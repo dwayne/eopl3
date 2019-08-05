@@ -7,6 +7,12 @@ module Test.Ch1 exposing
   , subst
 
   , remove
+
+  , duple
+  , invert
+  , down
+  , swapper
+  , listSet
   )
 
 
@@ -173,4 +179,169 @@ remove =
         \_ ->
           Ch1.remove "x" []
             |> Expect.equal []
+    ]
+
+
+duple : Test
+duple =
+  describe "duple"
+    [ test "it returns 2 3's" <|
+        \_ ->
+          Ch1.duple 2 3
+            |> Expect.equal [3, 3]
+    , test "it returns 4 [\"ha\", \"ha\"]'s" <|
+        \_ ->
+          Ch1.duple 4 ["ha", "ha"]
+            |> Expect.equal [["ha", "ha"], ["ha", "ha"], ["ha", "ha"], ["ha", "ha"]]
+    , test "it returns the empty list" <|
+        \_ ->
+          Ch1.duple 0 ["blah"]
+            |> Expect.equal []
+    ]
+
+
+invert : Test
+invert =
+  describe "invert"
+    [ test "it reverses each 2-tuple in the list" <|
+        \_ ->
+          Ch1.invert [("a", "1"), ("a", "2"), ("1", "b"), ("2", "b")]
+            |> Expect.equal [("1", "a"), ("2", "a"), ("b", "1"), ("b", "2")]
+    ]
+
+
+down : Test
+down =
+  describe "down"
+    [ test "it returns [[1], [2], [3]]" <|
+        \_ ->
+          Ch1.down [1, 2, 3]
+            |> Expect.equal [[1], [2], [3]]
+    , test "it returns [[\"a\"], [\"fine\"], [\"idea\"]]" <|
+        \_ ->
+          Ch1.down [["a"], ["fine"], ["idea"]]
+            |> Expect.equal [[["a"]], [["fine"]], [["idea"]]]
+    , test "it returns the empty list" <|
+        \_ ->
+          Ch1.down []
+            |> Expect.equal []
+    ]
+
+
+swapper : Test
+swapper =
+  describe "swapper"
+    [ test "example 1" <|
+        \_ ->
+          let
+            input =
+              (Cons
+                (Symbol "a")
+                (Cons
+                  (Symbol "b")
+                  (Cons
+                    (Symbol "c")
+                    (Cons
+                      (Symbol "d")
+                      Empty))))
+
+            output =
+              (Cons
+                (Symbol "d")
+                (Cons
+                  (Symbol "b")
+                  (Cons
+                    (Symbol "c")
+                    (Cons
+                      (Symbol "a")
+                      Empty))))
+          in
+            Ch1.swapper "a" "d" input
+              |> Expect.equal output
+    , test "example 2" <|
+        \_ ->
+          let
+            input =
+              (Cons
+                (Symbol "a")
+                (Cons
+                  (Symbol "d")
+                  (Cons
+                    (SList Empty)
+                    (Cons
+                      (Symbol "c")
+                      (Cons
+                        (Symbol "d")
+                        Empty)))))
+
+            output =
+              (Cons
+                (Symbol "d")
+                (Cons
+                  (Symbol "a")
+                  (Cons
+                    (SList Empty)
+                    (Cons
+                      (Symbol "c")
+                      (Cons
+                        (Symbol "a")
+                        Empty)))))
+          in
+            Ch1.swapper "a" "d" input
+              |> Expect.equal output
+    , test "example 3" <|
+        \_ ->
+          let
+            input =
+              (Cons
+                (SList (Cons (Symbol "x") Empty))
+                (Cons
+                  (Symbol "y")
+                  (Cons
+                    (SList
+                      (Cons
+                        (Symbol "z")
+                        (Cons
+                          (SList (Cons (Symbol "x") Empty))
+                          Empty)))
+                    Empty)))
+
+            output =
+              (Cons
+                (SList (Cons (Symbol "y") Empty))
+                (Cons
+                  (Symbol "x")
+                  (Cons
+                    (SList
+                      (Cons
+                        (Symbol "z")
+                        (Cons
+                          (SList (Cons (Symbol "y") Empty))
+                          Empty)))
+                    Empty)))
+          in
+            Ch1.swapper "x" "y" input
+              |> Expect.equal output
+    ]
+
+
+listSet : Test
+listSet =
+  describe "listSet"
+    [ test "example 1" <|
+        \_ ->
+          Ch1.listSet ["a", "b", "c", "d"] 2 "(1 2)"
+            |> Expect.equal ["a", "b", "(1 2)", "d"]
+    , test "example 2" <|
+        \_ ->
+          Ch1.listSet ["a", "b", "c", "d"] 3 "(1 5 10)"
+            |> Expect.equal ["a", "b", "c", "(1 5 10)"]
+    , test "when index is negative it returns the original list" <|
+        \_ ->
+          Ch1.listSet ["a", "b"] -1 "c"
+            |> Expect.equal ["a", "b"]
+    , test "when index is positively out of bounds it returns the original list" <|
+        \_ ->
+          Ch1.listSet ["a", "b"] 2 "c"
+            |> Expect.equal ["a", "b"]
     ]

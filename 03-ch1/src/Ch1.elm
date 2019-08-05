@@ -12,6 +12,12 @@ module Ch1 exposing
   , subst
 
   , remove
+
+  , duple
+  , invert
+  , down
+  , swapper
+  , listSet
   )
 
 
@@ -174,3 +180,97 @@ remove s list =
         remove s rest
       else
         x :: remove s rest
+
+
+-- Exercise 1.15
+duple : Int -> a -> List a
+duple n x =
+  if n <= 0 then
+    []
+  else
+    x :: duple (n-1) x
+
+
+-- Exercise 1.16
+invert : List (a, b) -> List (b, a)
+invert list =
+  case list of
+    [] ->
+      []
+
+    (x, y) :: rest ->
+      (y, x) :: invert rest
+
+
+-- Exercise 1.17
+down : List a -> List (List a)
+down list =
+  case list of
+    [] ->
+      []
+
+    x :: rest ->
+      [x] :: down rest
+--
+-- or
+--
+-- (define (down lst)
+--   (if (null? lst)
+--       '()
+--       (cons (list (car lst)) (down (cdr lst)))))
+--
+-- > (down '(1 2 3))
+-- '((1) (2) (3))
+-- > (down '((a) (fine) (idea)))
+-- '(((a)) ((fine)) ((idea)))
+-- > (down '(a (more (complicated)) object))
+-- '((a) ((more (complicated))) (object))
+
+
+-- Exercise 1.18
+swapper : String -> String -> SList -> SList
+swapper s1 s2 slist =
+  case slist of
+    Empty ->
+      slist
+
+    (Cons sexp rest) ->
+      (Cons
+        (swapperForSExp s1 s2 sexp)
+        (swapper s1 s2 rest))
+
+
+swapperForSExp : String -> String -> SExp -> SExp
+swapperForSExp s1 s2 sexp =
+  case sexp of
+    Symbol s ->
+      if s == s1 then
+        Symbol s2
+      else if s == s2 then
+        Symbol s1
+      else
+        Symbol s
+
+    SList slist ->
+      SList (swapper s1 s2 slist)
+
+
+-- Exercise 1.19
+listSet : List a -> Int -> a -> List a
+listSet list n x =
+  if n < 0 then
+    list
+  else if n == 0 then
+    case list of
+      [] ->
+        list
+
+      _ :: rest ->
+        x :: rest
+  else
+    case list of
+      [] ->
+        list
+
+      y :: rest ->
+        y :: listSet rest (n-1) x
