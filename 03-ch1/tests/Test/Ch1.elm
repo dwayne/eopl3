@@ -13,6 +13,12 @@ module Test.Ch1 exposing
   , down
   , swapper
   , listSet
+  , countOccurrences
+  , product
+  , filterIn
+  , listIndex
+  , every
+  , exists
   )
 
 
@@ -344,4 +350,151 @@ listSet =
         \_ ->
           Ch1.listSet ["a", "b"] 2 "c"
             |> Expect.equal ["a", "b"]
+    ]
+
+
+countOccurrences : Test
+countOccurrences =
+  let
+    fx =
+      Cons (Symbol "f") (Cons (Symbol "x") Empty)
+
+    xz =
+      Cons (Symbol "x") (Cons (Symbol "z") Empty)
+
+    xzx =
+      Cons (SList xz) (Cons (Symbol "x") Empty)
+
+    xzex =
+      Cons (SList xz) (Cons (SList Empty) (Cons (Symbol "x") Empty))
+  in
+    describe "countOccurrences"
+      [ test "example 1" <|
+          \_ ->
+            let
+              input =
+                Cons
+                  (SList fx)
+                  (Cons
+                    (Symbol "y")
+                    (Cons
+                      (SList (Cons (SList xzx) Empty))
+                      Empty))
+            in
+              Ch1.countOccurrences "x" input
+                |> Expect.equal 3
+      , test "example 2" <|
+          \_ ->
+            let
+              input =
+                Cons
+                  (SList fx)
+                  (Cons
+                    (Symbol "y")
+                    (Cons
+                      (SList (Cons (SList xzex) Empty))
+                      Empty))
+            in
+              Ch1.countOccurrences "x" input
+                |> Expect.equal 3
+      , test "example 3" <|
+          \_ ->
+            let
+              input =
+                Cons
+                  (SList fx)
+                  (Cons
+                    (Symbol "y")
+                    (Cons
+                      (SList (Cons (SList xzx) Empty))
+                      Empty))
+            in
+              Ch1.countOccurrences "w" input
+                |> Expect.equal 0
+      ]
+
+
+product : Test
+product =
+  let
+    one : Int
+    one = 1
+  in
+    describe "product"
+      [ test "example 1" <|
+          \_ ->
+            Ch1.product [] []
+              |> Expect.equal []
+      , test "example 2" <|
+          \_ ->
+            Ch1.product [1] []
+              |> Expect.equal []
+      , test "example 3" <|
+          \_ ->
+            Ch1.product [] [1]
+              |> Expect.equal []
+      , test "example 4" <|
+          \_ ->
+            Ch1.product [one] [1]
+              |> Expect.equal [(1, 1)]
+      , test "example 5" <|
+          \_ ->
+            Ch1.product [one, 2] [1, 2, 3]
+              |> Expect.equal [(1, 1), (1, 2), (1, 3), (2, 1), (2, 2), (2, 3)]
+      ]
+
+
+filterIn : Test
+filterIn =
+  describe "filterIn"
+    [ test "even" <|
+        \_ ->
+          Ch1.filterIn (\n -> modBy 2 n == 0) [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            |> Expect.equal [2, 4, 6, 8, 10]
+    , test "odd" <|
+        \_ ->
+          Ch1.filterIn (\n -> modBy 2 n == 1) [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            |> Expect.equal [1, 3, 5, 7, 9]
+    ]
+
+
+listIndex : Test
+listIndex =
+  describe "listIndex"
+    [ test "example 1" <|
+        \_ ->
+          Ch1.listIndex (\n -> modBy 2 n == 0) [1, 3, 5, 7, 9]
+            |> Expect.equal Nothing
+    , test "example 2" <|
+        \_ ->
+          Ch1.listIndex ((==) "Eli") ["Dwayne", "Denzil", "Eli", "Darryl"]
+            |> Expect.equal (Just 2)
+    ]
+
+
+every : Test
+every =
+  describe "every"
+    [ test "example 1" <|
+        \_ ->
+          Ch1.every (\n -> modBy 2 n == 0) [2, 4, 6]
+            |> Expect.equal True
+    , test "example 2" <|
+        \_ ->
+          Ch1.every (\n -> modBy 2 n == 0) [2, 4, 5, 6]
+            |> Expect.equal False
+    ]
+
+
+exists : Test
+exists =
+  describe "exists"
+    [ test "example 1" <|
+        \_ ->
+          Ch1.exists (\n -> modBy 2 n == 0) [1, 3, 5, 6, 7]
+            |> Expect.equal True
+    , test "example 2" <|
+        \_ ->
+          Ch1.exists (\n -> modBy 2 n == 0) [1, 3, 5, 7]
+            |> Expect.equal False
     ]

@@ -18,6 +18,12 @@ module Ch1 exposing
   , down
   , swapper
   , listSet
+  , countOccurrences
+  , product
+  , filterIn
+  , listIndex
+  , every
+  , exists
   )
 
 
@@ -274,3 +280,88 @@ listSet list n x =
 
       y :: rest ->
         y :: listSet rest (n-1) x
+
+
+-- Exercise 1.20
+countOccurrences : String -> SList -> Int
+countOccurrences s slist =
+  case slist of
+    Empty ->
+      0
+
+    Cons sexp rest ->
+      countOccurrencesInSExp s sexp + countOccurrences s rest
+
+
+countOccurrencesInSExp : String -> SExp -> Int
+countOccurrencesInSExp s sexp =
+  case sexp of
+    Symbol t ->
+      if t == s then
+        1
+      else
+        0
+
+    SList slist ->
+      countOccurrences s slist
+
+
+-- Exercise 1.21
+product : List a -> List b -> List (a, b)
+product list1 list2 =
+  List.concatMap (\x -> List.map (\y -> (x, y)) list2) list1
+
+
+-- Exercise 1.22
+filterIn : (a -> Bool) -> List a -> List a
+filterIn pred list =
+  case list of
+    [] ->
+      []
+
+    x :: rest ->
+      if pred x then
+        x :: filterIn pred rest
+      else
+        filterIn pred rest
+
+
+-- Exercise 1.23
+listIndex : (a -> Bool) -> List a -> Maybe Int
+listIndex pred list =
+  listIndexHelper pred list 0
+
+
+listIndexHelper : (a -> Bool) -> List a -> Int -> Maybe Int
+listIndexHelper pred list index =
+  case list of
+    [] ->
+      Nothing
+
+    x :: rest ->
+      if pred x then
+        Just index
+      else
+        listIndexHelper pred rest (index + 1)
+
+
+-- Exercise 1.24
+every : (a -> Bool) -> List a -> Bool
+every pred list =
+  case list of
+    [] ->
+      True
+
+    x :: rest ->
+      pred x && every pred rest
+
+
+-- Exercise 1.25
+exists : (a -> Bool) -> List a -> Bool
+exists pred list =
+  case list of
+    [] ->
+      False
+
+    x :: rest ->
+      pred x || exists pred rest
