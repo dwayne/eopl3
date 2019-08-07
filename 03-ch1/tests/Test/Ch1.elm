@@ -19,6 +19,10 @@ module Test.Ch1 exposing
   , listIndex
   , every
   , exists
+  , flatten
+  , merge
+  , sort
+  , sortWithPredicate
   )
 
 
@@ -497,4 +501,129 @@ exists =
         \_ ->
           Ch1.exists (\n -> modBy 2 n == 0) [1, 3, 5, 7]
             |> Expect.equal False
+    ]
+
+
+flatten : Test
+flatten =
+  describe "flatten"
+    [ test "example 1" <|
+        \_ ->
+          -- '(a b c)
+          Ch1.flatten (Cons (Symbol "a") (Cons (Symbol "b") (Cons (Symbol "c") Empty)))
+            |> Expect.equal ["a", "b", "c"]
+    , test "example 2" <|
+        \_ ->
+          let
+            -- '((a) () (b ()) () (c))
+            input =
+              Cons
+                (SList (Cons (Symbol "a") Empty))
+                (Cons
+                  (SList Empty)
+                  (Cons
+                    (SList (Cons (Symbol "b") (Cons (SList Empty) Empty)))
+                    (Cons
+                      (SList Empty)
+                      (Cons
+                        (SList (Cons (Symbol "c") Empty))
+                        Empty))))
+          in
+            Ch1.flatten input
+              |> Expect.equal ["a", "b", "c"]
+    , test "example 3" <|
+        \_ ->
+          let
+            -- '((a b) c (((d)) e))
+            input =
+              Cons
+                (SList (Cons (Symbol "a") (Cons (Symbol "b") Empty)))
+                (Cons
+                  (Symbol "c")
+                  (Cons
+                    (SList
+                      (Cons
+                        (SList
+                          (Cons (SList (Cons (Symbol "d") Empty)) Empty))
+                        (Cons
+                          (Symbol "e")
+                          Empty)))
+                    Empty))
+          in
+            Ch1.flatten input
+              |> Expect.equal ["a", "b", "c", "d", "e"]
+    , test "example 4" <|
+        \_ ->
+          let
+            -- '(a b (() (c)))
+            input =
+              Cons
+                (Symbol "a")
+                (Cons
+                  (Symbol "b")
+                  (Cons
+                    (SList
+                      (Cons
+                        (SList Empty)
+                        (Cons
+                          (SList (Cons (Symbol "c") Empty))
+                          Empty)))
+                    Empty))
+          in
+            Ch1.flatten input
+              |> Expect.equal ["a", "b", "c"]
+    ]
+
+
+merge : Test
+merge =
+  describe "merge"
+    [ test "example 1" <|
+        \_ ->
+          Ch1.merge [1, 4] [1, 2, 8]
+            |> Expect.equal [1, 1, 2, 4, 8]
+    , test "example 2" <|
+        \_ ->
+          Ch1.merge [35, 62, 81, 90, 91] [3, 83, 85, 90]
+            |> Expect.equal [3, 35, 62, 81, 83, 85, 90, 90, 91]
+    ]
+
+
+sort : Test
+sort =
+  describe "sort"
+    [ test "example 1" <|
+        \_ ->
+          Ch1.sort []
+            |> Expect.equal []
+    , test "example 2" <|
+        \_ ->
+          Ch1.sort [1]
+            |> Expect.equal [1]
+    , test "example 3" <|
+        \_ ->
+          Ch1.sort [1, 2]
+            |> Expect.equal [1, 2]
+    , test "example 4" <|
+        \_ ->
+          Ch1.sort [2, 1]
+            |> Expect.equal [1, 2]
+    , test "example 5" <|
+        \_ ->
+          Ch1.sort [8, 2, 5, 2, 3]
+            |> Expect.equal [2, 2, 3, 5, 8]
+    ]
+
+
+sortWithPredicate : Test
+sortWithPredicate =
+  describe "sortWithPredicate"
+    [ test "example 1" <|
+        \_ ->
+          Ch1.sortWithPredicate (<) [8, 2, 5, 2, 3]
+            |> Expect.equal [2, 2, 3, 5, 8]
+    , test "example 2" <|
+        \_ ->
+          Ch1.sortWithPredicate (>) [8, 2, 5, 2, 3]
+            |> Expect.equal [8, 5, 3, 2, 2]
     ]

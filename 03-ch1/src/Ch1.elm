@@ -24,6 +24,11 @@ module Ch1 exposing
   , listIndex
   , every
   , exists
+  -- , up ; see ex1.26.rkt
+  , flatten
+  , merge
+  , sort
+  , sortWithPredicate
   )
 
 
@@ -365,3 +370,87 @@ exists pred list =
 
     x :: rest ->
       pred x || exists pred rest
+
+
+-- Exercise 1.27
+flatten : SList -> List String
+flatten slist =
+  case slist of
+    Empty ->
+      []
+
+    Cons sexp rest ->
+      case sexp of
+        Symbol s ->
+          s :: flatten rest
+
+        SList inner ->
+          flatten inner ++ flatten rest
+
+
+-- Exercise 1.28
+merge : List Int -> List Int -> List Int
+merge list1 list2 =
+  case (list1, list2) of
+    ([], []) ->
+      []
+
+    ([], _) ->
+      list2
+
+    (_, []) ->
+      list1
+
+    (x :: rest1, y :: rest2) ->
+      if x <= y then
+        x :: merge rest1 list2
+      else
+        y :: merge list1 rest2
+
+
+-- Exercise 1.29
+sort : List Int -> List Int
+sort list =
+  case list of
+    [] ->
+      []
+
+    x :: rest ->
+      insertIntoSorted x (sort rest)
+
+
+insertIntoSorted : Int -> List Int -> List Int
+insertIntoSorted x list =
+  case list of
+    [] ->
+      [x]
+
+    y :: rest ->
+      if x <= y then
+        x :: list
+      else
+        y :: insertIntoSorted x rest
+
+
+-- Exercise 1.30
+sortWithPredicate : (Int -> Int -> Bool) -> List Int -> List Int
+sortWithPredicate pred list =
+  case list of
+    [] ->
+      []
+
+    x :: rest ->
+      insertIntoSortedWithPredicate pred x (sortWithPredicate pred rest)
+
+
+insertIntoSortedWithPredicate : (Int -> Int -> Bool) -> Int -> List Int -> List Int
+insertIntoSortedWithPredicate pred x list =
+  case list of
+    [] ->
+      [x]
+
+    y :: rest ->
+      if pred x y then
+        x :: list
+      else
+        y :: insertIntoSortedWithPredicate pred x rest
