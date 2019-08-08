@@ -23,6 +23,10 @@ module Test.Ch1 exposing
   , merge
   , sort
   , sortWithPredicate
+  , doubleTree
+  , markLeavesWithRedDepth
+  , path
+  , numberLeaves
   )
 
 
@@ -31,7 +35,14 @@ import Fuzz
 import Test exposing (Test, describe, fuzz, test)
 
 
-import Ch1 exposing (LcExp(..), SList(..), SExp(..))
+import Ch1 exposing
+  ( LcExp(..)
+  , SList(..)
+  , SExp(..)
+  , BinTree(..)
+  , BinarySearchTree(..)
+  , Direction(..)
+  )
 
 
 inS : Test
@@ -626,4 +637,109 @@ sortWithPredicate =
         \_ ->
           Ch1.sortWithPredicate (>) [8, 2, 5, 2, 3]
             |> Expect.equal [8, 5, 3, 2, 2]
+    ]
+
+
+doubleTree : Test
+doubleTree =
+  describe "doubleTree"
+    [ test "example 1" <|
+        \_ ->
+          let
+            input =
+              Node "a"
+                (Node "b" (Leaf 1) (Leaf 2))
+                (Node "c" (Leaf 3) (Leaf 4))
+
+            output =
+              Node "a"
+                (Node "b" (Leaf 2) (Leaf 4))
+                (Node "c" (Leaf 6) (Leaf 8))
+          in
+            Ch1.doubleTree input
+              |> Expect.equal output
+    ]
+
+
+markLeavesWithRedDepth : Test
+markLeavesWithRedDepth =
+  describe "markLeavesWithRedDepth"
+    [ test "example 1" <|
+        \_ ->
+          let
+            input =
+              Node "red"
+                (Node "bar" (Leaf 26) (Leaf 12))
+                (Node "red" (Leaf 11) (Node "quux" (Leaf 117) (Leaf 14)))
+
+            output =
+              Node "red"
+                (Node "bar" (Leaf 1) (Leaf 1))
+                (Node "red" (Leaf 2) (Node "quux" (Leaf 2) (Leaf 2)))
+          in
+            Ch1.markLeavesWithRedDepth input
+              |> Expect.equal output
+    ]
+
+
+path : Test
+path =
+  describe "path" <|
+    let
+      input =
+        Branch 14
+          (Branch 7
+            Nil
+            (Branch 12 Nil Nil))
+          (Branch 26
+            (Branch 20
+              (Branch 17 Nil Nil)
+              Nil)
+            (Branch 31 Nil Nil))
+    in
+      [ test "example 1" <|
+          \_ ->
+            Ch1.path 1 Nil
+              |> Expect.equal Nothing
+      , test "example 2" <|
+          \_ ->
+            Ch1.path 19 input
+              |> Expect.equal Nothing
+      , test "example 3" <|
+          \_ ->
+            Ch1.path 14 input
+              |> Expect.equal (Just [])
+      , test "example 4" <|
+          \_ ->
+            Ch1.path 7 input
+              |> Expect.equal (Just [TurnLeft])
+      , test "example 5" <|
+          \_ ->
+            Ch1.path 26 input
+              |> Expect.equal (Just [TurnRight])
+      , test "example 6" <|
+          \_ ->
+            Ch1.path 17 input
+              |> Expect.equal (Just [TurnRight, TurnLeft, TurnLeft])
+      ]
+
+
+numberLeaves : Test
+numberLeaves =
+  describe "numberLeaves" <|
+    [ test "example 1" <|
+        \_ ->
+          let
+            input =
+              Node "foo"
+                (Node "bar" (Leaf 26) (Leaf 12))
+                (Node "baz" (Leaf 11) (Node "quux" (Leaf 117) (Leaf 14)))
+
+            output =
+              Node "foo"
+                (Node "bar" (Leaf 0) (Leaf 1))
+                (Node "baz" (Leaf 2) (Node "quux" (Leaf 3) (Leaf 4)))
+          in
+            Ch1.numberLeaves input
+              |> Expect.equal output
     ]

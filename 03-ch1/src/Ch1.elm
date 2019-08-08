@@ -29,6 +29,16 @@ module Ch1 exposing
   , merge
   , sort
   , sortWithPredicate
+
+  , BinTree(..)
+  , doubleTree
+  , markLeavesWithRedDepth
+
+  , BinarySearchTree(..)
+  , Direction(..)
+  , path
+
+  , numberLeaves
   )
 
 
@@ -454,3 +464,148 @@ insertIntoSortedWithPredicate pred x list =
         x :: list
       else
         y :: insertIntoSortedWithPredicate pred x rest
+
+
+type BinTree
+  = Leaf Int
+  | Node String BinTree BinTree
+
+
+-- Exercise 1.31
+--
+-- I wrote the functions isLeaf (leaf?), leftTree (lson), rightTree (rson) and
+-- nodeContents (contents-of) just to complete the exercise but they will not
+-- be needed because we can simply pattern match on the BinTree structure when
+-- manipulating them.
+
+
+isLeaf : BinTree -> Bool
+isLeaf tree =
+  case tree of
+    Leaf _ ->
+      True
+
+    Node _ _ _ ->
+      False
+
+
+leftTree : BinTree -> Maybe BinTree
+leftTree tree =
+  case tree of
+    Leaf _ ->
+      Nothing
+
+    Node _ left _ ->
+      Just left
+
+
+rightTree : BinTree -> Maybe BinTree
+rightTree tree =
+  case tree of
+    Leaf _ ->
+      Nothing
+
+    Node _ _ right ->
+      Just right
+
+
+type Either a b
+  = Left a
+  | Right b
+
+
+contents : BinTree -> Either Int String
+contents tree =
+  case tree of
+    Leaf n ->
+      Left n
+
+    Node s _ _ ->
+      Right s
+
+
+-- Exercise 1.32
+doubleTree : BinTree -> BinTree
+doubleTree tree =
+  case tree of
+    Leaf n ->
+      Leaf (2 * n)
+
+    Node s left right ->
+      Node s (doubleTree left) (doubleTree right)
+
+
+-- Exercise 1.33
+markLeavesWithRedDepth : BinTree -> BinTree
+markLeavesWithRedDepth tree =
+  markLeavesWithRedDepthHelper tree 0
+
+
+markLeavesWithRedDepthHelper : BinTree -> Int -> BinTree
+markLeavesWithRedDepthHelper tree depth =
+  case tree of
+    Leaf _ ->
+      Leaf depth
+
+    Node s left right ->
+      let
+        newDepth =
+          if s == "red" then
+            depth + 1
+          else
+            depth
+      in
+        Node s
+          (markLeavesWithRedDepthHelper left newDepth)
+          (markLeavesWithRedDepthHelper right newDepth)
+
+
+type BinarySearchTree
+  = Nil
+  | Branch Int BinarySearchTree BinarySearchTree
+
+
+-- Exercise 1.34
+
+
+type Direction
+  = TurnLeft
+  | TurnRight
+
+
+path : Int -> BinarySearchTree -> Maybe (List Direction)
+path n bst =
+  case bst of
+    Nil ->
+      Nothing
+
+    Branch k left right ->
+      if n == k then
+        Just []
+      else if n < k then
+        Maybe.map ((::) TurnLeft) (path n left)
+      else
+        Maybe.map ((::) TurnRight) (path n right)
+
+
+-- Exercise 1.35
+numberLeaves : BinTree -> BinTree
+numberLeaves tree =
+  Tuple.first (numberLeavesHelper tree 0)
+
+
+numberLeavesHelper : BinTree -> Int -> (BinTree, Int)
+numberLeavesHelper tree counter =
+  case tree of
+    Leaf n ->
+      (Leaf counter, counter + 1)
+
+    Node s left right ->
+      let
+        (newLeft, counterL) =
+          numberLeavesHelper left counter
+
+        (newRight, counterR) =
+          numberLeavesHelper right counterL
+      in
+        (Node s newLeft newRight, counterR)
