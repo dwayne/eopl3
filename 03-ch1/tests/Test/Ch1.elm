@@ -27,6 +27,7 @@ module Test.Ch1 exposing
   , markLeavesWithRedDepth
   , path
   , numberLeaves
+  , numberElements
   )
 
 
@@ -742,4 +743,26 @@ numberLeaves =
           in
             Ch1.numberLeaves input
               |> Expect.equal output
+    ]
+
+
+numberElements : Test
+numberElements =
+  describe "numberElements" <|
+    [ test "example 1" <|
+        \_ ->
+          Ch1.numberElements []
+            |> Expect.equal []
+    , test "example 2" <|
+        \_ ->
+          Ch1.numberElements [1]
+            |> Expect.equal [(0, 1)]
+    , test "example 3" <|
+        \_ ->
+          Ch1.numberElements [1, 2]
+            |> Expect.equal [(0, 1), (1, 2)]
+    , test "example 4" <|
+        \_ ->
+          Ch1.numberElements [1, 2, 3]
+            |> Expect.equal [(0, 1), (1, 2), (2, 3)]
     ]

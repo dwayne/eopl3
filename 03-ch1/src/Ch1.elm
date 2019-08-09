@@ -39,6 +39,8 @@ module Ch1 exposing
   , path
 
   , numberLeaves
+
+  , numberElements
   )
 
 
@@ -609,3 +611,23 @@ numberLeavesHelper tree counter =
           numberLeavesHelper right counterL
       in
         (Node s newLeft newRight, counterR)
+
+
+-- Exercise 1.36
+--
+-- See ex1.36.md to understand how I worked it out.
+
+numberElements : List a -> List (Int, a)
+numberElements list =
+  case list of
+    [] ->
+      []
+
+    x :: rest ->
+      numberElementsHelper (0, x) (numberElements rest)
+
+
+-- This is g.
+numberElementsHelper : (Int, a) -> List (Int, a) -> List (Int, a)
+numberElementsHelper p list =
+  p :: List.map (\(i, x) -> (i+1, x)) list
