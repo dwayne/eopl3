@@ -65,6 +65,10 @@ My [notes](03-ch1.md).
 
 My [notes](04-ch2.md).
 
+- [x] [2.1](04-ch2/ex2.1.md)
+- [x] [2.2](04-ch2/ex2.2.md)
+- [x] [2.3](04-ch2/ex2.3.md)
+
 ## Resources
 
 - [eopl3](http://eopl3.com/)

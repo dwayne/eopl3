@@ -5,6 +5,7 @@ module Test.Natural.Bignum exposing
   , succPred
   , zeroIsIdentityForAddition
   , additionIsCommutative
+  , fact
   )
 
 
@@ -69,6 +70,17 @@ additionIsCommutative =
       \(a, b) ->
         Natural.plus a b
           |> Expect.equal (Natural.plus b a)
+
+
+fact : Test
+fact =
+  describe "fact"
+    [ test "10! equals 3628800" <|
+        \_ ->
+          Natural.fact (Natural.fromInt 10)
+            |> Natural.toInt
+            |> Expect.equal 3628800
+    ]
 
 
 -- HELPERS
