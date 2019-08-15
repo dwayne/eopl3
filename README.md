@@ -68,6 +68,13 @@ My [notes](04-ch2.md).
 - [x] [2.1](04-ch2/ex2.1.md)
 - [x] [2.2](04-ch2/ex2.2.md)
 - [x] [2.3](04-ch2/ex2.3.md)
+- [x] [2.4](04-ch2/ex2.4.md)
+- [x] [2.5](04-ch2/ex2.5.md)
+- [x] [2.6](04-ch2/ex2.6.md)
+- [x] [2.7](04-ch2/ex2.7.md)
+- [x] [2.8](04-ch2/src/Env/Assoc.elm)
+- [x] [2.9](04-ch2/src/Env/Assoc.elm)
+- [x] [2.10](04-ch2/src/Env/Assoc.elm)
 
 ## Resources
 
