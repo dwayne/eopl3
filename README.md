@@ -75,6 +75,10 @@ My [notes](04-ch2.md).
 - [x] [2.8](04-ch2/src/Env/Assoc.elm)
 - [x] [2.9](04-ch2/src/Env/Assoc.elm)
 - [x] [2.10](04-ch2/src/Env/Assoc.elm)
+- [x] [2.11](04-ch2/src/Env/Ribcage.elm)
+- [x] [2.12](04-ch2/src/Stack/Proc.elm)
+- [x] [2.13](04-ch2/src/Env/Proc.elm)
+- [x] [2.14](04-ch2/src/Env/Proc.elm)
 
 ## Resources
 
