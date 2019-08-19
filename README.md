@@ -79,6 +79,10 @@ My [notes](04-ch2.md).
 - [x] [2.12](04-ch2/src/Stack/Proc.elm)
 - [x] [2.13](04-ch2/src/Env/Proc.elm)
 - [x] [2.14](04-ch2/src/Env/Proc.elm)
+- [x] [2.15](04-ch2/ex2.15.rkt)
+- [x] [2.16](04-ch2/ex2.16.rkt)
+- [x] 2.17 [a](04-ch2/ex2.17a.rkt), [b](04-ch2/ex2.17b.rkt)
+- [x] [2.18](04-ch2/src/NonEmptyBiSeq.elm)
 
 ## Resources
 
