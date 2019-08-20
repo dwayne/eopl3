@@ -83,6 +83,11 @@ My [notes](04-ch2.md).
 - [x] [2.16](04-ch2/ex2.16.rkt)
 - [x] 2.17 [a](04-ch2/ex2.17a.rkt), [b](04-ch2/ex2.17b.rkt)
 - [x] [2.18](04-ch2/src/NonEmptyBiSeq.elm)
+- [x] [2.19](04-ch2/src/Bintree.elm)
+- [x] [2.20](04-ch2/src/BiBintree.elm), [wrong](04-ch2/src/BiBintreeWrong.elm)
+- [x] [2.21](04-ch2/ex2.21.rkt)
+- [x] [2.22](04-ch2/ex2.22.rkt)
+- [x] [2.23](04-ch2/ex2.23.rkt)
 
 ## Resources
 
