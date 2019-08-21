@@ -88,6 +88,14 @@ My [notes](04-ch2.md).
 - [x] [2.21](04-ch2/ex2.21.rkt)
 - [x] [2.22](04-ch2/ex2.22.rkt)
 - [x] [2.23](04-ch2/ex2.23.rkt)
+- [x] [2.24](04-ch2/src/InteriorNodeBintree.elm)
+- [x] [2.25](04-ch2/src/InteriorNodeBintree.elm)
+- [x] [2.26](04-ch2/src/RedBlueTree.elm)
+- [x] [2.27](04-ch2/ex2.27.md)
+- [x] [2.28](04-ch2/ex2.28.rkt)
+- [x] [2.29](04-ch2/ex2.29.rkt)
+- [x] [2.30](04-ch2/ex2.30.rkt)
+- [x] [2.31](04-ch2/ex2.31.rkt)
 
 ## Resources
 
