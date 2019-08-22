@@ -97,6 +97,14 @@ My [notes](04-ch2.md).
 - [x] [2.30](04-ch2/ex2.30.rkt)
 - [x] [2.31](04-ch2/ex2.31.rkt)
 
+## Chapter 3
+
+My [notes](05-ch3.md).
+
+- [x] [3.1](05-ch3/ex3.1.md)
+- [x] [3.2](05-ch3/ex3.2.md)
+- [x] [3.3](05-ch3/ex3.3.md)
+
 ## Resources
 
 - [eopl3](http://eopl3.com/)
