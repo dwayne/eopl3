@@ -104,6 +104,7 @@ My [notes](05-ch3.md).
 **Interpreters**
 
 - [LET](05-ch3/interpreters/LET)
+- [PROC](05-ch3/interpreters/PROC)
 
 **Solutions to exercises**
 
