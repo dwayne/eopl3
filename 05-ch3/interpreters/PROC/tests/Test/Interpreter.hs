@@ -77,5 +77,32 @@ spec = do
 
       run input `shouldBe` "-5"
 
+  describe "example 11" $ do
+    it "returns 55" $ do
+      let input = "                 \
+        \ let f = proc (x) -(x, 11) \
+        \ in (f (f 77))             "
+
+      run input `shouldBe` "55"
+
+  describe "example 12" $ do
+    it "returns 55" $ do
+      let input = "            \
+        \ (proc (f) (f (f 77)) \
+        \  proc (x) -(x, 11))  "
+
+      run input `shouldBe` "55"
+
+  describe "example 13" $ do
+    it "returns -100" $ do
+      let input = "                         \
+        \ let x = 200                       \
+        \ in let f = proc (z) -(z, x)       \
+        \    in let x = 100                 \
+        \       in let g = proc (z) -(z, x) \
+        \          in -((f 1), (g 1))       "
+
+      run input `shouldBe` "-100"
+
 run :: String -> String
 run = show . I.run
