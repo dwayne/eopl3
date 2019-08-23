@@ -8,12 +8,14 @@ import Proc.Parser (parse)
 data Value
   = NumberVal Number
   | BoolVal Bool
+  | ProcedureVal Procedure
 
 type Environment = Env.Env Id Value
 
 instance Show Value where
   show (NumberVal n) = show n
   show (BoolVal b) = if b then "True" else "False"
+  show (ProcedureVal _) = "<<proc>>"
 
 run :: String -> Value
 run = valueOfProgram . parse
@@ -65,6 +67,16 @@ valueOfExpr expr env =
       in
         valueOfExpr body (Env.extend var val env)
 
+    Proc var body ->
+      ProcedureVal (procedure var body env)
+
+    Call f arg ->
+      let
+        fVal = valueOfExpr f env
+        argVal = valueOfExpr arg env
+      in
+        applyProcedure (toProcedure fVal) argVal
+
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n
 toNumber x = error ("Expected a number: " ++ show x)
@@ -72,3 +84,18 @@ toNumber x = error ("Expected a number: " ++ show x)
 toBool :: Value -> Bool
 toBool (BoolVal b) = b
 toBool x = error ("Expected a boolean: " ++ show x)
+
+toProcedure :: Value -> Procedure
+toProcedure (ProcedureVal p) = p
+toProcedure x = error ("Expected a procedure: " ++ show x)
+
+-- Procedure ADT
+
+data Procedure = Procedure Id Expr Environment
+
+procedure :: Id -> Expr -> Environment -> Procedure
+procedure = Procedure
+
+applyProcedure :: Procedure -> Value -> Value
+applyProcedure (Procedure var body env) val =
+  valueOfExpr body (Env.extend var val env)
