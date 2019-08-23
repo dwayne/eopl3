@@ -101,6 +101,12 @@ My [notes](04-ch2.md).
 
 My [notes](05-ch3.md).
 
+**Interpreters**
+
+- [LET](05-ch3/interpreters/LET)
+
+**Solutions to exercises**
+
 - [x] [3.1](05-ch3/ex3.1.md)
 - [x] [3.2](05-ch3/ex3.2.md)
 - [x] [3.3](05-ch3/ex3.3.md)
