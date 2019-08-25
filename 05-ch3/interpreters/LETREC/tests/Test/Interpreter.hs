@@ -104,5 +104,13 @@ spec = do
 
       run input `shouldBe` "-100"
 
+  describe "example 14" $ do
+    it "returns 12" $ do
+      let input = "                                                         \
+        \ letrec double(x) = if zero?(x) then 0 else -((double -(x,1)), -2) \
+        \ in (double 6)                                                     "
+
+      run input `shouldBe` "12"
+
 run :: String -> String
 run = show . I.run
