@@ -10,7 +10,7 @@ data Value
   | BoolVal Bool
   | ProcedureVal Procedure
 
-type Environment = Env.Env Id Value
+type Environment = Env.Env Id Value Expr
 
 instance Show Value where
   show (NumberVal n) = show n
@@ -37,7 +37,7 @@ valueOfExpr expr env =
       NumberVal n
 
     Var v ->
-      Env.apply env v
+      Env.apply env v procedureVal
 
     Diff a b ->
       let
@@ -68,7 +68,7 @@ valueOfExpr expr env =
         valueOfExpr body (Env.extend var val env)
 
     Proc var body ->
-      ProcedureVal (procedure var body env)
+      procedureVal var body env
 
     Call f arg ->
       let
@@ -76,6 +76,9 @@ valueOfExpr expr env =
         argVal = valueOfExpr arg env
       in
         applyProcedure (toProcedure fVal) argVal
+
+    Letrec name param body e ->
+      valueOfExpr e (Env.extendRec name param body env)
 
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n
@@ -95,6 +98,10 @@ data Procedure = Procedure Id Expr Environment
 
 procedure :: Id -> Expr -> Environment -> Procedure
 procedure = Procedure
+
+procedureVal :: Id -> Expr -> Environment -> Value
+procedureVal var body env =
+  ProcedureVal (procedure var body env)
 
 applyProcedure :: Procedure -> Value -> Value
 applyProcedure (Procedure var body env) val =

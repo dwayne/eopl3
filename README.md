@@ -105,6 +105,7 @@ My [notes](05-ch3.md).
 
 - [LET](05-ch3/interpreters/LET)
 - [PROC](05-ch3/interpreters/PROC)
+- [LETREC](05-ch3/interpreters/LETREC)
 
 **Solutions to exercises**
 
