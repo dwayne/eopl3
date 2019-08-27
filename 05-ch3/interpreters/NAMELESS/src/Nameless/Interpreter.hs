@@ -1,16 +1,18 @@
 module Nameless.Interpreter (Value, run) where
 
-import qualified Nameless.Env as Env
+import qualified Nameless.AST.AST as AST
+import qualified Nameless.Env.Nameless as Env
 
-import Nameless.AST
+import Nameless.AST.Nameless
 import Nameless.Parser (parse)
+import Nameless.Translator (translate)
 
 data Value
   = NumberVal Number
   | BoolVal Bool
   | ProcedureVal Procedure
 
-type Environment = Env.Env Id Value
+type Environment = Env.Env Lexaddr Value
 
 instance Show Value where
   show (NumberVal n) = show n
@@ -18,16 +20,16 @@ instance Show Value where
   show (ProcedureVal _) = "<<proc>>"
 
 run :: String -> Value
-run = valueOfProgram . parse
+run = valueOfProgram . translate . parse
 
 valueOfProgram :: Program -> Value
 valueOfProgram (Program expr) =
   valueOfExpr expr initEnv
   where
     initEnv =
-      Env.extend "i" (NumberVal 1)
-        (Env.extend "v" (NumberVal 5)
-          (Env.extend "x" (NumberVal 10)
+      Env.extend (NumberVal 1)
+        (Env.extend (NumberVal 5)
+          (Env.extend (NumberVal 10)
             Env.empty))
 
 valueOfExpr :: Expr -> Environment -> Value
@@ -36,8 +38,8 @@ valueOfExpr expr env =
     Const n ->
       NumberVal n
 
-    Var v ->
-      Env.apply env v
+    Var n ->
+      Env.apply env n
 
     Diff a b ->
       let
@@ -61,14 +63,14 @@ valueOfExpr expr env =
         else
           valueOfExpr alternative env
 
-    Let var e body ->
+    Let e body ->
       let
         val = valueOfExpr e env
       in
-        valueOfExpr body (Env.extend var val env)
+        valueOfExpr body (Env.extend val env)
 
-    Proc var body ->
-      ProcedureVal (procedure var body env)
+    Proc body ->
+      ProcedureVal (procedure body env)
 
     Call f arg ->
       let
@@ -91,11 +93,11 @@ toProcedure x = error ("Expected a procedure: " ++ show x)
 
 -- Procedure ADT
 
-data Procedure = Procedure Id Expr Environment
+data Procedure = Procedure Expr Environment
 
-procedure :: Id -> Expr -> Environment -> Procedure
+procedure :: Expr -> Environment -> Procedure
 procedure = Procedure
 
 applyProcedure :: Procedure -> Value -> Value
-applyProcedure (Procedure var body env) val =
-  valueOfExpr body (Env.extend var val env)
+applyProcedure (Procedure body env) val =
+  valueOfExpr body (Env.extend val env)

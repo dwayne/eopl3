@@ -8,7 +8,7 @@ import Text.Parsec.Language (emptyDef)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Token (LanguageDef, TokenParser)
 
-import Nameless.AST
+import Nameless.AST.AST
 
 parse :: String -> Program
 parse input =

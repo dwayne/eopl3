@@ -10,9 +10,12 @@ library
     Nameless.Interpreter
 
   other-modules:
-    Nameless.AST
-    Nameless.Env
+    Nameless.AST.AST
+    Nameless.AST.Nameless
+    Nameless.Env.Nameless
+    Nameless.Env.Static
     Nameless.Parser
+    Nameless.Translator
 
   build-depends:
     base >= 4.7 && < 5,

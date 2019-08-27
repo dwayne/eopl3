@@ -1,4 +1,4 @@
-module Nameless.AST (Program(..), Expr(..), Number, Id) where
+module Nameless.AST.AST (Program(..), Expr(..), Number, Id) where
 
 data Program = Program Expr deriving Show
 
