@@ -28,6 +28,7 @@ expr :: Parser Expr
 expr
   = constExpr
   <|> diffExpr
+  <|> minusExpr
   <|> zeroExpr
   <|> ifExpr
   <|> letExpr
@@ -41,6 +42,9 @@ diffExpr = minus *> (parens (Diff <$> (expr <* comma) <*> expr))
   where
     minus = char '-'
     comma = lexeme (char ',')
+
+minusExpr :: Parser Expr
+minusExpr = reserved "minus" *> (parens (Minus <$> expr))
 
 zeroExpr :: Parser Expr
 zeroExpr = reserved "zero?" *> (parens (Zero <$> expr))
@@ -96,6 +100,7 @@ letDef = emptyDef
       , "if"
       , "in"
       , "let"
+      , "minus"
       , "then"
       , "zero?"
       ]

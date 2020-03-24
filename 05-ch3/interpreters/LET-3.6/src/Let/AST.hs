@@ -6,6 +6,7 @@ data Expr
   = Const Number
   | Var Id
   | Diff Expr Expr
+  | Minus Expr
   | Zero Expr
   | If Expr Expr Expr
   | Let Id Expr Expr

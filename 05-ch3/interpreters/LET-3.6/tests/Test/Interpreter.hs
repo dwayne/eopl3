@@ -77,5 +77,11 @@ spec = do
 
       run input `shouldBe` "-5"
 
+  describe "example 11" $ do
+    it "returns 14" $ do
+      let input = "minus(-(minus(5), 9))"
+
+      run input `shouldBe` "14"
+
 run :: String -> String
 run = show . I.run

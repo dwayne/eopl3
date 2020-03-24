@@ -44,6 +44,12 @@ valueOfExpr expr env =
       in
         NumberVal (toNumber aVal - toNumber bVal)
 
+    Minus e ->
+      let
+        val = valueOfExpr e env
+      in
+        NumberVal (negate (toNumber val))
+
     Zero e ->
       let
         val = valueOfExpr e env
