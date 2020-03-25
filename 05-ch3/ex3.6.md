@@ -2,13 +2,13 @@ The syntax:
 
 ```
 Expression ::= minus (Expression)
-               [(minus exp)]
+               [(minus-exp exp)]
 ```
 
 The semantics:
 
 ```
-(value-of (minus exp) ρ)
+(value-of (minus-exp exp) ρ)
 = (num-val
     (- (expval->num (value-of exp ρ))))
 ```
