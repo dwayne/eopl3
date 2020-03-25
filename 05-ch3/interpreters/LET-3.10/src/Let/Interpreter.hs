@@ -132,6 +132,12 @@ valueOfExpr expr env =
     Empty ->
       ListVal []
 
+    List l ->
+      let
+        toValue e = valueOfExpr e env
+      in
+        ListVal (map toValue l)
+
     If test consequent alternative ->
       let
         testVal = valueOfExpr test env

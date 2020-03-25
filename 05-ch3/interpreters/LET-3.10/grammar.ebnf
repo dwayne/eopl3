@@ -16,6 +16,7 @@ Car     ::= 'car' '(' Expr ')'
 Cdr     ::= 'cdr' '(' Expr ')'
 Null    ::= 'null?' '(' Expr ')'
 Empty   ::= 'emptylist'
+List    ::= 'list' '(' (Expr (',' Expr)*)? ')'
 If      ::= 'if' Expr 'then' Expr 'else' Expr
 Let     ::= 'let' Id '=' Expr 'in' Expr
 Number  ::= [0-9]+

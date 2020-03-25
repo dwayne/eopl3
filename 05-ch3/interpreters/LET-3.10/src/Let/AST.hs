@@ -19,6 +19,7 @@ data Expr
   | Cdr Expr
   | Null Expr
   | Empty
+  | List [Expr]
   | If Expr Expr Expr
   | Let Id Expr Expr
   deriving Show

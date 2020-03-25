@@ -3,7 +3,7 @@ module Let.Parser where
 import qualified Text.Parsec as Parsec
 import qualified Text.Parsec.Token as Token
 
-import Text.Parsec ((<|>), char, eof, oneOf)
+import Text.Parsec ((<|>), char, eof, oneOf, sepBy)
 import Text.Parsec.Language (emptyDef)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Token (LanguageDef, TokenParser)
@@ -41,6 +41,7 @@ expr
   <|> cdrExpr
   <|> nullExpr
   <|> emptyExpr
+  <|> listExpr
   <|> ifExpr
   <|> letExpr
   <|> varExpr
@@ -92,6 +93,9 @@ nullExpr = reserved "null?" *> (parens (Null <$> expr))
 
 emptyExpr :: Parser Expr
 emptyExpr = Empty <$ reserved "emptylist"
+
+listExpr :: Parser Expr
+listExpr = reserved "list" *> (parens (List <$> (expr `sepBy` comma)))
 
 ifExpr :: Parser Expr
 ifExpr =
@@ -156,6 +160,7 @@ letDef = emptyDef
       , "in"
       , "less?"
       , "let"
+      , "list"
       , "minus"
       , "mul"
       , "null?"

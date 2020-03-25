@@ -166,5 +166,19 @@ spec = do
 
       run input `shouldBe` "False"
 
+  describe "example 25" $ do
+    it "returns (4 3 1)" $ do
+      let input = "                   \
+        \ let x = 4 in                \
+        \   list(x, -(x, 1), -(x, 3)) "
+
+      run input `shouldBe` "(4 3 1)"
+
+  describe "example 26" $ do
+    it "returns True" $ do
+      let input = "null?(list())"
+
+      run input `shouldBe` "True"
+
 run :: String -> String
 run = show . I.run
