@@ -83,5 +83,23 @@ spec = do
 
       run input `shouldBe` "14"
 
+  describe "example 12" $ do
+    it "returns 6" $ do
+      let input = "add(1, add(2, 3))"
+
+      run input `shouldBe` "6"
+
+  describe "example 13" $ do
+    it "returns 60" $ do
+      let input = "mul(mul(2, 3), 10)"
+
+      run input `shouldBe` "60"
+
+  describe "example 14" $ do
+    it "returns 4" $ do
+      let input = "div(div(24, 3), div(4, 2))"
+
+      run input `shouldBe` "4"
+
 run :: String -> String
 run = show . I.run

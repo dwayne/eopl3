@@ -7,6 +7,9 @@ data Expr
   | Var Id
   | Diff Expr Expr
   | Minus Expr
+  | Add Expr Expr
+  | Mul Expr Expr
+  | Div Expr Expr
   | Zero Expr
   | If Expr Expr Expr
   | Let Id Expr Expr
