@@ -8,6 +8,9 @@ Add     ::= 'add' '(' Expr ',' Expr ')'
 Mul     ::= 'mul' '(' Expr ',' Expr ')'
 Div     ::= 'div' '(' Expr ',' Expr ')'
 Zero    ::= 'zero?' '(' Expr ')'
+Equal   ::= 'equal?' '(' Expr ',' Expr ')'
+Greater ::= 'greater?' '(' Expr ',' Expr ')'
+Less    ::= 'less?' '(' Expr ',' Expr ')'
 If      ::= 'if' Expr 'then' Expr 'else' Expr
 Let     ::= 'let' Id '=' Expr 'in' Expr
 Number  ::= [0-9]+

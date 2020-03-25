@@ -11,6 +11,9 @@ data Expr
   | Mul Expr Expr
   | Div Expr Expr
   | Zero Expr
+  | Equal Expr Expr
+  | Greater Expr Expr
+  | Less Expr Expr
   | If Expr Expr Expr
   | Let Id Expr Expr
   deriving Show

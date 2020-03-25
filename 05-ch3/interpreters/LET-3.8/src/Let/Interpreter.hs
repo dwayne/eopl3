@@ -77,6 +77,27 @@ valueOfExpr expr env =
       in
         BoolVal (toNumber val == 0)
 
+    Equal a b ->
+      let
+        aVal = valueOfExpr a env
+        bVal = valueOfExpr b env
+      in
+        BoolVal (toNumber aVal == toNumber bVal)
+
+    Greater a b ->
+      let
+        aVal = valueOfExpr a env
+        bVal = valueOfExpr b env
+      in
+        BoolVal (toNumber aVal > toNumber bVal)
+
+    Less a b ->
+      let
+        aVal = valueOfExpr a env
+        bVal = valueOfExpr b env
+      in
+        BoolVal (toNumber aVal < toNumber bVal)
+
     If test consequent alternative ->
       let
         testVal = valueOfExpr test env
