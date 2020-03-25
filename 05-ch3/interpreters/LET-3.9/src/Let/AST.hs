@@ -14,6 +14,11 @@ data Expr
   | Equal Expr Expr
   | Greater Expr Expr
   | Less Expr Expr
+  | Cons Expr Expr
+  | Car Expr
+  | Cdr Expr
+  | Null Expr
+  | Empty
   | If Expr Expr Expr
   | Let Id Expr Expr
   deriving Show

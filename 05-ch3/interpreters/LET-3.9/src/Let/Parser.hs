@@ -36,6 +36,11 @@ expr
   <|> equalExpr
   <|> greaterExpr
   <|> lessExpr
+  <|> consExpr
+  <|> carExpr
+  <|> cdrExpr
+  <|> nullExpr
+  <|> emptyExpr
   <|> ifExpr
   <|> letExpr
   <|> varExpr
@@ -72,6 +77,21 @@ greaterExpr =
 
 lessExpr :: Parser Expr
 lessExpr = reserved "less?" *> (parens (Less <$> (expr <* comma) <*> expr))
+
+consExpr :: Parser Expr
+consExpr = reserved "cons" *> (parens (Cons <$> (expr <* comma) <*> expr))
+
+carExpr :: Parser Expr
+carExpr = reserved "car" *> (parens (Car <$> expr))
+
+cdrExpr :: Parser Expr
+cdrExpr = reserved "cdr" *> (parens (Cdr <$> expr))
+
+nullExpr :: Parser Expr
+nullExpr = reserved "null?" *> (parens (Null <$> expr))
+
+emptyExpr :: Parser Expr
+emptyExpr = Empty <$ reserved "emptylist"
 
 ifExpr :: Parser Expr
 ifExpr =
@@ -124,8 +144,12 @@ letDef = emptyDef
   , Token.identLetter = Token.identStart letDef
   , Token.reservedNames =
       [ "add"
+      , "car"
+      , "cdr"
+      , "cons"
       , "div"
       , "else"
+      , "emptylist"
       , "equal?"
       , "greater?"
       , "if"
@@ -134,6 +158,7 @@ letDef = emptyDef
       , "let"
       , "minus"
       , "mul"
+      , "null?"
       , "then"
       , "zero?"
       ]

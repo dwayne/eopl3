@@ -11,6 +11,11 @@ Zero    ::= 'zero?' '(' Expr ')'
 Equal   ::= 'equal?' '(' Expr ',' Expr ')'
 Greater ::= 'greater?' '(' Expr ',' Expr ')'
 Less    ::= 'less?' '(' Expr ',' Expr ')'
+Cons    ::= 'cons' '(' Expr ',' Expr ')'
+Car     ::= 'car' '(' Expr ')'
+Cdr     ::= 'cdr' '(' Expr ')'
+Null    ::= 'null?' '(' Expr ')'
+Empty   ::= 'emptylist'
 If      ::= 'if' Expr 'then' Expr 'else' Expr
 Let     ::= 'let' Id '=' Expr 'in' Expr
 Number  ::= [0-9]+
