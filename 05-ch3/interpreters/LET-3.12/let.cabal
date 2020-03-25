@@ -1,0 +1,37 @@
+name: let
+version: 0.1.0.0
+build-type: Simple
+cabal-version: >=1.10
+
+library
+  hs-source-dirs: src
+
+  exposed-modules:
+    Let.Interpreter
+
+  other-modules:
+    Let.AST
+    Let.Env
+    Let.Parser
+
+  build-depends:
+    base >= 4.7 && < 5,
+    parsec
+
+  default-language: Haskell2010
+
+test-suite let-tests
+  hs-source-dirs: tests
+
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+
+  other-modules:
+    Test.Interpreter
+
+  build-depends:
+    base >= 4.7 && < 5,
+    hspec,
+    let
+
+  default-language: Haskell2010
