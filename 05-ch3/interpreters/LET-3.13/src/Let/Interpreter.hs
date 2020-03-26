@@ -7,13 +7,11 @@ import Let.Parser (parse)
 
 data Value
   = NumberVal Number
-  | BoolVal Bool
 
 type Environment = Env.Env Id Value
 
 instance Show Value where
   show (NumberVal n) = show n
-  show (BoolVal b) = if b then "True" else "False"
 
 run :: String -> Value
 run = valueOfProgram . parse
@@ -75,34 +73,46 @@ valueOfExpr expr env =
       let
         val = valueOfExpr e env
       in
-        BoolVal (toNumber val == 0)
+        if (toNumber val == 0) then
+          true
+        else
+          false
 
     Equal a b ->
       let
         aVal = valueOfExpr a env
         bVal = valueOfExpr b env
       in
-        BoolVal (toNumber aVal == toNumber bVal)
+        if (toNumber aVal == toNumber bVal) then
+          true
+        else
+          false
 
     Greater a b ->
       let
         aVal = valueOfExpr a env
         bVal = valueOfExpr b env
       in
-        BoolVal (toNumber aVal > toNumber bVal)
+        if (toNumber aVal > toNumber bVal) then
+          true
+        else
+          false
 
     Less a b ->
       let
         aVal = valueOfExpr a env
         bVal = valueOfExpr b env
       in
-        BoolVal (toNumber aVal < toNumber bVal)
+        if (toNumber aVal < toNumber bVal) then
+          true
+        else
+          false
 
     If test consequent alternative ->
       let
         testVal = valueOfExpr test env
       in
-        if (toBool testVal) then
+        if (toNumber testVal /= 0) then
           valueOfExpr consequent env
         else
           valueOfExpr alternative env
@@ -115,8 +125,9 @@ valueOfExpr expr env =
 
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n
-toNumber x = error ("Expected a number: " ++ show x)
 
-toBool :: Value -> Bool
-toBool (BoolVal b) = b
-toBool x = error ("Expected a boolean: " ++ show x)
+true :: Value
+true = NumberVal 1
+
+false :: Value
+false = NumberVal 0
