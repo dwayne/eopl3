@@ -180,5 +180,17 @@ spec = do
 
       run input `shouldBe` "True"
 
+  describe "example 27" $ do
+    it "returns 9" $ do
+      let input = "                            \
+        \ cond                                 \
+        \   zero?(1) ==> 2                     \
+        \   null?(cons(1, emptylist)) ==> 4    \
+        \   greater?(5, -(3, 1)) ==> mul(3, 3) \
+        \   less?(1, add(1, 1)) ==> zero?(0)   \
+        \ end                                  "
+
+      run input `shouldBe` "9"
+
 run :: String -> String
 run = show . I.run

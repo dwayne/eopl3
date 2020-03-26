@@ -3,7 +3,7 @@ module Let.Parser where
 import qualified Text.Parsec as Parsec
 import qualified Text.Parsec.Token as Token
 
-import Text.Parsec ((<|>), char, eof, oneOf, sepBy)
+import Text.Parsec ((<|>), char, eof, many, oneOf, sepBy)
 import Text.Parsec.Language (emptyDef)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Token (LanguageDef, TokenParser)
@@ -43,6 +43,7 @@ expr
   <|> emptyExpr
   <|> listExpr
   <|> ifExpr
+  <|> condExpr
   <|> letExpr
   <|> varExpr
 
@@ -105,6 +106,15 @@ ifExpr =
     thenToken = reserved "then"
     elseToken = reserved "else"
 
+condExpr :: Parser Expr
+condExpr = Cond <$> (condToken *> clauses <* endToken)
+  where
+    condToken = reserved "cond"
+    endToken = reserved "end"
+    rocketToken = reserved "==>"
+    clauses = many clause
+    clause = (,) <$> expr <*> (rocketToken *> expr)
+
 letExpr :: Parser Expr
 letExpr =
   Let <$> (letToken *> identifier) <*> (equal *> expr) <*> (inToken *> expr)
@@ -147,13 +157,16 @@ letDef = emptyDef
   { Token.identStart = oneOf ['a'..'z']
   , Token.identLetter = Token.identStart letDef
   , Token.reservedNames =
-      [ "add"
+      [ "==>"
+      , "add"
       , "car"
       , "cdr"
+      , "cond"
       , "cons"
       , "div"
       , "else"
       , "emptylist"
+      , "end"
       , "equal?"
       , "greater?"
       , "if"

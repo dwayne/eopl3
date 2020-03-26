@@ -18,6 +18,7 @@ Null    ::= 'null?' '(' Expr ')'
 Empty   ::= 'emptylist'
 List    ::= 'list' '(' (Expr (',' Expr)*)? ')'
 If      ::= 'if' Expr 'then' Expr 'else' Expr
+Cond    ::= 'cond' (Expr '==>' Expr)* 'end'
 Let     ::= 'let' Id '=' Expr 'in' Expr
 Number  ::= [0-9]+
 Id      ::= [a-z]+

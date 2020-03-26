@@ -147,6 +147,17 @@ valueOfExpr expr env =
         else
           valueOfExpr alternative env
 
+    Cond clauses ->
+      let
+        toValue [] = error "No test succeeds"
+        toValue ((test,result):cs) =
+          if (toBool (valueOfExpr test env)) then
+            valueOfExpr result env
+          else
+            toValue cs
+      in
+        toValue clauses
+
     Let var e body ->
       let
         val = valueOfExpr e env

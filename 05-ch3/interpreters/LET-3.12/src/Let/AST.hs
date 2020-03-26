@@ -21,6 +21,7 @@ data Expr
   | Empty
   | List [Expr]
   | If Expr Expr Expr
+  | Cond [(Expr, Expr)]
   | Let Id Expr Expr
   deriving Show
 
