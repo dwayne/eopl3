@@ -32,13 +32,16 @@ expr
   <|> addExpr
   <|> mulExpr
   <|> divExpr
-  <|> zeroExpr
-  <|> equalExpr
-  <|> greaterExpr
-  <|> lessExpr
   <|> ifExpr
   <|> letExpr
   <|> varExpr
+
+boolExpr :: Parser BoolExpr
+boolExpr
+  = zeroExpr
+  <|> equalExpr
+  <|> greaterExpr
+  <|> lessExpr
 
 constExpr :: Parser Expr
 constExpr = Const <$> number
@@ -60,22 +63,9 @@ mulExpr = reserved "mul" *> (parens (Mul <$> (expr <* comma) <*> expr))
 divExpr :: Parser Expr
 divExpr = reserved "div" *> (parens (Div <$> (expr <* comma) <*> expr))
 
-zeroExpr :: Parser Expr
-zeroExpr = reserved "zero?" *> (parens (Zero <$> expr))
-
-equalExpr :: Parser Expr
-equalExpr = reserved "equal?" *> (parens (Equal <$> (expr <* comma) <*> expr))
-
-greaterExpr :: Parser Expr
-greaterExpr =
-  reserved "greater?" *> (parens (Greater <$> (expr <* comma) <*> expr))
-
-lessExpr :: Parser Expr
-lessExpr = reserved "less?" *> (parens (Less <$> (expr <* comma) <*> expr))
-
 ifExpr :: Parser Expr
 ifExpr =
-  If <$> (ifToken *> expr) <*> (thenToken *> expr) <*> (elseToken *> expr)
+  If <$> (ifToken *> boolExpr) <*> (thenToken *> expr) <*> (elseToken *> expr)
   where
     ifToken = reserved "if"
     thenToken = reserved "then"
@@ -91,6 +81,19 @@ letExpr =
 
 varExpr :: Parser Expr
 varExpr = Var <$> identifier
+
+zeroExpr :: Parser BoolExpr
+zeroExpr = reserved "zero?" *> (parens (Zero <$> expr))
+
+equalExpr :: Parser BoolExpr
+equalExpr = reserved "equal?" *> (parens (Equal <$> (expr <* comma) <*> expr))
+
+greaterExpr :: Parser BoolExpr
+greaterExpr =
+  reserved "greater?" *> (parens (Greater <$> (expr <* comma) <*> expr))
+
+lessExpr :: Parser BoolExpr
+lessExpr = reserved "less?" *> (parens (Less <$> (expr <* comma) <*> expr))
 
 -- Helpers
 

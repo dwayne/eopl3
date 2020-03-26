@@ -1,4 +1,4 @@
-module Let.AST (Program(..), Expr(..), Number, Id) where
+module Let.AST (Program(..), Expr(..), BoolExpr(..), Number, Id) where
 
 data Program = Program Expr deriving Show
 
@@ -10,12 +10,15 @@ data Expr
   | Add Expr Expr
   | Mul Expr Expr
   | Div Expr Expr
-  | Zero Expr
+  | If BoolExpr Expr Expr
+  | Let Id Expr Expr
+  deriving Show
+
+data BoolExpr
+  = Zero Expr
   | Equal Expr Expr
   | Greater Expr Expr
   | Less Expr Expr
-  | If Expr Expr Expr
-  | Let Id Expr Expr
   deriving Show
 
 type Number = Integer

@@ -1,18 +1,22 @@
-Program ::= Expr
-Expr    ::= Const | Var | Diff | Zero | If | Let
-Const   ::= Number
-Var     ::= Id
-Diff    ::= '-' '(' Expr ',' Expr ')'
-Minus   ::= 'minus' '(' Expr ')'
-Add     ::= 'add' '(' Expr ',' Expr ')'
-Mul     ::= 'mul' '(' Expr ',' Expr ')'
-Div     ::= 'div' '(' Expr ',' Expr ')'
-Zero    ::= 'zero?' '(' Expr ')'
-Equal   ::= 'equal?' '(' Expr ',' Expr ')'
-Greater ::= 'greater?' '(' Expr ',' Expr ')'
-Less    ::= 'less?' '(' Expr ',' Expr ')'
-If      ::= 'if' Expr 'then' Expr 'else' Expr
-Let     ::= 'let' Id '=' Expr 'in' Expr
+Program  ::= Expr
+
+Expr     ::= Const | Var | Diff | Minus | Add | Mul | Div | If | Let
+Const    ::= Number
+Var      ::= Id
+Diff     ::= '-' '(' Expr ',' Expr ')'
+Minus    ::= 'minus' '(' Expr ')'
+Add      ::= 'add' '(' Expr ',' Expr ')'
+Mul      ::= 'mul' '(' Expr ',' Expr ')'
+Div      ::= 'div' '(' Expr ',' Expr ')'
+If       ::= 'if' BoolExpr 'then' Expr 'else' Expr
+Let      ::= 'let' Id '=' Expr 'in' Expr
+
+BoolExpr ::= Zero | Equal | Greater | Less
+Zero     ::= 'zero?' '(' Expr ')'
+Equal    ::= 'equal?' '(' Expr ',' Expr ')'
+Greater  ::= 'greater?' '(' Expr ',' Expr ')'
+Less     ::= 'less?' '(' Expr ',' Expr ')'
+
 Number  ::= [0-9]+
 Id      ::= [a-z]+
 

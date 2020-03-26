@@ -19,16 +19,16 @@ spec = do
       run input `shouldBe` "10"
 
   describe "example 3" $ do
-    it "returns False" $ do
-      let input = "zero?(i)"
+    it "returns 10" $ do
+      let input = "if zero?(i) then v else x"
 
-      run input `shouldBe` "False"
+      run input `shouldBe` "10"
 
   describe "example 4" $ do
-    it "returns True" $ do
-      let input = "zero?(-(i, 1))"
+    it "returns 5" $ do
+      let input = "if zero?(-(i, 1)) then v else x"
 
-      run input `shouldBe` "True"
+      run input `shouldBe` "5"
 
   describe "example 5" $ do
     it "returns 56" $ do
@@ -102,22 +102,22 @@ spec = do
       run input `shouldBe` "4"
 
   describe "example 15" $ do
-    it "returns True" $ do
-      let input = "equal?(add(1, add(2, 3)), add(add(1, 2), 3))"
+    it "returns 6" $ do
+      let input = "if equal?(add(1, add(2, 3)), add(add(1, 2), 3)) then 6 else 0"
 
-      run input `shouldBe` "True"
+      run input `shouldBe` "6"
 
   describe "example 16" $ do
-    it "returns True" $ do
-      let input = "greater?(mul(2, 5), add(2, 5))"
+    it "returns 10" $ do
+      let input = "if greater?(mul(2, 5), add(2, 5)) then 10 else 7"
 
-      run input `shouldBe` "True"
+      run input `shouldBe` "10"
 
   describe "example 17" $ do
-    it "returns True" $ do
-      let input = "less?(div(6, 3), -(6, 3))"
+    it "returns 2" $ do
+      let input = "if less?(div(6, 3), -(6, 3)) then 2 else 3"
 
-      run input `shouldBe` "True"
+      run input `shouldBe` "2"
 
 run :: String -> String
 run = show . I.run
