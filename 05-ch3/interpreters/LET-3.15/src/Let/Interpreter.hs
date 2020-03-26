@@ -15,10 +15,10 @@ instance Show Value where
   show (NumberVal n) = show n
   show (BoolVal b) = if b then "True" else "False"
 
-run :: String -> Value
+run :: String -> (Value, String)
 run = valueOfProgram . parse
 
-valueOfProgram :: Program -> Value
+valueOfProgram :: Program -> (Value, String)
 valueOfProgram (Program expr) =
   valueOfExpr expr initEnv
   where
@@ -28,42 +28,55 @@ valueOfProgram (Program expr) =
           (Env.extend "x" (NumberVal 10)
             Env.empty))
 
-valueOfExpr :: Expr -> Environment -> Value
+valueOfExpr :: Expr -> Environment -> (Value, String)
 valueOfExpr expr env =
   case expr of
     Const n ->
-      NumberVal n
+      (NumberVal n, "")
 
     Var v ->
-      Env.apply env v
+      (Env.apply env v, "")
 
     Diff a b ->
       let
-        aVal = valueOfExpr a env
-        bVal = valueOfExpr b env
+        (aVal, s) = valueOfExpr a env
+        (bVal, t) = valueOfExpr b env
       in
-        NumberVal (toNumber aVal - toNumber bVal)
+        (NumberVal (toNumber aVal - toNumber bVal), s ++ t)
 
     Zero e ->
       let
-        val = valueOfExpr e env
+        (val, s) = valueOfExpr e env
       in
-        BoolVal (toNumber val == 0)
+        (BoolVal (toNumber val == 0), s)
 
     If test consequent alternative ->
       let
-        testVal = valueOfExpr test env
+        (testVal, s) = valueOfExpr test env
       in
         if (toBool testVal) then
-          valueOfExpr consequent env
+          let
+            (result, t) = valueOfExpr consequent env
+          in
+            (result, s ++ t)
         else
-          valueOfExpr alternative env
+          let
+            (result, t) = valueOfExpr alternative env
+          in
+            (result, s ++ t)
 
     Let var e body ->
       let
-        val = valueOfExpr e env
+        (val, s) = valueOfExpr e env
+        (result, t) = valueOfExpr body (Env.extend var val env)
       in
-        valueOfExpr body (Env.extend var val env)
+        (result, s ++ t)
+
+    Print e ->
+      let
+        (val, s) = valueOfExpr e env
+      in
+        (NumberVal 1, s ++ show val ++ "\n")
 
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n

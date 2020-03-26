@@ -31,6 +31,7 @@ expr
   <|> zeroExpr
   <|> ifExpr
   <|> letExpr
+  <|> printExpr
   <|> varExpr
 
 constExpr :: Parser Expr
@@ -60,6 +61,9 @@ letExpr =
     letToken = reserved "let"
     inToken = reserved "in"
     equal = lexeme (char '=')
+
+printExpr :: Parser Expr
+printExpr = reserved "print" *> (parens (Print <$> expr))
 
 varExpr :: Parser Expr
 varExpr = Var <$> identifier
@@ -96,6 +100,7 @@ letDef = emptyDef
       , "if"
       , "in"
       , "let"
+      , "print"
       , "then"
       , "zero?"
       ]

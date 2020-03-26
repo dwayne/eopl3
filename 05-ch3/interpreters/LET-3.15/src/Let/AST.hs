@@ -9,6 +9,7 @@ data Expr
   | Zero Expr
   | If Expr Expr Expr
   | Let Id Expr Expr
+  | Print Expr
   deriving Show
 
 type Number = Integer
