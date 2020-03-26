@@ -1,5 +1,7 @@
 module Let.Interpreter (Value, run) where
 
+import Control.Monad.Writer
+
 import qualified Let.Env as Env
 
 import Let.AST
@@ -16,9 +18,9 @@ instance Show Value where
   show (BoolVal b) = if b then "True" else "False"
 
 run :: String -> (Value, String)
-run = valueOfProgram . parse
+run = runWriter . valueOfProgram . parse
 
-valueOfProgram :: Program -> (Value, String)
+valueOfProgram :: Program -> Writer String Value
 valueOfProgram (Program expr) =
   valueOfExpr expr initEnv
   where
@@ -28,55 +30,42 @@ valueOfProgram (Program expr) =
           (Env.extend "x" (NumberVal 10)
             Env.empty))
 
-valueOfExpr :: Expr -> Environment -> (Value, String)
+valueOfExpr :: Expr -> Environment -> Writer String Value
 valueOfExpr expr env =
   case expr of
     Const n ->
-      (NumberVal n, "")
+      return $ NumberVal n
 
     Var v ->
-      (Env.apply env v, "")
+      return $ Env.apply env v
 
-    Diff a b ->
-      let
-        (aVal, s) = valueOfExpr a env
-        (bVal, t) = valueOfExpr b env
-      in
-        (NumberVal (toNumber aVal - toNumber bVal), s ++ t)
+    Diff a b -> do
+      aVal <- valueOfExpr a env
+      bVal <- valueOfExpr b env
+      return $ NumberVal (toNumber aVal - toNumber bVal)
 
-    Zero e ->
-      let
-        (val, s) = valueOfExpr e env
-      in
-        (BoolVal (toNumber val == 0), s)
+    Zero e -> do
+      val <- valueOfExpr e env
+      return $ BoolVal (toNumber val == 0)
 
-    If test consequent alternative ->
-      let
-        (testVal, s) = valueOfExpr test env
-      in
-        if (toBool testVal) then
-          let
-            (result, t) = valueOfExpr consequent env
-          in
-            (result, s ++ t)
-        else
-          let
-            (result, t) = valueOfExpr alternative env
-          in
-            (result, s ++ t)
+    If test consequent alternative -> do
+      testVal <- valueOfExpr test env
 
-    Let var e body ->
-      let
-        (val, s) = valueOfExpr e env
-        (result, t) = valueOfExpr body (Env.extend var val env)
-      in
-        (result, s ++ t)
+      if (toBool testVal) then
+        valueOfExpr consequent env
+      else
+        valueOfExpr alternative env
 
-    Print e ->
-      let
-        (val, s) = valueOfExpr e env
-      in
-        (NumberVal 1, s ++ show val ++ "\n")
+    Let var e body -> do
+      val <- valueOfExpr e env
+      valueOfExpr body (Env.extend var val env)
+
+    Print e -> do
+      val <- valueOfExpr e env
+
+      tell $ show val ++ "\n"
+
+      return $ NumberVal 1
 
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n
