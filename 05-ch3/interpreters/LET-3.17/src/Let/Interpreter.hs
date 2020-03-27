@@ -65,6 +65,17 @@ valueOfExpr expr env =
       in
         valueOfExpr body (Env.extend var val env)
 
+    LetStar bindings body ->
+      let
+        extendStar [] env = env
+        extendStar ((var, e):bs) env =
+          let
+            val = valueOfExpr e env
+          in
+            extendStar bs (Env.extend var val env)
+      in
+        valueOfExpr body (extendStar bindings env)
+
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n
 toNumber x = error ("Expected a number: " ++ show x)
