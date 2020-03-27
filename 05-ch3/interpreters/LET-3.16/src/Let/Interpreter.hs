@@ -59,11 +59,16 @@ valueOfExpr expr env =
         else
           valueOfExpr alternative env
 
-    Let var e body ->
+    Let bindings body ->
       let
-        val = valueOfExpr e env
+        extendMany [] = env
+        extendMany ((var, e):bs) =
+          let
+            val = valueOfExpr e env
+          in
+            Env.extend var val (extendMany bs)
       in
-        valueOfExpr body (Env.extend var val env)
+        valueOfExpr body (extendMany bindings)
 
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n

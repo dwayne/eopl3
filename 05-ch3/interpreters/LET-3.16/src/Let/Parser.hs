@@ -3,7 +3,7 @@ module Let.Parser where
 import qualified Text.Parsec as Parsec
 import qualified Text.Parsec.Token as Token
 
-import Text.Parsec ((<|>), char, eof, oneOf)
+import Text.Parsec ((<|>), char, eof, many, oneOf)
 import Text.Parsec.Language (emptyDef)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Token (LanguageDef, TokenParser)
@@ -55,11 +55,12 @@ ifExpr =
 
 letExpr :: Parser Expr
 letExpr =
-  Let <$> (letToken *> identifier) <*> (equal *> expr) <*> (inToken *> expr)
+  Let <$> (letToken *> bindings) <*> (inToken *> expr)
   where
     letToken = reserved "let"
     inToken = reserved "in"
     equal = lexeme (char '=')
+    bindings = many ((,) <$> identifier <*> (equal *> expr))
 
 varExpr :: Parser Expr
 varExpr = Var <$> identifier
