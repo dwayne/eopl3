@@ -21,6 +21,7 @@ data Expr
   | Empty
   | If Expr Expr Expr
   | Let Id Expr Expr
+  | Unpack [Id] Expr Expr
   deriving Show
 
 type Number = Integer

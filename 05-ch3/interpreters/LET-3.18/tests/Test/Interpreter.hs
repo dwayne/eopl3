@@ -166,5 +166,14 @@ spec = do
 
       run input `shouldBe` "False"
 
+  describe "example 25" $ do
+    it "returns 4" $ do
+      let input = "                                     \
+        \ let u = 7 in                                  \
+        \   unpack x y = cons(u, cons(3, emptylist)) in \
+        \     -(x, y)                                   "
+
+      run input `shouldBe` "4"
+
 run :: String -> String
 run = show . I.run

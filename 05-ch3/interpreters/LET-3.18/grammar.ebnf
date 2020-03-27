@@ -4,7 +4,7 @@ Expr    ::= Const | Var
           | Diff | Minus | Add | Mul | Div
           | Zero | Equal | Greater | Less
           | Cons | Car | Cdr | Null | Empty
-          | If | Let
+          | If | Let | Unpack
 
 Const   ::= Number
 Var     ::= Id
@@ -28,6 +28,7 @@ Empty   ::= 'emptylist'
 
 If      ::= 'if' Expr 'then' Expr 'else' Expr
 Let     ::= 'let' Id '=' Expr 'in' Expr
+Unpack  ::= 'unpack' (Identifier)* '=' Expr 'in' Expr
 
 Number  ::= [0-9]+
 Id      ::= [a-z]+

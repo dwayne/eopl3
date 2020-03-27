@@ -147,6 +147,18 @@ valueOfExpr expr env =
       in
         valueOfExpr body (Env.extend var val env)
 
+    Unpack vars e body ->
+      let
+        val = valueOfExpr e env
+
+        bind [] [] env = env
+        bind [] _ _ = error "unpack: list is too long"
+        bind _ [] _ = error "unpack: list is too short"
+        bind (var:vars) (val:vals) env =
+          bind vars vals (Env.extend var val env)
+      in
+        valueOfExpr body (bind vars (toList val) env)
+
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n
 toNumber x = error ("Expected a number: " ++ show x)
