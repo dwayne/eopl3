@@ -67,8 +67,8 @@ valueOfExpr expr env =
       in
         valueOfExpr body (Env.extend var val env)
 
-    Proc var body ->
-      ProcedureVal (procedure var body env)
+    LetProc name var body e ->
+      valueOfExpr e (Env.extend name (ProcedureVal (procedure var body env)) env)
 
     Call f arg ->
       let

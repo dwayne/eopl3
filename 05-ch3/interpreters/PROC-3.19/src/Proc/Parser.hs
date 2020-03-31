@@ -31,7 +31,7 @@ expr
   <|> zeroExpr
   <|> ifExpr
   <|> letExpr
-  <|> procExpr
+  <|> letprocExpr
   <|> callExpr
   <|> varExpr
 
@@ -63,11 +63,13 @@ letExpr =
     inToken = reserved "in"
     equal = lexeme (char '=')
 
-procExpr :: Parser Expr
-procExpr =
-  Proc <$> (procToken *> parens identifier) <*> expr
+letprocExpr :: Parser Expr
+letprocExpr =
+  LetProc <$> (letprocToken *> identifier) <*> (parens identifier) <*> (equal *> expr) <*> (inToken *> expr)
   where
-    procToken = reserved "proc"
+    letprocToken = reserved "letproc"
+    inToken = reserved "in"
+    equal = lexeme (char '=')
 
 callExpr :: Parser Expr
 callExpr =
@@ -108,7 +110,7 @@ letDef = emptyDef
       , "if"
       , "in"
       , "let"
-      , "proc"
+      , "letproc"
       , "then"
       , "zero?"
       ]
