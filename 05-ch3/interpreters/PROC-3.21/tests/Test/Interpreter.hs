@@ -112,5 +112,13 @@ spec = do
 
       run input `shouldBe` "7"
 
+  describe "example 14" $ do
+    it "returns 7" $ do
+      let input = "                           \
+        \ let sum = proc (x, y) -(x, -(0, y)) \
+        \   in (sum 3 4)                      "
+
+      run input `shouldBe` "7"
+
 run :: String -> String
 run = show . I.run

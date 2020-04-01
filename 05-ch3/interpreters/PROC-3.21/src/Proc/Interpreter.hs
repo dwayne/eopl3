@@ -67,15 +67,15 @@ valueOfExpr expr env =
       in
         valueOfExpr body (Env.extend var val env)
 
-    Proc var body ->
-      ProcedureVal (procedure var body env)
+    Proc vars body ->
+      ProcedureVal (procedure vars body env)
 
-    Call f arg ->
+    Call f args ->
       let
         fVal = valueOfExpr f env
-        argVal = valueOfExpr arg env
+        argVals = map (\arg -> valueOfExpr arg env) args
       in
-        applyProcedure (toProcedure fVal) argVal
+        applyProcedure (toProcedure fVal) argVals
 
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n
@@ -91,11 +91,18 @@ toProcedure x = error ("Expected a procedure: " ++ show x)
 
 -- Procedure ADT
 
-data Procedure = Procedure Id Expr Environment
+data Procedure = Procedure [Id] Expr Environment
 
-procedure :: Id -> Expr -> Environment -> Procedure
+procedure :: [Id] -> Expr -> Environment -> Procedure
 procedure = Procedure
 
-applyProcedure :: Procedure -> Value -> Value
-applyProcedure (Procedure var body env) val =
-  valueOfExpr body (Env.extend var val env)
+applyProcedure :: Procedure -> [Value] -> Value
+applyProcedure (Procedure vars body env) vals =
+  let
+    extend [] [] env = env
+    extend _ [] env = error "Too few arguments"
+    extend [] _ env = error "Too many arguments"
+    extend (var:vars) (val:vals) env =
+      extend vars vals (Env.extend var val env)
+  in
+    valueOfExpr body (extend vars vals env)
