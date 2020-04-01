@@ -3,7 +3,7 @@ module Proc.Parser where
 import qualified Text.Parsec as Parsec
 import qualified Text.Parsec.Token as Token
 
-import Text.Parsec ((<|>), char, eof, oneOf)
+import Text.Parsec ((<|>), char, eof, oneOf, try)
 import Text.Parsec.Language (emptyDef)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Token (LanguageDef, TokenParser)
@@ -27,25 +27,14 @@ program = Program <$> (whiteSpace *> expr <* eof)
 expr :: Parser Expr
 expr
   = constExpr
-  <|> diffExpr
-  <|> zeroExpr
   <|> ifExpr
   <|> letExpr
   <|> procExpr
-  <|> callExpr
+  <|> appExpr
   <|> varExpr
 
 constExpr :: Parser Expr
 constExpr = Const <$> number
-
-diffExpr :: Parser Expr
-diffExpr = minus *> (parens (Diff <$> (expr <* comma) <*> expr))
-  where
-    minus = char '-'
-    comma = lexeme (char ',')
-
-zeroExpr :: Parser Expr
-zeroExpr = reserved "zero?" *> (parens (Zero <$> expr))
 
 ifExpr :: Parser Expr
 ifExpr =
@@ -69,9 +58,14 @@ procExpr =
   where
     procToken = reserved "proc"
 
-callExpr :: Parser Expr
-callExpr =
-  parens (Call <$> expr <*> expr)
+appExpr :: Parser Expr
+appExpr =
+  parens (diffExpr <|> zeroExpr <|> callExpr)
+  where
+    diffExpr = Diff <$> (minus *> expr) <*> expr
+    zeroExpr = Zero <$> (reserved "zero?" *> expr)
+    callExpr = Call <$> expr <*> expr
+    minus = lexeme (char '-')
 
 varExpr :: Parser Expr
 varExpr = Var <$> identifier
