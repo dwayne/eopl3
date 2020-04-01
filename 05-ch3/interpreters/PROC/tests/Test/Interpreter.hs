@@ -112,5 +112,75 @@ spec = do
 
       run input `shouldBe` "7"
 
+  describe "example for Exercise 3.23 - timesfour" $ do
+    it "returns 12" $ do
+      let input = "                                           \
+        \ let makemult =                                      \
+        \   proc (maker)                                      \
+        \     proc (x)                                        \
+        \       if zero?(x) then                              \
+        \         0                                           \
+        \       else                                          \
+        \         -(((maker maker) -(x, 1)), -(0, 4))         \
+        \ in let timesfour = proc (x) ((makemult makemult) x) \
+        \    in (timesfour 3)                                 \
+        \                                                     "
+        -- Changes:
+        -- 1. "-4" is written as "-(0, 4)"
+        -- 2. "times4" is written as "timesfour"
+
+      run input `shouldBe` "12"
+
+  describe "example for Exercise 3.23 - fact" $ do
+    it "returns 5!" $ do
+      let input = "                                                         \
+        \  let timesmaker =                                                 \
+        \    proc (maker)                                                   \
+        \      proc (x)                                                     \
+        \        proc (y)                                                   \
+        \          if zero?(y) then                                         \
+        \            0                                                      \
+        \          else                                                     \
+        \            -((((maker maker) x) -(y, 1)), -(0, x))                \
+        \  in let times = proc (x) proc (y) (((timesmaker timesmaker) x) y) \
+        \     in let factmaker =                                            \
+        \          proc (maker)                                             \
+        \            proc (n)                                               \
+        \              if zero?(n) then                                     \
+        \                1                                                  \
+        \              else                                                 \
+        \                ((times n) ((maker maker) -(n, 1)))                \
+        \        in let fact = proc (n) ((factmaker factmaker) n)           \
+        \           in (fact 5)                                             "
+
+      run input `shouldBe` "120"
+
+  describe "example for Exercise 3.23 - fact (alternative)" $ do
+    it "returns 5!" $ do
+      let input = "                                          \
+        \  let timesmaker =                                  \
+        \    proc (maker)                                    \
+        \      proc (x)                                      \
+        \        proc (y)                                    \
+        \          if zero?(y) then                          \
+        \            0                                       \
+        \          else                                      \
+        \            -((((maker maker) x) -(y, 1)), -(0, x)) \
+        \  in let times = (timesmaker timesmaker)            \
+        \     in let factmaker =                             \
+        \          proc (maker)                              \
+        \            proc (n)                                \
+        \              if zero?(n) then                      \
+        \                1                                   \
+        \              else                                  \
+        \                ((times n) ((maker maker) -(n, 1))) \
+        \        in let fact = (factmaker factmaker)         \
+        \           in (fact 5)                              "
+        -- N.B.
+        -- times = (timesmaker timesmaker)
+        -- fact = (factmaker factmaker)
+
+      run input `shouldBe` "120"
+
 run :: String -> String
 run = show . I.run
