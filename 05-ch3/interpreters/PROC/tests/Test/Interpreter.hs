@@ -182,5 +182,30 @@ spec = do
 
       run input `shouldBe` "120"
 
+  describe "example for Exercise 3.24 - odd and even" $ do
+    it "returns 1" $ do
+      let input = "                                               \
+        \ let evenmaker =                                         \
+        \   proc (evenmaker)                                      \
+        \     proc (oddmaker)                                     \
+        \       proc (x)                                          \
+        \         if zero?(x) then                                \
+        \           1                                             \
+        \         else                                            \
+        \           (((oddmaker oddmaker) evenmaker) -(x, 1))     \
+        \ in let oddmaker =                                       \
+        \      proc (oddmaker)                                    \
+        \        proc (evenmaker)                                 \
+        \          proc (x)                                       \
+        \            if zero?(x) then                             \
+        \              0                                          \
+        \            else                                         \
+        \              (((evenmaker evenmaker) oddmaker) -(x, 1)) \
+        \    in let odd = ((oddmaker oddmaker) evenmaker)         \
+        \       in (odd 13)                                       "
+
+      run input `shouldBe` "1"
+
+
 run :: String -> String
 run = show . I.run
