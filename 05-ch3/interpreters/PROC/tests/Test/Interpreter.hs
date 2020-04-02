@@ -206,6 +206,55 @@ spec = do
 
       run input `shouldBe` "1"
 
+  describe "example for Exercise 3.25 - from the book" $ do
+    it "returns 12" $ do
+      let input = "                               \
+        \ let makerec =                           \
+        \   proc (f)                              \
+        \     let d =                             \
+        \       proc (x)                          \
+        \         proc (z) ((f (x x)) z)          \
+        \     in proc (n) ((f (d d)) n)           \
+        \ in let maketimes =                      \
+        \      proc (f)                           \
+        \        proc (x)                         \
+        \          if zero?(x) then               \
+        \            0                            \
+        \          else                           \
+        \            -((f -(x, 1)), -(0, 4))      \
+        \    in let times = (makerec maketimes)   \
+        \       in (times 3)                      "
+        -- Changes:
+        -- 1. `maketimes` is `maketimes4`
+        -- 2. `times` is `times4`
+        -- 3. -4 = -(0, 4)
+
+      run input `shouldBe` "12"
+
+  describe "example for Exercise 3.25 - my derivation" $ do
+    it "returns 12" $ do
+      let input = "                               \
+        \ let makerec =                           \
+        \   proc (f)                              \
+        \     let inf =                           \
+        \       proc (inf)                        \
+        \         (f (inf inf))                   \
+        \     in (inf inf)                        \
+        \ in let maketimes =                      \
+        \      proc (f)                           \
+        \        proc (x)                         \
+        \          if zero?(x) then               \
+        \            0                            \
+        \          else                           \
+        \            -((f -(x, 1)), -(0, 4))      \
+        \    in let times = (makerec maketimes)   \
+        \       in (times 3)                      "
+        -- Changes:
+        -- 1. `maketimes` is `maketimes4`
+        -- 2. `times` is `times4`
+        -- 3. -4 = -(0, 4)
+
+      run input `shouldBe` "12"
 
 run :: String -> String
 run = show . I.run
