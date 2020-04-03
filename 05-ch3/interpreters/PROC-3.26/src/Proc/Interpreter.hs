@@ -1,5 +1,8 @@
 module Proc.Interpreter (Value, run) where
 
+import Data.Set (Set)
+import qualified Data.Set as Set
+
 import qualified Proc.Env as Env
 
 import Proc.AST
@@ -94,7 +97,51 @@ toProcedure x = error ("Expected a procedure: " ++ show x)
 data Procedure = Procedure Id Expr Environment
 
 procedure :: Id -> Expr -> Environment -> Procedure
-procedure = Procedure
+procedure var body env =
+  let
+    savedEnv = pluck (freeVariables (Proc var body)) env
+  in
+    Procedure var body savedEnv
+
+pluck :: Set Id -> Environment -> Environment
+pluck vars global =
+  let
+    extend var env = Env.extend var (Env.apply global var) env
+  in
+    Set.foldr extend Env.empty vars
+
+freeVariables :: Expr -> Set Id
+freeVariables expr =
+  case expr of
+    Const n ->
+      Set.empty
+
+    Var v ->
+      Set.singleton v
+
+    Diff a b ->
+      Set.union (freeVariables a) (freeVariables b)
+
+    Zero e ->
+      freeVariables e
+
+    If test consequent alternative ->
+      Set.unions
+        [ freeVariables test
+        , freeVariables consequent
+        , freeVariables alternative
+        ]
+
+    Let var e body ->
+      Set.union
+        (freeVariables e)
+        (Set.difference (freeVariables body) (Set.singleton var))
+
+    Proc var body ->
+      Set.difference (freeVariables body) (Set.singleton var)
+
+    Call f arg ->
+      Set.union (freeVariables f) (freeVariables arg)
 
 applyProcedure :: Procedure -> Value -> Value
 applyProcedure (Procedure var body env) val =
