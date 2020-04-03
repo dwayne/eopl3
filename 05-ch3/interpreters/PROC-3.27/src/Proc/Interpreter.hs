@@ -1,5 +1,7 @@
 module Proc.Interpreter (Value, run) where
 
+import Control.Monad.Writer
+
 import qualified Proc.Env as Env
 
 import Proc.AST
@@ -17,10 +19,10 @@ instance Show Value where
   show (BoolVal b) = if b then "True" else "False"
   show (ProcedureVal _) = "<<proc>>"
 
-run :: String -> Value
-run = valueOfProgram . parse
+run :: String -> (Value, String)
+run = runWriter . valueOfProgram . parse
 
-valueOfProgram :: Program -> Value
+valueOfProgram :: Program -> Writer String Value
 valueOfProgram (Program expr) =
   valueOfExpr expr initEnv
   where
@@ -30,52 +32,44 @@ valueOfProgram (Program expr) =
           (Env.extend "x" (NumberVal 10)
             Env.empty))
 
-valueOfExpr :: Expr -> Environment -> Value
+valueOfExpr :: Expr -> Environment -> Writer String Value
 valueOfExpr expr env =
   case expr of
     Const n ->
-      NumberVal n
+      return $ NumberVal n
 
     Var v ->
-      Env.apply env v
+      return $ Env.apply env v
 
-    Diff a b ->
-      let
-        aVal = valueOfExpr a env
-        bVal = valueOfExpr b env
-      in
-        NumberVal (toNumber aVal - toNumber bVal)
+    Diff a b -> do
+      aVal <- valueOfExpr a env
+      bVal <- valueOfExpr b env
+      return $ NumberVal (toNumber aVal - toNumber bVal)
 
-    Zero e ->
-      let
-        val = valueOfExpr e env
-      in
-        BoolVal (toNumber val == 0)
+    Zero e -> do
+      val <- valueOfExpr e env
+      return $ BoolVal (toNumber val == 0)
 
-    If test consequent alternative ->
-      let
-        testVal = valueOfExpr test env
-      in
-        if (toBool testVal) then
-          valueOfExpr consequent env
-        else
-          valueOfExpr alternative env
+    If test consequent alternative -> do
+      testVal <- valueOfExpr test env
 
-    Let var e body ->
-      let
-        val = valueOfExpr e env
-      in
-        valueOfExpr body (Env.extend var val env)
+      if (toBool testVal) then
+        valueOfExpr consequent env
+      else
+        valueOfExpr alternative env
 
-    Proc var body ->
-      ProcedureVal (procedure var body env)
+    Let var e body -> do
+      val <- valueOfExpr e env
+      valueOfExpr body (Env.extend var val env)
 
-    Call f arg ->
-      let
-        fVal = valueOfExpr f env
-        argVal = valueOfExpr arg env
-      in
-        applyProcedure (toProcedure fVal) argVal
+    Proc trace var body ->
+      return $ ProcedureVal (procedure trace var body env)
+
+    Call f arg -> do
+      fVal <- valueOfExpr f env
+      argVal <- valueOfExpr arg env
+
+      applyProcedure (toProcedure fVal) argVal
 
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n
@@ -91,11 +85,22 @@ toProcedure x = error ("Expected a procedure: " ++ show x)
 
 -- Procedure ADT
 
-data Procedure = Procedure Id Expr Environment
+data Procedure = Procedure Bool Id Expr Environment
 
-procedure :: Id -> Expr -> Environment -> Procedure
+procedure :: Bool -> Id -> Expr -> Environment -> Procedure
 procedure = Procedure
 
-applyProcedure :: Procedure -> Value -> Value
-applyProcedure (Procedure var body env) val =
-  valueOfExpr body (Env.extend var val env)
+applyProcedure :: Procedure -> Value -> Writer String Value
+applyProcedure (Procedure trace var body env) val =
+  if trace then do
+    let binding = var ++ "=" ++ show val
+
+    tell $ "Entering: " ++ binding ++ "\n"
+
+    result <- valueOfExpr body (Env.extend var val env)
+
+    tell $ "Leaving: " ++ binding ++ " result=" ++ show result ++ "\n"
+
+    return result
+  else
+    valueOfExpr body (Env.extend var val env)

@@ -32,6 +32,7 @@ expr
   <|> ifExpr
   <|> letExpr
   <|> procExpr
+  <|> traceprocExpr
   <|> callExpr
   <|> varExpr
 
@@ -65,9 +66,15 @@ letExpr =
 
 procExpr :: Parser Expr
 procExpr =
-  Proc <$> (procToken *> parens identifier) <*> expr
+  Proc False <$> (procToken *> parens identifier) <*> expr
   where
     procToken = reserved "proc"
+
+traceprocExpr :: Parser Expr
+traceprocExpr =
+  Proc True <$> (traceprocToken *> parens identifier) <*> expr
+  where
+    traceprocToken = reserved "traceproc"
 
 callExpr :: Parser Expr
 callExpr =
@@ -110,6 +117,7 @@ letDef = emptyDef
       , "let"
       , "proc"
       , "then"
+      , "traceproc"
       , "zero?"
       ]
   }

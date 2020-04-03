@@ -10,37 +10,37 @@ spec = do
     it "returns 5" $ do
       let input = "5"
 
-      run input `shouldBe` "5"
+      runForValue input `shouldBe` "5"
 
   describe "example 2" $ do
     it "returns 10" $ do
       let input = "x"
 
-      run input `shouldBe` "10"
+      runForValue input `shouldBe` "10"
 
   describe "example 3" $ do
     it "returns False" $ do
       let input = "zero?(i)"
 
-      run input `shouldBe` "False"
+      runForValue input `shouldBe` "False"
 
   describe "example 4" $ do
     it "returns True" $ do
       let input = "zero?(-(i, 1))"
 
-      run input `shouldBe` "True"
+      runForValue input `shouldBe` "True"
 
   describe "example 5" $ do
     it "returns 56" $ do
       let input = "-(55, -(x, 11))"
 
-      run input `shouldBe` "56"
+      runForValue input `shouldBe` "56"
 
   describe "example 6" $ do
     it "returns 3" $ do
       let input = "-(-(x, 3), -(v, i))"
 
-      run input `shouldBe` "3"
+      runForValue input `shouldBe` "3"
 
   describe "example 7" $ do
     it "returns 18" $ do
@@ -49,13 +49,13 @@ spec = do
         \ in let y = 22                                      \
         \    in if zero?(-(x, 11)) then -(y, 2) else -(y, 4) "
 
-      run input `shouldBe` "18"
+      runForValue input `shouldBe` "18"
 
   describe "example 8" $ do
     it "returns 2" $ do
       let input = "let x = 5 in -(x, 3)"
 
-      run input `shouldBe` "2"
+      runForValue input `shouldBe` "2"
 
   describe "example 9" $ do
     it "returns 3" $ do
@@ -65,7 +65,7 @@ spec = do
         \     let y = -(x, 1) in          \
         \       let x = 4 in -(z, -(x, y))"
 
-      run input `shouldBe` "3"
+      runForValue input `shouldBe` "3"
 
   describe "example 10" $ do
     it "returns -5" $ do
@@ -75,7 +75,7 @@ spec = do
         \     let y = let x = -(x, 1) in -(x, y) in \
         \       -(-(x, 8), y)                       "
 
-      run input `shouldBe` "-5"
+      runForValue input `shouldBe` "-5"
 
   describe "example 11" $ do
     it "returns 55" $ do
@@ -83,7 +83,7 @@ spec = do
         \ let f = proc (x) -(x, 11) \
         \ in (f (f 77))             "
 
-      run input `shouldBe` "55"
+      runForValue input `shouldBe` "55"
 
   describe "example 12" $ do
     it "returns 55" $ do
@@ -91,7 +91,7 @@ spec = do
         \ (proc (f) (f (f 77)) \
         \  proc (x) -(x, 11))  "
 
-      run input `shouldBe` "55"
+      runForValue input `shouldBe` "55"
 
   describe "example 13" $ do
     it "returns -100" $ do
@@ -102,7 +102,7 @@ spec = do
         \       in let g = proc (z) -(z, x) \
         \          in -((f 1), (g 1))       "
 
-      run input `shouldBe` "-100"
+      runForValue input `shouldBe` "-100"
 
   describe "example for Exercise 3.20" $ do
     it "returns the sum of 3 and 4" $ do
@@ -110,7 +110,7 @@ spec = do
         \ let sum = proc (x) proc (y) -(x, -(0, y)) \
         \ in ((sum 3) 4)                            "
 
-      run input `shouldBe` "7"
+      runForValue input `shouldBe` "7"
 
   describe "example for Exercise 3.23 - timesfour" $ do
     it "returns 12" $ do
@@ -129,7 +129,7 @@ spec = do
         -- 1. "-4" is written as "-(0, 4)"
         -- 2. "times4" is written as "timesfour"
 
-      run input `shouldBe` "12"
+      runForValue input `shouldBe` "12"
 
   describe "example for Exercise 3.23 - fact" $ do
     it "returns 5!" $ do
@@ -153,7 +153,7 @@ spec = do
         \        in let fact = proc (n) ((factmaker factmaker) n)           \
         \           in (fact 5)                                             "
 
-      run input `shouldBe` "120"
+      runForValue input `shouldBe` "120"
 
   describe "example for Exercise 3.23 - fact (alternative)" $ do
     it "returns 5!" $ do
@@ -180,7 +180,7 @@ spec = do
         -- times = (timesmaker timesmaker)
         -- fact = (factmaker factmaker)
 
-      run input `shouldBe` "120"
+      runForValue input `shouldBe` "120"
 
   describe "example for Exercise 3.24 - odd and even" $ do
     it "returns 1" $ do
@@ -204,7 +204,7 @@ spec = do
         \    in let odd = ((oddmaker oddmaker) evenmaker)         \
         \       in (odd 13)                                       "
 
-      run input `shouldBe` "1"
+      runForValue input `shouldBe` "1"
 
   describe "example for Exercise 3.25 - from the book" $ do
     it "returns 12" $ do
@@ -229,7 +229,7 @@ spec = do
         -- 2. `times` is `times4`
         -- 3. -4 = -(0, 4)
 
-      run input `shouldBe` "12"
+      runForValue input `shouldBe` "12"
 
   describe "example for Exercise 3.25 - my derivation" $ do
     it "returns 12" $ do
@@ -254,7 +254,39 @@ spec = do
         -- 2. `times` is `times4`
         -- 3. -4 = -(0, 4)
 
-      run input `shouldBe` "12"
+      runForValue input `shouldBe` "12"
 
-run :: String -> String
-run = show . I.run
+  describe "example 1 for Exercise 3.27" $ do
+    it "returns 3 and a trace of the calls" $ do
+      let input = "           \
+        \ let add =           \
+        \   traceproc (a)     \
+        \     traceproc (b)   \
+        \       -(a, -(0, b)) \
+        \ in ((add 1) 2)      "
+
+      let output = concat [ "Entering: a=1\n", "Leaving: a=1 result=<<proc>>\n", "Entering: b=2\n", "Leaving: b=2 result=3\n" ]
+
+      runForValueAndEffect input `shouldBe` ("3", output)
+
+  describe "example 2 for Exercise 3.27" $ do
+    it "returns 0 and a trace of the calls" $ do
+      let input = "                             \
+        \ let f = traceproc (x) -(x, -(0, 1))   \
+        \ in let g = traceproc (y) -(y, 1)      \
+        \    in let h = traceproc (z) (g (f z)) \
+        \       in (h 0)                        "
+
+      let output = concat [ "Entering: z=0\n", "Entering: x=0\n", "Leaving: x=0 result=1\n", "Entering: y=1\n", "Leaving: y=1 result=0\n", "Leaving: z=0 result=0\n" ]
+
+      runForValueAndEffect input `shouldBe` ("0", output)
+
+runForValue :: String -> String
+runForValue = show . fst . I.run
+
+runForValueAndEffect :: String -> (String, String)
+runForValueAndEffect input =
+  let
+    (value, output) = I.run input
+  in
+    (show value, output)
