@@ -294,5 +294,27 @@ spec = do
 
       run input `shouldBe` "8"
 
+  describe "example 1 for Exercise 3.29" $ do
+    it "returns 5" $ do
+      let input = "                    \
+        \ let a = 3                    \
+        \ in let p = proc (z) a        \
+        \    in let f = proc (x) (p 0) \
+        \       in let a = 5           \
+        \          in (f 2)            "
+
+      run input `shouldBe` "5"
+
+  describe "example 2 for Exercise 3.29" $ do
+    it "returns 2" $ do
+      let input = "                    \
+        \ let a = 3                    \
+        \ in let p = proc (z) a        \
+        \    in let f = proc (a) (p 0) \
+        \       in let a = 5           \
+        \          in (f 2)            "
+
+      run input `shouldBe` "2"
+
 run :: String -> String
 run = show . I.run
