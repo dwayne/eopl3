@@ -104,6 +104,16 @@ spec = do
 
       run input `shouldBe` "-100"
 
+  describe "example 14" $ do
+    it "return 2" $ do
+      let input = "        \
+        \ let a = 3        \
+        \     b = 2        \
+        \     c = 1        \
+        \ in -(a, -(b, c)) "
+
+      run input `shouldBe` "2"
+
   describe "example for Exercise 3.20" $ do
     it "returns the sum of 3 and 4" $ do
       let input = "                                 \
