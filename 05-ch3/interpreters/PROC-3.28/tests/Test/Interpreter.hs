@@ -95,14 +95,15 @@ spec = do
 
   describe "example 13" $ do
     it "returns -100" $ do
-      let input = "                         \
-        \ let x = 200                       \
-        \ in let f = proc (z) -(z, x)       \
-        \    in let x = 100                 \
-        \       in let g = proc (z) -(z, x) \
-        \          in -((f 1), (g 1))       "
-
-      run input `shouldBe` "-100"
+      -- let input = "                         \
+      --   \ let x = 200                       \
+      --   \ in let f = proc (z) -(z, x)       \
+      --   \    in let x = 100                 \
+      --   \       in let g = proc (z) -(z, x) \
+      --   \          in -((f 1), (g 1))       "
+      --
+      -- run input `shouldBe` "-100"
+      pendingWith "Returns 0 due to dynamic binding"
 
   describe "example 14" $ do
     it "return 2" $ do
@@ -116,81 +117,85 @@ spec = do
 
   describe "example for Exercise 3.20" $ do
     it "returns the sum of 3 and 4" $ do
-      let input = "                                 \
-        \ let sum = proc (x) proc (y) -(x, -(0, y)) \
-        \ in ((sum 3) 4)                            "
-
-      run input `shouldBe` "7"
+      -- let input = "                                 \
+      --   \ let sum = proc (x) proc (y) -(x, -(0, y)) \
+      --   \ in ((sum 3) 4)                            "
+      --
+      -- run input `shouldBe` "7"
+      pendingWith "Returns 14 due to dynamic binding"
 
   describe "example for Exercise 3.23 - timesfour" $ do
     it "returns 12" $ do
-      let input = "                                           \
-        \ let makemult =                                      \
-        \   proc (maker)                                      \
-        \     proc (x)                                        \
-        \       if zero?(x) then                              \
-        \         0                                           \
-        \       else                                          \
-        \         -(((maker maker) -(x, 1)), -(0, 4))         \
-        \ in let timesfour = proc (x) ((makemult makemult) x) \
-        \    in (timesfour 3)                                 \
-        \                                                     "
-        -- Changes:
-        -- 1. "-4" is written as "-(0, 4)"
-        -- 2. "times4" is written as "timesfour"
-
-      run input `shouldBe` "12"
+      -- let input = "                                           \
+      --   \ let makemult =                                      \
+      --   \   proc (maker)                                      \
+      --   \     proc (x)                                        \
+      --   \       if zero?(x) then                              \
+      --   \         0                                           \
+      --   \       else                                          \
+      --   \         -(((maker maker) -(x, 1)), -(0, 4))         \
+      --   \ in let timesfour = proc (x) ((makemult makemult) x) \
+      --   \    in (timesfour 3)                                 \
+      --   \                                                     "
+      --   -- Changes:
+      --   -- 1. "-4" is written as "-(0, 4)"
+      --   -- 2. "times4" is written as "timesfour"
+      --
+      -- run input `shouldBe` "12"
+      pendingWith "No binding for \"maker\" due to dynamic binding"
 
   describe "example for Exercise 3.23 - fact" $ do
     it "returns 5!" $ do
-      let input = "                                                         \
-        \  let timesmaker =                                                 \
-        \    proc (maker)                                                   \
-        \      proc (x)                                                     \
-        \        proc (y)                                                   \
-        \          if zero?(y) then                                         \
-        \            0                                                      \
-        \          else                                                     \
-        \            -((((maker maker) x) -(y, 1)), -(0, x))                \
-        \  in let times = proc (x) proc (y) (((timesmaker timesmaker) x) y) \
-        \     in let factmaker =                                            \
-        \          proc (maker)                                             \
-        \            proc (n)                                               \
-        \              if zero?(n) then                                     \
-        \                1                                                  \
-        \              else                                                 \
-        \                ((times n) ((maker maker) -(n, 1)))                \
-        \        in let fact = proc (n) ((factmaker factmaker) n)           \
-        \           in (fact 5)                                             "
-
-      run input `shouldBe` "120"
+      -- let input = "                                                         \
+      --   \  let timesmaker =                                                 \
+      --   \    proc (maker)                                                   \
+      --   \      proc (x)                                                     \
+      --   \        proc (y)                                                   \
+      --   \          if zero?(y) then                                         \
+      --   \            0                                                      \
+      --   \          else                                                     \
+      --   \            -((((maker maker) x) -(y, 1)), -(0, x))                \
+      --   \  in let times = proc (x) proc (y) (((timesmaker timesmaker) x) y) \
+      --   \     in let factmaker =                                            \
+      --   \          proc (maker)                                             \
+      --   \            proc (n)                                               \
+      --   \              if zero?(n) then                                     \
+      --   \                1                                                  \
+      --   \              else                                                 \
+      --   \                ((times n) ((maker maker) -(n, 1)))                \
+      --   \        in let fact = proc (n) ((factmaker factmaker) n)           \
+      --   \           in (fact 5)                                             "
+      --
+      -- run input `shouldBe` "120"
+      pendingWith "No binding for \"maker\" due to dynamic binding"
 
   describe "example for Exercise 3.23 - fact (alternative)" $ do
     it "returns 5!" $ do
-      let input = "                                          \
-        \  let timesmaker =                                  \
-        \    proc (maker)                                    \
-        \      proc (x)                                      \
-        \        proc (y)                                    \
-        \          if zero?(y) then                          \
-        \            0                                       \
-        \          else                                      \
-        \            -((((maker maker) x) -(y, 1)), -(0, x)) \
-        \  in let times = (timesmaker timesmaker)            \
-        \     in let factmaker =                             \
-        \          proc (maker)                              \
-        \            proc (n)                                \
-        \              if zero?(n) then                      \
-        \                1                                   \
-        \              else                                  \
-        \                ((times n) ((maker maker) -(n, 1))) \
-        \        in let fact = (factmaker factmaker)         \
-        \           in (fact 5)                              "
-        -- N.B.
-        -- times = (timesmaker timesmaker)
-        -- fact = (factmaker factmaker)
-
-      run input `shouldBe` "120"
+      -- let input = "                                          \
+      --   \  let timesmaker =                                  \
+      --   \    proc (maker)                                    \
+      --   \      proc (x)                                      \
+      --   \        proc (y)                                    \
+      --   \          if zero?(y) then                          \
+      --   \            0                                       \
+      --   \          else                                      \
+      --   \            -((((maker maker) x) -(y, 1)), -(0, x)) \
+      --   \  in let times = (timesmaker timesmaker)            \
+      --   \     in let factmaker =                             \
+      --   \          proc (maker)                              \
+      --   \            proc (n)                                \
+      --   \              if zero?(n) then                      \
+      --   \                1                                   \
+      --   \              else                                  \
+      --   \                ((times n) ((maker maker) -(n, 1))) \
+      --   \        in let fact = (factmaker factmaker)         \
+      --   \           in (fact 5)                              "
+      --   -- N.B.
+      --   -- times = (timesmaker timesmaker)
+      --   -- fact = (factmaker factmaker)
+      --
+      -- run input `shouldBe` "120"
+      pendingWith "No binding for \"maker\" due to dynamic binding"
 
   describe "example for Exercise 3.24 - odd and even" $ do
     it "returns 1" $ do
@@ -218,63 +223,76 @@ spec = do
 
   describe "example for Exercise 3.25 - from the book" $ do
     it "returns 12" $ do
-      let input = "                               \
-        \ let makerec =                           \
-        \   proc (f)                              \
-        \     let d =                             \
-        \       proc (x)                          \
-        \         proc (z) ((f (x x)) z)          \
-        \     in proc (n) ((f (d d)) n)           \
-        \ in let maketimes =                      \
-        \      proc (f)                           \
-        \        proc (x)                         \
-        \          if zero?(x) then               \
-        \            0                            \
-        \          else                           \
-        \            -((f -(x, 1)), -(0, 4))      \
-        \    in let times = (makerec maketimes)   \
-        \       in (times 3)                      "
-        -- Changes:
-        -- 1. `maketimes` is `maketimes4`
-        -- 2. `times` is `times4`
-        -- 3. -4 = -(0, 4)
-
-      run input `shouldBe` "12"
+      -- let input = "                               \
+      --   \ let makerec =                           \
+      --   \   proc (f)                              \
+      --   \     let d =                             \
+      --   \       proc (x)                          \
+      --   \         proc (z) ((f (x x)) z)          \
+      --   \     in proc (n) ((f (d d)) n)           \
+      --   \ in let maketimes =                      \
+      --   \      proc (f)                           \
+      --   \        proc (x)                         \
+      --   \          if zero?(x) then               \
+      --   \            0                            \
+      --   \          else                           \
+      --   \            -((f -(x, 1)), -(0, 4))      \
+      --   \    in let times = (makerec maketimes)   \
+      --   \       in (times 3)                      "
+      --   -- Changes:
+      --   -- 1. `maketimes` is `maketimes4`
+      --   -- 2. `times` is `times4`
+      --   -- 3. -4 = -(0, 4)
+      --
+      -- run input `shouldBe` "12"
+      pendingWith "No binding for \"f\" due to dynamic binding"
 
   describe "example for Exercise 3.25 - my derivation" $ do
     it "returns 12" $ do
-      let input = "                               \
-        \ let makerec =                           \
-        \   proc (f)                              \
-        \     let inf =                           \
-        \       proc (inf)                        \
-        \         (f (inf inf))                   \
-        \     in (inf inf)                        \
-        \ in let maketimes =                      \
-        \      proc (f)                           \
-        \        proc (x)                         \
-        \          if zero?(x) then               \
-        \            0                            \
-        \          else                           \
-        \            -((f -(x, 1)), -(0, 4))      \
-        \    in let times = (makerec maketimes)   \
-        \       in (times 3)                      "
-        -- Changes:
-        -- 1. `maketimes` is `maketimes4`
-        -- 2. `times` is `times4`
-        -- 3. -4 = -(0, 4)
-
-      run input `shouldBe` "12"
+      -- let input = "                               \
+      --   \ let makerec =                           \
+      --   \   proc (f)                              \
+      --   \     let inf =                           \
+      --   \       proc (inf)                        \
+      --   \         (f (inf inf))                   \
+      --   \     in (inf inf)                        \
+      --   \ in let maketimes =                      \
+      --   \      proc (f)                           \
+      --   \        proc (x)                         \
+      --   \          if zero?(x) then               \
+      --   \            0                            \
+      --   \          else                           \
+      --   \            -((f -(x, 1)), -(0, 4))      \
+      --   \    in let times = (makerec maketimes)   \
+      --   \       in (times 3)                      "
+      --   -- Changes:
+      --   -- 1. `maketimes` is `maketimes4`
+      --   -- 2. `times` is `times4`
+      --   -- 3. -4 = -(0, 4)
+      --
+      -- run input `shouldBe` "12"
+      pendingWith "No binding for \"f\" due to dynamic binding"
 
   describe "example for Exercise 3.28 - before dynamic binding" $ do
     it "returns 6" $ do
+      -- let input = "                   \
+      --   \ let a = 3                   \
+      --   \ in let p = proc (x) -(x, a) \
+      --   \        a = 5                \
+      --   \    in -(a, (p 2))           "
+      --
+      -- run input `shouldBe` "6"
+      pendingWith "Returns 8 due to dynamic binding"
+
+  describe "example for Exercise 3.28 - after dynamic binding" $ do
+    it "returns 8" $ do
       let input = "                   \
         \ let a = 3                   \
         \ in let p = proc (x) -(x, a) \
         \        a = 5                \
         \    in -(a, (p 2))           "
 
-      run input `shouldBe` "6"
+      run input `shouldBe` "8"
 
 run :: String -> String
 run = show . I.run

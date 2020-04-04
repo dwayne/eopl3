@@ -73,14 +73,14 @@ valueOfExpr expr env =
         valueOfExpr body (extendMany bindings)
 
     Proc var body ->
-      ProcedureVal (procedure var body env)
+      ProcedureVal (procedure var body)
 
     Call f arg ->
       let
         fVal = valueOfExpr f env
         argVal = valueOfExpr arg env
       in
-        applyProcedure (toProcedure fVal) argVal
+        applyProcedure (toProcedure fVal) argVal env
 
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n
@@ -96,11 +96,11 @@ toProcedure x = error ("Expected a procedure: " ++ show x)
 
 -- Procedure ADT
 
-data Procedure = Procedure Id Expr Environment
+data Procedure = Procedure Id Expr
 
-procedure :: Id -> Expr -> Environment -> Procedure
+procedure :: Id -> Expr -> Procedure
 procedure = Procedure
 
-applyProcedure :: Procedure -> Value -> Value
-applyProcedure (Procedure var body env) val =
+applyProcedure :: Procedure -> Value -> Environment -> Value
+applyProcedure (Procedure var body) val env =
   valueOfExpr body (Env.extend var val env)
