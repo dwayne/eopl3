@@ -266,5 +266,15 @@ spec = do
 
       run input `shouldBe` "12"
 
+  describe "example for Exercise 3.28 - before dynamic binding" $ do
+    it "returns 6" $ do
+      let input = "                   \
+        \ let a = 3                   \
+        \ in let p = proc (x) -(x, a) \
+        \        a = 5                \
+        \    in -(a, (p 2))           "
+
+      run input `shouldBe` "6"
+
 run :: String -> String
 run = show . I.run
