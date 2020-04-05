@@ -10,8 +10,8 @@ data Expr
   | If Expr Expr Expr
   | Let Id Expr Expr
   | Proc Id Expr
-  | Call Expr Expr
-  | Letrec Id Id Expr Expr
+  | Call Expr [Expr]
+  | Letrec Id [Id] Expr Expr
   deriving Show
 
 type Number = Integer

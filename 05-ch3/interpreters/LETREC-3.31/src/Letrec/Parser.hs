@@ -3,7 +3,7 @@ module Letrec.Parser where
 import qualified Text.Parsec as Parsec
 import qualified Text.Parsec.Token as Token
 
-import Text.Parsec ((<|>), char, eof, oneOf)
+import Text.Parsec ((<|>), char, eof, many, oneOf)
 import Text.Parsec.Language (emptyDef)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Token (LanguageDef, TokenParser)
@@ -58,7 +58,7 @@ ifExpr =
 
 letrecExpr :: Parser Expr
 letrecExpr =
-  Letrec <$> (letrecToken *> identifier) <*> (parens identifier) <*> (equal *> expr) <*> (inToken *> expr)
+  Letrec <$> (letrecToken *> identifier) <*> (parens (commaSep identifier)) <*> (equal *> expr) <*> (inToken *> expr)
   where
     letrecToken = reserved "letrec"
 
@@ -76,7 +76,7 @@ procExpr =
 
 callExpr :: Parser Expr
 callExpr =
-  parens (Call <$> expr <*> expr)
+  parens (Call <$> expr <*> many expr)
 
 varExpr :: Parser Expr
 varExpr = Var <$> identifier
@@ -100,6 +100,9 @@ reserved = Token.reserved lexer
 
 parens :: Parser a -> Parser a
 parens = Token.parens lexer
+
+commaSep :: Parser a -> Parser [a]
+commaSep = Token.commaSep lexer
 
 whiteSpace :: Parser ()
 whiteSpace = Token.whiteSpace lexer

@@ -113,5 +113,19 @@ spec = do
 
       run input `shouldBe` "12"
 
+  describe "example 15" $ do
+    it "returns 15" $ do
+      let input = "                            \
+        \ letrec add(x, y) =                   \
+        \   if zero?(y) then                   \
+        \     x                                \
+        \   else                               \
+        \     (add -(x, -(0, 1)) -(y, 1))      \
+        \ in (add (add (add (add 1 2) 3) 4) 5) "
+        -- x + 0 = x
+        -- x + y = (x+1) + (y-1) if y > 0
+
+      run input `shouldBe` "15"
+
 run :: String -> String
 run = show . I.run
