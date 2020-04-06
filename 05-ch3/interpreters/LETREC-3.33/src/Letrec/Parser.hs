@@ -61,7 +61,7 @@ letrecExpr =
   Letrec <$> (letrecToken *> many recProc) <*> (inToken *> expr)
   where
     letrecToken = reserved "letrec"
-    recProc = (,,) <$> identifier <*> (parens identifier) <*> (equal *> expr)
+    recProc = (,,) <$> identifier <*> (parens (commaSep identifier)) <*> (equal *> expr)
 
 letExpr :: Parser Expr
 letExpr =
@@ -77,7 +77,7 @@ procExpr =
 
 callExpr :: Parser Expr
 callExpr =
-  parens (Call <$> expr <*> expr)
+  parens (Call <$> expr <*> many expr)
 
 varExpr :: Parser Expr
 varExpr = Var <$> identifier
@@ -101,6 +101,9 @@ reserved = Token.reserved lexer
 
 parens :: Parser a -> Parser a
 parens = Token.parens lexer
+
+commaSep :: Parser a -> Parser [a]
+commaSep = Token.commaSep lexer
 
 whiteSpace :: Parser ()
 whiteSpace = Token.whiteSpace lexer

@@ -123,5 +123,30 @@ spec = do
 
       run input `shouldBe` "1"
 
+  describe "example 16" $ do
+    it "returns 15" $ do
+      let input = "                            \
+        \ letrec add(x, y) =                   \
+        \   if zero?(y) then                   \
+        \     x                                \
+        \   else                               \
+        \     (add -(x, -(0, 1)) -(y, 1))      \
+        \ in (add (add (add (add 1 2) 3) 4) 5) "
+        -- x + 0 = x
+        -- x + y = (x+1) + (y-1) if y > 0
+
+      run input `shouldBe` "15"
+
+  describe "example 17" $ do
+    it "returns 2" $ do
+      let input = "                                            \
+        \ letrec                                               \
+        \   f(x, y) = if zero?(x) then (g y) else (h x y y)    \
+        \   g(a) = if zero?(a) then 2 else (f -(a, 1) -(a, 1)) \
+        \   h(b, c, d) = if zero?(b) then 3 else (f 0 b)       \
+        \ in (f 1 2)                                           "
+
+      run input `shouldBe` "2"
+
 run :: String -> String
 run = show . I.run
