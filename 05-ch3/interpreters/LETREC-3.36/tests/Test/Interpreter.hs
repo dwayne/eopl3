@@ -113,5 +113,15 @@ spec = do
 
       run input `shouldBe` "12"
 
+  describe "example 15" $ do
+    it "returns 1" $ do
+      let input = "                                         \
+        \ letrec                                            \
+        \   even(x) = if zero?(x) then 1 else (odd -(x, 1)) \
+        \   odd(x) = if zero?(x) then 0 else (even -(x, 1)) \
+        \ in (odd 13)                                       "
+
+      run input `shouldBe` "1"
+
 run :: String -> String
 run = show . I.run

@@ -2,7 +2,7 @@ module Letrec.Env (Env, empty, extend, extendRec, apply) where
 
 data Env s v
   = Empty
-  | Bind s v (Env s v) -- name value
+  | Bind [(s, v)] (Env s v) -- [(name, value)]
 
 -- s represents the type for identifiers
 -- v represents the type for values
@@ -11,12 +11,14 @@ empty :: Env s v
 empty = Empty
 
 extend :: s -> v -> Env s v -> Env s v
-extend = Bind
+extend varName value = Bind [(varName, value)]
 
-extendRec :: s -> s -> e -> (s -> e -> Env s v -> v) -> Env s v -> Env s v
-extendRec procName param body makeValue nextEnv =
+extendRec :: [(s, s, e)] -> (s -> e -> Env s v -> v) -> Env s v -> Env s v
+extendRec recProcs makeValue nextEnv =
   let
-    env = Bind procName (makeValue param body env) nextEnv
+    env = Bind
+      (map (\(procName, param, body) -> (procName, (makeValue param body env))) recProcs)
+      nextEnv
   in
     env
 
@@ -26,8 +28,10 @@ apply env name =
     Empty ->
       error ("No binding for " ++ show name)
 
-    Bind varName value nextEnv ->
-      if name == varName then
-        value
-      else
-        apply nextEnv name
+    Bind bindings nextEnv ->
+      case lookup name bindings of
+        Nothing ->
+          apply nextEnv name
+
+        Just value ->
+          value

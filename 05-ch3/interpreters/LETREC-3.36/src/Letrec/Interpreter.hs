@@ -77,8 +77,8 @@ valueOfExpr expr env =
       in
         applyProcedure (toProcedure fVal) argVal
 
-    Letrec name param body e ->
-      valueOfExpr e (Env.extendRec name param body procedureVal env)
+    Letrec recProcs e ->
+      valueOfExpr e (Env.extendRec recProcs procedureVal env)
 
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n
