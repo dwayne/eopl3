@@ -1,39 +1,38 @@
 module Letrec.Env (Env, empty, extend, extendRec, apply) where
 
-data Env s v e
-  = Empty
-  | Bind s v (Env s v e) -- name value
-  | RecBind s s e (Env s v e) -- name param body
-
+data Env s v = Env (s -> v)
 -- s represents the type for identifiers
 -- v represents the type for values
--- e represents the type for expressions
 
-empty :: Env s v e
-empty = Empty
-
-extend :: s -> v -> Env s v e -> Env s v e
-extend = Bind
-
-extendRec :: s -> s -> e -> Env s v e -> Env s v e
-extendRec = RecBind
-
-apply :: (Eq s, Show s) => Env s v e -> s -> (s -> e -> Env s v e -> v) -> v
-apply env name makeValue =
-  case env of
-    Empty ->
+empty :: Show s => Env s v
+empty = Env (
+    \name ->
       error ("No binding for " ++ show name)
+  )
 
-    Bind varName value nextEnv ->
+extend :: Eq s => s -> v -> Env s v -> Env s v
+extend varName value nextEnv = Env (
+    \name ->
       if name == varName then
         value
       else
-        apply nextEnv name makeValue
+        apply nextEnv name
+  )
 
-    RecBind procName param body nextEnv ->
-      if name == procName then
-        makeValue param body env
-        -- N.B. We use `env`, the environment in which `procName` is defined.
-        -- This is the key to making `letrec` work.
-      else
-        apply nextEnv name makeValue
+extendRec :: Eq s => s -> s -> e -> (s -> e -> Env s v -> v) -> Env s v -> Env s v
+extendRec procName param body makeValue nextEnv =
+  let
+    env = Env (
+        \name ->
+          if name == procName then
+            makeValue param body env
+            -- N.B. We use `env`, the environment in which `procName` is defined.
+            -- This is the key to making `letrec` work.
+          else
+            apply nextEnv name
+      )
+  in
+    env
+
+apply :: Env s v -> s -> v
+apply (Env env) name = env name
