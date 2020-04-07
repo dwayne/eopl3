@@ -316,5 +316,16 @@ spec = do
 
       run input `shouldBe` "2"
 
+  describe "example for Exercise 3.37 using dynamic binding" $ do
+    it "returns 120" $ do
+      let input = "                                           \
+        \ let fact = proc (n) add1(n)                         \
+        \ in let fact =                                       \
+        \      proc (n)                                       \
+        \        if zero?(n) then 1 else *(n, (fact -(n, 1))) \
+        \    in (fact 5)                                      "
+
+      run input `shouldBe` "120"
+
 run :: String -> String
 run = show . I.run

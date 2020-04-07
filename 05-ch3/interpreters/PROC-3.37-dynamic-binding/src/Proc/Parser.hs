@@ -27,7 +27,9 @@ program = Program <$> (whiteSpace *> expr <* eof)
 expr :: Parser Expr
 expr
   = constExpr
+  <|> mulExpr
   <|> diffExpr
+  <|> add1Expr
   <|> zeroExpr
   <|> ifExpr
   <|> letExpr
@@ -38,11 +40,20 @@ expr
 constExpr :: Parser Expr
 constExpr = Const <$> number
 
+mulExpr :: Parser Expr
+mulExpr = times *> (parens (Mul <$> (expr <* comma) <*> expr))
+  where
+    times = char '*'
+    comma = lexeme (char ',')
+
 diffExpr :: Parser Expr
 diffExpr = minus *> (parens (Diff <$> (expr <* comma) <*> expr))
   where
     minus = char '-'
     comma = lexeme (char ',')
+
+add1Expr :: Parser Expr
+add1Expr = reserved "add1" *> (parens (Add1 <$> expr))
 
 zeroExpr :: Parser Expr
 zeroExpr = reserved "zero?" *> (parens (Zero <$> expr))
@@ -105,7 +116,8 @@ letDef = emptyDef
   { Token.identStart = oneOf ['a'..'z']
   , Token.identLetter = Token.identStart letDef
   , Token.reservedNames =
-      [ "else"
+      [ "add1"
+      , "else"
       , "if"
       , "in"
       , "let"

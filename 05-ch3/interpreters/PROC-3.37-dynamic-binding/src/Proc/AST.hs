@@ -5,7 +5,9 @@ data Program = Program Expr deriving Show
 data Expr
   = Const Number
   | Var Id
+  | Mul Expr Expr
   | Diff Expr Expr
+  | Add1 Expr
   | Zero Expr
   | If Expr Expr Expr
   | Let [(Id, Expr)] Expr

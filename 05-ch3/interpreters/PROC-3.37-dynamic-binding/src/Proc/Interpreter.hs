@@ -39,12 +39,25 @@ valueOfExpr expr env =
     Var v ->
       Env.apply env v
 
+    Mul a b ->
+      let
+        aVal = valueOfExpr a env
+        bVal = valueOfExpr b env
+      in
+        NumberVal (toNumber aVal * toNumber bVal)
+
     Diff a b ->
       let
         aVal = valueOfExpr a env
         bVal = valueOfExpr b env
       in
         NumberVal (toNumber aVal - toNumber bVal)
+
+    Add1 e ->
+      let
+        val = valueOfExpr e env
+      in
+        NumberVal (toNumber val + 1)
 
     Zero e ->
       let
