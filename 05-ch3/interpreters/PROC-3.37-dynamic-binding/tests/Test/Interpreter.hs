@@ -327,5 +327,14 @@ spec = do
 
       run input `shouldBe` "120"
 
+  describe "example for Exercise 3.37 using the mutually recursive procedures even and odd" $ do
+    it "returns 1" $ do
+      let input = "                                                   \
+        \ let even = proc(x) if zero?(x) then 1 else (odd -(x, 1))    \
+        \ in let odd = proc(x) if zero?(x) then 0 else (even -(x, 1)) \
+        \    in (odd 13)                                              "
+
+      run input `shouldBe` "1"
+
 run :: String -> String
 run = show . I.run
