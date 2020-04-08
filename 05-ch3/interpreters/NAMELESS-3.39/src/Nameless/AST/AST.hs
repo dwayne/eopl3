@@ -14,6 +14,7 @@ data Expr
   | Empty
   | If Expr Expr Expr
   | Let Id Expr Expr
+  | Unpack [Id] Expr Expr
   | Proc Id Expr
   | Call Expr Expr
   deriving Show

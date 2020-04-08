@@ -14,6 +14,7 @@ data Expr
   | Empty
   | If Expr Expr Expr
   | Let Expr Expr
+  | Unpack Expr Expr
   | Proc Expr
   | Call Expr Expr
   deriving Show

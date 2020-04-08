@@ -104,6 +104,16 @@ valueOfExpr expr env =
       in
         valueOfExpr body (Env.extend val env)
 
+    Unpack e body ->
+      let
+        val = valueOfExpr e env
+
+        extendMany [] env = env
+        extendMany (val:vals) env =
+          extendMany vals (Env.extend val env)
+      in
+        valueOfExpr body (extendMany (toList val) env)
+
     Proc body ->
       ProcedureVal (procedure body env)
 

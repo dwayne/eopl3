@@ -151,5 +151,52 @@ spec = do
 
       run input `shouldBe` "False"
 
+  describe "example 21" $ do
+    it "returns 4" $ do
+      let input = "                                     \
+        \ let u = 7 in                                  \
+        \   unpack x y = cons(u, cons(3, emptylist)) in \
+        \     -(x, y)                                   "
+
+      run input `shouldBe` "4"
+
+  -- Incorrect when list is too long
+  describe "example 22" $ do
+    it "returns 2" $ do
+      let input = "                                              \
+        \ let u = 7 in                                           \
+        \   unpack x y = cons(u, cons(3, cons(1, emptylist))) in \
+        \     -(x, y)                                            "
+      -- Analysis:
+      --
+      -- senv = (y x u)
+      --         0 1 2
+      --
+      -- env = (4 3 7 7)
+      --        y x u
+      --
+      -- The 4 messes things up. x-y = 3-1 = 2
+
+      run input `shouldBe` "2"
+
+  -- Incorrect when list is too short
+  describe "example 23" $ do
+    it "returns 0" $ do
+      let input = "                            \
+        \ let u = 7 in                         \
+        \   unpack x y = cons(u, emptylist) in \
+        \     -(x, y)                          "
+      -- Analysis:
+      --
+      -- senv = (y x u)
+      --         0 1 2
+      --
+      -- env = (7 7)
+      --       (y x)
+      --
+      -- x-y = 7-7 = 0
+
+      run input `shouldBe` "0"
+
 run :: String -> String
 run = show . I.run

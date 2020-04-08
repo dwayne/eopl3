@@ -3,7 +3,7 @@ module Nameless.Parser where
 import qualified Text.Parsec as Parsec
 import qualified Text.Parsec.Token as Token
 
-import Text.Parsec ((<|>), char, eof, oneOf)
+import Text.Parsec ((<|>), char, eof, many, oneOf)
 import Text.Parsec.Language (emptyDef)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Token (LanguageDef, TokenParser)
@@ -36,6 +36,7 @@ expr
   <|> emptyExpr
   <|> ifExpr
   <|> letExpr
+  <|> unpackExpr
   <|> procExpr
   <|> callExpr
   <|> varExpr
@@ -81,6 +82,15 @@ letExpr =
     letToken = reserved "let"
     inToken = reserved "in"
     equal = lexeme (char '=')
+
+unpackExpr :: Parser Expr
+unpackExpr =
+  Unpack <$> (unpackToken *> identifiers) <*> (equal *> expr) <*> (inToken *> expr)
+  where
+    unpackToken = reserved "unpack"
+    inToken = reserved "in"
+    equal = lexeme (char '=')
+    identifiers = many identifier
 
 procExpr :: Parser Expr
 procExpr =
@@ -137,6 +147,7 @@ letDef = emptyDef
       , "null?"
       , "proc"
       , "then"
+      , "unpack"
       , "zero?"
       ]
   }

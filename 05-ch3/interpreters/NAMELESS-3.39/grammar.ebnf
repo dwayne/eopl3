@@ -1,7 +1,7 @@
 Program ::= Expr
 Expr    ::= Const | Var | Diff | Zero
           | Cons | Car | Cdr | Null | Empty
-          | If | Let | Proc | Call
+          | If | Let | Unpack | Proc | Call
 Const   ::= Number
 Var     ::= Id
 Diff    ::= '-' '(' Expr ',' Expr ')'
@@ -13,6 +13,7 @@ Null    ::= 'null?' '(' Expr ')'
 Empty   ::= 'emptylist'
 If      ::= 'if' Expr 'then' Expr 'else' Expr
 Let     ::= 'let' Id '=' Expr 'in' Expr
+Unpack  ::= 'unpack' (Identifier)* '=' Expr 'in' Expr
 Proc    ::= 'proc' '(' Id ')' Expr
 Call    ::= '(' Expr Expr ')'
 Number  ::= [0-9]+

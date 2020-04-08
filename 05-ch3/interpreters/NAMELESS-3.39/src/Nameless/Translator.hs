@@ -62,6 +62,16 @@ translateExpr expr senv =
         (translateExpr e senv)
         (translateExpr body (StaticEnv.extend var senv))
 
+    AST.Unpack vars e body ->
+      let
+        extendMany [] env = env
+        extendMany (var:vars) env =
+          extendMany vars (StaticEnv.extend var env)
+      in
+        Nameless.Unpack
+          (translateExpr e senv)
+          (translateExpr body (extendMany vars senv))
+
     AST.Proc var body ->
       Nameless.Proc
         (translateExpr body (StaticEnv.extend var senv))
