@@ -11,6 +11,7 @@ data Expr
   | Let Expr Expr
   | Proc Expr
   | Call Expr Expr
+  | Letrec Expr Expr
   deriving Show
 
 type Number = Integer

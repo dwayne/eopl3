@@ -104,5 +104,32 @@ spec = do
 
       run input `shouldBe` "-100"
 
+  describe "example 14" $ do
+    it "returns 15" $ do
+      let input = "                       \
+        \ letrec                          \
+        \   sum(n) =                      \
+        \     if zero?(n) then            \
+        \       0                         \
+        \     else                        \
+        \       -((sum -(n, 1)), -(0, n)) \
+        \ in (sum 5)                      "
+
+      run input `shouldBe` "15"
+
+  describe "example 15" $ do
+    it "returns 55" $ do
+      let input = "                          \
+        \ let n = 10                         \
+        \ in letrec                          \
+        \      sum(n) =                      \
+        \        if zero?(n) then            \
+        \          0                         \
+        \        else                        \
+        \          -((sum -(n, 1)), -(0, n)) \
+        \    in (sum n)                      "
+
+      run input `shouldBe` "55"
+
 run :: String -> String
 run = show . I.run

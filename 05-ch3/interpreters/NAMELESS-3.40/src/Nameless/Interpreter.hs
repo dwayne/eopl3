@@ -79,6 +79,12 @@ valueOfExpr expr env =
       in
         applyProcedure (toProcedure fVal) argVal
 
+    Letrec body e ->
+      let
+        recEnv = Env.extend (ProcedureVal (procedure body recEnv)) env
+      in
+        valueOfExpr e recEnv
+
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n
 toNumber x = error ("Expected a number: " ++ show x)

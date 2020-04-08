@@ -50,3 +50,12 @@ translateExpr expr senv =
     AST.Proc var body ->
       Nameless.Proc
         (translateExpr body (StaticEnv.extend var senv))
+
+    AST.Letrec name param body e ->
+      let
+        eSenv = StaticEnv.extend name senv
+        bodySenv = StaticEnv.extend param eSenv
+      in
+        Nameless.Letrec
+          (translateExpr body bodySenv)
+          (translateExpr e eSenv)

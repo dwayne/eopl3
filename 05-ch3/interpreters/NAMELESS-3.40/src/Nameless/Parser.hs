@@ -30,6 +30,7 @@ expr
   <|> diffExpr
   <|> zeroExpr
   <|> ifExpr
+  <|> letrecExpr
   <|> letExpr
   <|> procExpr
   <|> callExpr
@@ -55,13 +56,17 @@ ifExpr =
     thenToken = reserved "then"
     elseToken = reserved "else"
 
+letrecExpr :: Parser Expr
+letrecExpr =
+  Letrec <$> (letrecToken *> identifier) <*> (parens identifier) <*> (equal *> expr) <*> (inToken *> expr)
+  where
+    letrecToken = reserved "letrec"
+
 letExpr :: Parser Expr
 letExpr =
   Let <$> (letToken *> identifier) <*> (equal *> expr) <*> (inToken *> expr)
   where
     letToken = reserved "let"
-    inToken = reserved "in"
-    equal = lexeme (char '=')
 
 procExpr :: Parser Expr
 procExpr =
@@ -77,6 +82,12 @@ varExpr :: Parser Expr
 varExpr = Var <$> identifier
 
 -- Helpers
+
+inToken :: Parser ()
+inToken = reserved "in"
+
+equal :: Parser Char
+equal = lexeme (char '=')
 
 number :: Parser Number
 number = lexeme (Token.decimal lexer)
@@ -108,6 +119,7 @@ letDef = emptyDef
       , "if"
       , "in"
       , "let"
+      , "letrec"
       , "proc"
       , "then"
       , "zero?"
