@@ -67,11 +67,24 @@ translateExpr expr senv =
         extendMany [] env = env
         extendMany (var:vars) env =
           extendMany vars (StaticEnv.extend var env)
+
+        nVars = length vars
+        nVals = consLength e
       in
-        Nameless.Unpack
-          (translateExpr e senv)
-          (translateExpr body (extendMany vars senv))
+        if nVals > nVars then
+          error "unpack: list is too long"
+        else if nVals < nVars then
+          error "unpack: list is too short"
+        else
+          Nameless.Unpack
+            (translateExpr e senv)
+            (translateExpr body (extendMany vars senv))
 
     AST.Proc var body ->
       Nameless.Proc
         (translateExpr body (StaticEnv.extend var senv))
+
+consLength :: AST.Expr -> Int
+consLength AST.Empty = 0
+consLength (AST.Cons _ t) = 1 + consLength t
+consLength _ = error "Expected a list"
