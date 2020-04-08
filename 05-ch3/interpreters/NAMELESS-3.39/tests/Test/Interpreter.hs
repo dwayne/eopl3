@@ -104,5 +104,52 @@ spec = do
 
       run input `shouldBe` "-100"
 
+  describe "example 14" $ do
+    it "returns ()" $ do
+      let input = "emptylist"
+
+      run input `shouldBe` "()"
+
+  describe "example 15" $ do
+    it "returns (4)" $ do
+      let input = "cons(4, emptylist)"
+
+      run input `shouldBe` "(4)"
+
+  describe "example 16" $ do
+    it "returns (4 (3))" $ do
+      let input = "                                 \
+        \ let x = 4 in                              \
+        \   cons(x,                                 \
+        \        cons(cons(-(x, 1),                 \
+        \                  emptylist),              \
+        \             emptylist))                   "
+
+      run input `shouldBe` "(4 (3))"
+
+  describe "example 17" $ do
+    it "returns 1" $ do
+      let input = "car(cons(1, cons(2, emptylist)))"
+
+      run input `shouldBe` "1"
+
+  describe "example 18" $ do
+    it "returns (2)" $ do
+      let input = "cdr(cons(1, cons(2, emptylist)))"
+
+      run input `shouldBe` "(2)"
+
+  describe "example 19" $ do
+    it "returns True" $ do
+      let input = "null?(cdr(cdr(cons(1, cons(2, emptylist)))))"
+
+      run input `shouldBe` "True"
+
+  describe "example 20" $ do
+    it "returns False" $ do
+      let input = "null?(cdr(cons(1, cons(2, emptylist))))"
+
+      run input `shouldBe` "False"
+
 run :: String -> String
 run = show . I.run

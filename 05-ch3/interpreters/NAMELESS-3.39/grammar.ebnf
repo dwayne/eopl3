@@ -1,9 +1,16 @@
 Program ::= Expr
-Expr    ::= Const | Var | Diff | Zero | If | Let | Proc | Call
+Expr    ::= Const | Var | Diff | Zero
+          | Cons | Car | Cdr | Null | Empty
+          | If | Let | Proc | Call
 Const   ::= Number
 Var     ::= Id
 Diff    ::= '-' '(' Expr ',' Expr ')'
 Zero    ::= 'zero?' '(' Expr ')'
+Cons    ::= 'cons' '(' Expr ',' Expr ')'
+Car     ::= 'car' '(' Expr ')'
+Cdr     ::= 'cdr' '(' Expr ')'
+Null    ::= 'null?' '(' Expr ')'
+Empty   ::= 'emptylist'
 If      ::= 'if' Expr 'then' Expr 'else' Expr
 Let     ::= 'let' Id '=' Expr 'in' Expr
 Proc    ::= 'proc' '(' Id ')' Expr

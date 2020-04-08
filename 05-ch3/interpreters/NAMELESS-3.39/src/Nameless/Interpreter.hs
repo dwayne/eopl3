@@ -10,6 +10,7 @@ import Nameless.Translator (translate)
 data Value
   = NumberVal Number
   | BoolVal Bool
+  | ListVal [Value]
   | ProcedureVal Procedure
 
 type Environment = Env.Env Value
@@ -17,6 +18,12 @@ type Environment = Env.Env Value
 instance Show Value where
   show (NumberVal n) = show n
   show (BoolVal b) = if b then "True" else "False"
+
+  show (ListVal l) = "(" ++ showList "" l ++ ")"
+    where
+      showList _ [] = ""
+      showList prefix (v:vs) = prefix ++ show v ++ showList " " vs
+
   show (ProcedureVal _) = "<<proc>>"
 
 run :: String -> Value
@@ -54,6 +61,34 @@ valueOfExpr expr env =
       in
         BoolVal (toNumber val == 0)
 
+    Cons h t ->
+      let
+        hVal = valueOfExpr h env
+        tVal = valueOfExpr t env
+      in
+        ListVal (hVal : (toList tVal))
+
+    Car l ->
+      let
+        lVal = valueOfExpr l env
+      in
+        head (toList lVal)
+
+    Cdr l ->
+      let
+        lVal = valueOfExpr l env
+      in
+        ListVal (tail (toList lVal))
+
+    Null l ->
+      let
+        lVal = valueOfExpr l env
+      in
+        BoolVal (null (toList lVal))
+
+    Empty ->
+      ListVal []
+
     If test consequent alternative ->
       let
         testVal = valueOfExpr test env
@@ -86,6 +121,10 @@ toNumber x = error ("Expected a number: " ++ show x)
 toBool :: Value -> Bool
 toBool (BoolVal b) = b
 toBool x = error ("Expected a boolean: " ++ show x)
+
+toList :: Value -> [Value]
+toList (ListVal l) = l
+toList x = error ("Expected a list: " ++ show x)
 
 toProcedure :: Value -> Procedure
 toProcedure (ProcedureVal p) = p

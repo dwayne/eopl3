@@ -7,6 +7,11 @@ data Expr
   | Var Int
   | Diff Expr Expr
   | Zero Expr
+  | Cons Expr Expr
+  | Car Expr
+  | Cdr Expr
+  | Null Expr
+  | Empty
   | If Expr Expr Expr
   | Let Expr Expr
   | Proc Expr

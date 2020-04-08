@@ -28,6 +28,21 @@ translateExpr expr senv =
     AST.Zero e ->
       Nameless.Zero (translateExpr e senv)
 
+    AST.Cons h t ->
+      Nameless.Cons (translateExpr h senv) (translateExpr t senv)
+
+    AST.Car l ->
+      Nameless.Car (translateExpr l senv)
+
+    AST.Cdr l ->
+      Nameless.Cdr (translateExpr l senv)
+
+    AST.Null l ->
+      Nameless.Null (translateExpr l senv)
+
+    AST.Empty ->
+      Nameless.Empty
+
     AST.If test consequent alternative ->
       Nameless.If
         (translateExpr test senv)

@@ -29,6 +29,11 @@ expr
   = constExpr
   <|> diffExpr
   <|> zeroExpr
+  <|> consExpr
+  <|> carExpr
+  <|> cdrExpr
+  <|> nullExpr
+  <|> emptyExpr
   <|> ifExpr
   <|> letExpr
   <|> procExpr
@@ -42,10 +47,24 @@ diffExpr :: Parser Expr
 diffExpr = minus *> (parens (Diff <$> (expr <* comma) <*> expr))
   where
     minus = char '-'
-    comma = lexeme (char ',')
 
 zeroExpr :: Parser Expr
 zeroExpr = reserved "zero?" *> (parens (Zero <$> expr))
+
+consExpr :: Parser Expr
+consExpr = reserved "cons" *> (parens (Cons <$> (expr <* comma) <*> expr))
+
+carExpr :: Parser Expr
+carExpr = reserved "car" *> (parens (Car <$> expr))
+
+cdrExpr :: Parser Expr
+cdrExpr = reserved "cdr" *> (parens (Cdr <$> expr))
+
+nullExpr :: Parser Expr
+nullExpr = reserved "null?" *> (parens (Null <$> expr))
+
+emptyExpr :: Parser Expr
+emptyExpr = Empty <$ reserved "emptylist"
 
 ifExpr :: Parser Expr
 ifExpr =
@@ -78,6 +97,9 @@ varExpr = Var <$> identifier
 
 -- Helpers
 
+comma :: Parser Char
+comma = lexeme (char ',')
+
 number :: Parser Number
 number = lexeme (Token.decimal lexer)
 
@@ -104,10 +126,15 @@ letDef = emptyDef
   { Token.identStart = oneOf ['a'..'z']
   , Token.identLetter = Token.identStart letDef
   , Token.reservedNames =
-      [ "else"
+      [ "car"
+      , "cdr"
+      , "cons"
+      , "else"
+      , "emptylist"
       , "if"
       , "in"
       , "let"
+      , "null?"
       , "proc"
       , "then"
       , "zero?"
