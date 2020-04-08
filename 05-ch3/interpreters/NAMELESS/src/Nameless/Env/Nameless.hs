@@ -1,21 +1,19 @@
 module Nameless.Env.Nameless (Env, empty, extend, apply) where
 
-data Env k v = Env [v]
+data Env v = Env [v]
 
-empty :: Env k v
+empty :: Env v
 empty = Env []
 
-extend :: v -> Env k v -> Env k v
+extend :: v -> Env v -> Env v
 extend v (Env values) = Env (v : values)
 
-apply :: (Integral k) => Env k v -> k -> v
-apply (Env values) index =
-  let
-    listRef [] _ = error "Index out of bounds"
-    listRef (v:_) 0 = v
-    listRef (_:vs) n = listRef vs (n-1)
-  in
-  if index < 0 then
-    error "Index must be greater than or equal to 0"
-  else
-    listRef values index
+apply :: Env v -> Int -> v
+apply (Env values) index = listRef values index
+
+-- Helpers
+
+listRef :: [a] -> Int -> a
+listRef [] _ = error "Index out of bounds"
+listRef (v:_) 0 = v
+listRef (_:vs) n = listRef vs (n-1)

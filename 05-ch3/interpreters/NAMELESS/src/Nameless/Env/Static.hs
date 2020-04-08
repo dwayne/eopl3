@@ -1,28 +1,18 @@
 module Nameless.Env.Static (Env, empty, extend, apply) where
 
-data Env k v = Env [k]
+import qualified Data.List as List
 
-empty :: Env k v
+data Env k = Env [k]
+
+empty :: Env k
 empty = Env []
 
-extend :: k -> Env k v -> Env k v
+extend :: k -> Env k -> Env k
 extend var (Env vars) = Env (var : vars)
 
-apply :: (Eq k, Show k, Integral v) => Env k v -> k -> v
+apply :: (Eq k, Show k) => Env k -> k -> Int
 apply (Env vars) var =
-  let
-    indexOf vs index =
-      case vs of
-        [] ->
-          Nothing
-
-        (v:rest) ->
-          if var == v then
-            Just index
-          else
-            indexOf rest (index + 1)
-  in
-  case indexOf vars 0 of
+  case List.elemIndex var vars of
     Nothing ->
       error ("No binding for " ++ show var)
 

@@ -4,7 +4,7 @@ import qualified Nameless.AST.AST as AST
 import qualified Nameless.AST.Nameless as Nameless
 import qualified Nameless.Env.Static as StaticEnv
 
-type StaticEnvironment = StaticEnv.Env AST.Id Nameless.Lexaddr
+type StaticEnv = StaticEnv.Env AST.Id
 
 translate :: AST.Program -> Nameless.Program
 translate (AST.Program expr) =
@@ -16,7 +16,7 @@ translate (AST.Program expr) =
           (StaticEnv.extend "x"
             StaticEnv.empty))
 
-translateExpr :: AST.Expr -> StaticEnvironment -> Nameless.Expr
+translateExpr :: AST.Expr -> StaticEnv -> Nameless.Expr
 translateExpr expr senv =
   case expr of
     AST.Const n ->

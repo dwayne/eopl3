@@ -12,7 +12,7 @@ data Value
   | BoolVal Bool
   | ProcedureVal Procedure
 
-type Environment = Env.Env Lexaddr Value
+type Environment = Env.Env Value
 
 instance Show Value where
   show (NumberVal n) = show n

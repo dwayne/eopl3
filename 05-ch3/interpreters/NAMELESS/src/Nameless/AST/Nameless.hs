@@ -1,10 +1,10 @@
-module Nameless.AST.Nameless (Program(..), Expr(..), Number, Lexaddr) where
+module Nameless.AST.Nameless (Program(..), Expr(..), Number) where
 
 data Program = Program Expr deriving Show
 
 data Expr
   = Const Number
-  | Var Lexaddr
+  | Var Int
   | Diff Expr Expr
   | Zero Expr
   | If Expr Expr Expr
@@ -14,5 +14,3 @@ data Expr
   deriving Show
 
 type Number = Integer
-
-type Lexaddr = Int
