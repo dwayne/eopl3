@@ -8,6 +8,7 @@ data Expr
   | Diff Expr Expr
   | Zero Expr
   | If Expr Expr Expr
+  | Cond [(Expr, Expr)]
   | Let Expr Expr
   | Proc Expr
   | Call Expr Expr

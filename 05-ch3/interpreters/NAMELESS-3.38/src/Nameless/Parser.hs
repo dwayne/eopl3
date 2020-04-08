@@ -3,7 +3,7 @@ module Nameless.Parser where
 import qualified Text.Parsec as Parsec
 import qualified Text.Parsec.Token as Token
 
-import Text.Parsec ((<|>), char, eof, oneOf)
+import Text.Parsec ((<|>), char, eof, many, oneOf)
 import Text.Parsec.Language (emptyDef)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Token (LanguageDef, TokenParser)
@@ -30,6 +30,7 @@ expr
   <|> diffExpr
   <|> zeroExpr
   <|> ifExpr
+  <|> condExpr
   <|> letExpr
   <|> procExpr
   <|> callExpr
@@ -54,6 +55,15 @@ ifExpr =
     ifToken = reserved "if"
     thenToken = reserved "then"
     elseToken = reserved "else"
+
+condExpr :: Parser Expr
+condExpr = Cond <$> (condToken *> clauses <* endToken)
+  where
+    condToken = reserved "cond"
+    endToken = reserved "end"
+    rocketToken = reserved "==>"
+    clauses = many clause
+    clause = (,) <$> expr <*> (rocketToken *> expr)
 
 letExpr :: Parser Expr
 letExpr =
@@ -104,7 +114,10 @@ letDef = emptyDef
   { Token.identStart = oneOf ['a'..'z']
   , Token.identLetter = Token.identStart letDef
   , Token.reservedNames =
-      [ "else"
+      [ "==>"
+      , "cond"
+      , "else"
+      , "end"
       , "if"
       , "in"
       , "let"

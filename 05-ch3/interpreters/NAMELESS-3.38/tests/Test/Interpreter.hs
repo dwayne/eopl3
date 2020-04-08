@@ -104,5 +104,17 @@ spec = do
 
       run input `shouldBe` "-100"
 
+  describe "example 14" $ do
+    it "returns 3" $ do
+      let input = "                          \
+        \ cond                               \
+        \   zero?(-(0, 1)) ==> 1             \
+        \   zero?(-(1, 0)) ==> 2             \
+        \   zero?(-(2, -(1, -(0, 1)))) ==> 3 \
+        \   zero?(5) ==> 4                   \
+        \ end                                "
+
+      run input `shouldBe` "3"
+
 run :: String -> String
 run = show . I.run

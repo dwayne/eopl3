@@ -34,6 +34,15 @@ translateExpr expr senv =
         (translateExpr consequent senv)
         (translateExpr alternative senv)
 
+    AST.Cond clauses ->
+      let
+        translateClause (test, consequent) =
+          ( translateExpr test senv
+          , translateExpr consequent senv
+          )
+      in
+        Nameless.Cond (map translateClause clauses)
+
     AST.Call f arg ->
       Nameless.Call
         (translateExpr f senv)
