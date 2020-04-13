@@ -66,13 +66,13 @@ letExpr =
 
 procExpr :: Parser Expr
 procExpr =
-  Proc <$> (procToken *> parens identifier) <*> expr
+  Proc <$> (procToken *> parens (commaSep identifier)) <*> expr
   where
     procToken = reserved "proc"
 
 callExpr :: Parser Expr
 callExpr =
-  parens (Call <$> expr <*> expr)
+  parens (Call <$> expr <*> many expr)
 
 varExpr :: Parser Expr
 varExpr = Var <$> identifier
@@ -90,6 +90,9 @@ reserved = Token.reserved lexer
 
 parens :: Parser a -> Parser a
 parens = Token.parens lexer
+
+commaSep :: Parser a -> Parser [a]
+commaSep = Token.commaSep lexer
 
 whiteSpace :: Parser ()
 whiteSpace = Token.whiteSpace lexer

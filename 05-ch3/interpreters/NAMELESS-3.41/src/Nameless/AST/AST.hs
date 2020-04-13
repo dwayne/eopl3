@@ -9,8 +9,8 @@ data Expr
   | Zero Expr
   | If Expr Expr Expr
   | Let [(Id, Expr)] Expr
-  | Proc Id Expr
-  | Call Expr Expr
+  | Proc [Id] Expr
+  | Call Expr [Expr]
   deriving Show
 
 type Number = Integer

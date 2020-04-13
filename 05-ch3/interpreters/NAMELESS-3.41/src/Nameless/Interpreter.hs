@@ -68,12 +68,12 @@ valueOfExpr expr env =
     Proc body ->
       ProcedureVal (procedure body env)
 
-    Call f arg ->
+    Call f args ->
       let
         fVal = valueOfExpr f env
-        argVal = valueOfExpr arg env
+        argVals = map (flip valueOfExpr env) args
       in
-        applyProcedure (toProcedure fVal) argVal
+        applyProcedure (toProcedure fVal) argVals
 
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n
@@ -94,6 +94,6 @@ data Procedure = Procedure Expr Environment
 procedure :: Expr -> Environment -> Procedure
 procedure = Procedure
 
-applyProcedure :: Procedure -> Value -> Value
-applyProcedure (Procedure body env) val =
-  valueOfExpr body (Env.extend [val] env)
+applyProcedure :: Procedure -> [Value] -> Value
+applyProcedure (Procedure body env) vals =
+  valueOfExpr body (Env.extend vals env)

@@ -30,10 +30,10 @@ translateExpr expr senv =
         (translateExpr consequent senv)
         (translateExpr alternative senv)
 
-    AST.Call f arg ->
+    AST.Call f args ->
       Nameless.Call
         (translateExpr f senv)
-        (translateExpr arg senv)
+        (map (flip translateExpr senv) args)
 
     AST.Var v ->
       Nameless.Var (StaticEnv.apply senv v)
@@ -43,6 +43,6 @@ translateExpr expr senv =
         (map (flip translateExpr senv . snd) bindings)
         (translateExpr body (StaticEnv.extend (map fst bindings) senv))
 
-    AST.Proc var body ->
+    AST.Proc vars body ->
       Nameless.Proc
-        (translateExpr body (StaticEnv.extend [var] senv))
+        (translateExpr body (StaticEnv.extend vars senv))

@@ -10,7 +10,7 @@ data Expr
   | If Expr Expr Expr
   | Let [Expr] Expr
   | Proc Expr
-  | Call Expr Expr
+  | Call Expr [Expr]
   deriving Show
 
 type Number = Integer
