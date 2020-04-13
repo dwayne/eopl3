@@ -26,11 +26,7 @@ valueOfProgram :: Program -> Value
 valueOfProgram (Program expr) =
   valueOfExpr expr initEnv
   where
-    initEnv =
-      Env.extend (NumberVal 1)
-        (Env.extend (NumberVal 5)
-          (Env.extend (NumberVal 10)
-            Env.empty))
+    initEnv = Env.extend [ NumberVal 1, NumberVal 5, NumberVal 10 ] Env.empty
 
 valueOfExpr :: Expr -> Environment -> Value
 valueOfExpr expr env =
@@ -38,8 +34,8 @@ valueOfExpr expr env =
     Const n ->
       NumberVal n
 
-    Var n ->
-      Env.apply env n
+    Var lexAddr ->
+      Env.apply env lexAddr
 
     Diff a b ->
       let
@@ -63,11 +59,11 @@ valueOfExpr expr env =
         else
           valueOfExpr alternative env
 
-    Let e body ->
+    Let exprs body ->
       let
-        val = valueOfExpr e env
+        vals = map (flip valueOfExpr env) exprs
       in
-        valueOfExpr body (Env.extend val env)
+        valueOfExpr body (Env.extend vals env)
 
     Proc body ->
       ProcedureVal (procedure body env)
@@ -100,4 +96,4 @@ procedure = Procedure
 
 applyProcedure :: Procedure -> Value -> Value
 applyProcedure (Procedure body env) val =
-  valueOfExpr body (Env.extend val env)
+  valueOfExpr body (Env.extend [val] env)

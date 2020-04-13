@@ -10,11 +10,7 @@ translate :: AST.Program -> Nameless.Program
 translate (AST.Program expr) =
   Nameless.Program (translateExpr expr initSenv)
   where
-    initSenv =
-      StaticEnv.extend "i"
-        (StaticEnv.extend "v"
-          (StaticEnv.extend "x"
-            StaticEnv.empty))
+    initSenv = StaticEnv.extend ["i", "v", "x"] StaticEnv.empty
 
 translateExpr :: AST.Expr -> StaticEnv -> Nameless.Expr
 translateExpr expr senv =
@@ -42,11 +38,11 @@ translateExpr expr senv =
     AST.Var v ->
       Nameless.Var (StaticEnv.apply senv v)
 
-    AST.Let var e body ->
+    AST.Let bindings body ->
       Nameless.Let
-        (translateExpr e senv)
-        (translateExpr body (StaticEnv.extend var senv))
+        (map (flip translateExpr senv . snd) bindings)
+        (translateExpr body (StaticEnv.extend (map fst bindings) senv))
 
     AST.Proc var body ->
       Nameless.Proc
-        (translateExpr body (StaticEnv.extend var senv))
+        (translateExpr body (StaticEnv.extend [var] senv))

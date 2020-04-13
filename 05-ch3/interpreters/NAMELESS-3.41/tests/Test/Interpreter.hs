@@ -104,5 +104,15 @@ spec = do
 
       run input `shouldBe` "-100"
 
+  describe "example 14" $ do
+    it "returns 1" $ do
+      let input = "            \
+        \ let x = 30 in        \
+        \   let x = -(x, 1)    \
+        \       y = -(x, 2) in \
+        \     -(x, y)          "
+
+      run input `shouldBe` "1"
+
 run :: String -> String
 run = show . I.run

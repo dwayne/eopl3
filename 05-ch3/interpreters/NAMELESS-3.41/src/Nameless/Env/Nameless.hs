@@ -1,15 +1,15 @@
 module Nameless.Env.Nameless (Env, empty, extend, apply) where
 
-data Env v = Env [v]
+data Env v = Env [[v]]
 
 empty :: Env v
 empty = Env []
 
-extend :: v -> Env v -> Env v
-extend v (Env values) = Env (v : values)
+extend :: [v] -> Env v -> Env v
+extend values (Env rest) = Env (values : rest)
 
-apply :: Env v -> Int -> v
-apply (Env values) index = listRef values index
+apply :: Env v -> (Int, Int) -> v
+apply (Env values) (depth, n) = listRef (listRef values depth) n
 
 -- Helpers
 

@@ -4,11 +4,11 @@ data Program = Program Expr deriving Show
 
 data Expr
   = Const Number
-  | Var Int
+  | Var (Int, Int)
   | Diff Expr Expr
   | Zero Expr
   | If Expr Expr Expr
-  | Let Expr Expr
+  | Let [Expr] Expr
   | Proc Expr
   | Call Expr Expr
   deriving Show
