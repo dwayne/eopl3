@@ -123,5 +123,73 @@ spec = do
 
       run input `shouldBe` "1"
 
+  describe "example 16" $ do
+    it "returns 1" $ do
+      let input = "                                      \
+        \ let x = newref(0)                              \
+        \ in letrec                                      \
+        \      even(dummy) =                             \
+        \        if zero?(deref(x)) then                 \
+        \          1                                     \
+        \        else                                    \
+        \          let dummy = setref(x, -(deref(x), 1)) \
+        \          in (odd 888)                          \
+        \      odd(dummy) =                              \
+        \        if zero?(deref(x)) then                 \
+        \          0                                     \
+        \        else                                    \
+        \          let dummy = setref(x, -(deref(x), 1)) \
+        \          in (even 888)                         \
+        \    in let dummy = setref(x, 13) in (odd 888)   "
+
+      run input `shouldBe` "1"
+
+  describe "example 17" $ do
+    it "returns -1" $ do
+      let input = "                                                            \
+        \ let g = let counter = newref(0)                                      \
+        \         in proc (dummy)                                              \
+        \              let dummy = setref(counter, -(deref(counter), -(0, 1))) \
+        \              in deref(counter)                                       \
+        \ in let a = (g 11)                                                    \
+        \    in let b = (g 11)                                                 \
+        \       in -(a, b)                                                     "
+
+      run input `shouldBe` "-1"
+
+  describe "example 18" $ do
+    it "returns 0" $ do
+      let input = "                                                            \
+        \ let g = proc (dummy)                                                 \
+        \           let counter = newref(0)                                    \
+        \           in let dummy = setref(counter, -(deref(counter), -(0, 1))) \
+        \              in deref(counter)                                       \
+        \ in let a = (g 11)                                                    \
+        \    in let b = (g 11)                                                 \
+        \       in -(a, b)                                                     "
+
+      run input `shouldBe` "0"
+
+  describe "example 19" $ do
+    it "returns 11" $ do
+      let input = "                           \
+        \ let x = newref(newref(0))           \
+        \ in let dummy = setref(deref(x), 11) \
+        \    in deref(deref(x))               "
+
+      run input `shouldBe` "11"
+
+  describe "example 20" $ do
+    it "returns 11" $ do
+      let input = "                              \
+        \ let x = newref(22)                     \
+        \ in let f =                             \
+        \      proc (z)                          \
+        \        let zz = newref(-(z, deref(x))) \
+        \        in deref(zz)                    \
+        \    in -((f 66), (f 55))                "
+
+      run input `shouldBe` "11"
+
 run :: String -> String
 run = show . I.run

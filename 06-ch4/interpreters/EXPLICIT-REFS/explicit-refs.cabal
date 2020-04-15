@@ -13,6 +13,7 @@ library
     ExplicitRefs.AST
     ExplicitRefs.Env
     ExplicitRefs.Parser
+    ExplicitRefs.Store
 
   build-depends:
     base >= 4.7 && < 5,

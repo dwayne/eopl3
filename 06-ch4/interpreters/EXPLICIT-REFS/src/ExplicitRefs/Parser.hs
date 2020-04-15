@@ -29,6 +29,9 @@ expr
   = constExpr
   <|> diffExpr
   <|> zeroExpr
+  <|> newrefExpr
+  <|> derefExpr
+  <|> setrefExpr
   <|> ifExpr
   <|> letrecExpr
   <|> letExpr
@@ -47,6 +50,17 @@ diffExpr = minus *> (parens (Diff <$> (expr <* comma) <*> expr))
 
 zeroExpr :: Parser Expr
 zeroExpr = reserved "zero?" *> (parens (Zero <$> expr))
+
+newrefExpr :: Parser Expr
+newrefExpr = reserved "newref" *> (parens (Newref <$> expr))
+
+derefExpr :: Parser Expr
+derefExpr = reserved "deref" *> (parens (Deref <$> expr))
+
+setrefExpr :: Parser Expr
+setrefExpr = reserved "setref" *> (parens (Setref <$> (expr <* comma) <*> expr))
+  where
+    comma = lexeme (char ',')
 
 ifExpr :: Parser Expr
 ifExpr =
@@ -116,12 +130,15 @@ letDef = emptyDef
   { Token.identStart = oneOf ['a'..'z']
   , Token.identLetter = Token.identStart letDef
   , Token.reservedNames =
-      [ "else"
+      [ "deref"
+      , "else"
       , "if"
       , "in"
       , "let"
       , "letrec"
+      , "newref"
       , "proc"
+      , "setref"
       , "then"
       , "zero?"
       ]
