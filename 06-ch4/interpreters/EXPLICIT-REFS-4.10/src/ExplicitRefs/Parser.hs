@@ -29,6 +29,7 @@ expr
   = constExpr
   <|> diffExpr
   <|> zeroExpr
+  <|> beginExpr
   <|> newrefExpr
   <|> derefExpr
   <|> setrefExpr
@@ -50,6 +51,9 @@ diffExpr = minus *> (parens (Diff <$> (expr <* comma) <*> expr))
 
 zeroExpr :: Parser Expr
 zeroExpr = reserved "zero?" *> (parens (Zero <$> expr))
+
+beginExpr :: Parser Expr
+beginExpr = reserved "begin" *> (Begin <$> semiSep1 expr) <* reserved "end"
 
 newrefExpr :: Parser Expr
 newrefExpr = reserved "newref" *> (parens (Newref <$> expr))
@@ -98,6 +102,9 @@ varExpr = Var <$> identifier
 
 -- Helpers
 
+semiSep1 :: Parser a -> Parser [a]
+semiSep1 = Token.semiSep1 lexer
+
 inToken :: Parser ()
 inToken = reserved "in"
 
@@ -130,8 +137,10 @@ letDef = emptyDef
   { Token.identStart = oneOf ['a'..'z']
   , Token.identLetter = Token.identStart letDef
   , Token.reservedNames =
-      [ "deref"
+      [ "begin"
+      , "deref"
       , "else"
+      , "end"
       , "if"
       , "in"
       , "let"

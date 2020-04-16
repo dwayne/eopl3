@@ -86,6 +86,9 @@ valueOfExpr expr env store =
     Letrec recProcs e ->
       valueOfExpr e (Env.extendRec recProcs env) store
 
+    Begin exprs ->
+      valueOfSequence exprs env store
+
     Newref e ->
       let
         (val, store1) = valueOfExpr e env store
@@ -107,6 +110,14 @@ valueOfExpr expr env store =
         store3 = Store.setref (toRef refVal) val store2
       in
         (val, store3)
+
+valueOfSequence :: [Expr] -> Environment -> Store -> (Value, Store)
+valueOfSequence [e] env store = valueOfExpr e env store
+valueOfSequence (e:es) env store =
+  let
+    (_, nextStore) = valueOfExpr e env store
+  in
+    valueOfSequence es env nextStore
 
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n

@@ -1,6 +1,6 @@
 Program ::= Expr
 Expr    ::= Const | Var | Diff | Zero | If | Let | Proc | Call | Letrec
-          | Newref | Deref | Setref
+          | Begin | Newref | Deref | Setref
 Const   ::= Number
 Var     ::= Id
 Diff    ::= '-' '(' Expr ',' Expr ')'
@@ -10,6 +10,7 @@ Let     ::= 'let' Id '=' Expr 'in' Expr
 Proc    ::= 'proc' '(' Id ')' Expr
 Call    ::= '(' Expr Expr ')'
 Letrec  ::= 'letrec' (Id '(' Id ')' '=' Expr)* 'in' Expr
+Begin   ::= 'begin' Expr (';' Expr)* 'end'
 Newref  ::= 'newref' '(' Expr ')'
 Deref   ::= 'deref' '(' Expr ')'
 Setref  ::= 'setref' '(' Expr ',' Expr ')'
