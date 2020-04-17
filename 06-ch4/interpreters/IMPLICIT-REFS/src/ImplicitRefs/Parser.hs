@@ -30,9 +30,7 @@ expr
   <|> diffExpr
   <|> zeroExpr
   <|> beginExpr
-  <|> newrefExpr
-  <|> derefExpr
-  <|> setrefExpr
+  <|> assignExpr
   <|> ifExpr
   <|> letrecExpr
   <|> letExpr
@@ -55,16 +53,8 @@ zeroExpr = reserved "zero?" *> (parens (Zero <$> expr))
 beginExpr :: Parser Expr
 beginExpr = reserved "begin" *> (Begin <$> semiSep1 expr) <* reserved "end"
 
-newrefExpr :: Parser Expr
-newrefExpr = reserved "newref" *> (parens (Newref <$> expr))
-
-derefExpr :: Parser Expr
-derefExpr = reserved "deref" *> (parens (Deref <$> expr))
-
-setrefExpr :: Parser Expr
-setrefExpr = reserved "setref" *> (parens (Setref <$> (expr <* comma) <*> expr))
-  where
-    comma = lexeme (char ',')
+assignExpr :: Parser Expr
+assignExpr = reserved "set" *> (Assign <$> (identifier <* equal) <*> expr)
 
 ifExpr :: Parser Expr
 ifExpr =
@@ -138,16 +128,14 @@ letDef = emptyDef
   , Token.identLetter = Token.identStart letDef
   , Token.reservedNames =
       [ "begin"
-      , "deref"
       , "else"
       , "end"
       , "if"
       , "in"
       , "let"
       , "letrec"
-      , "newref"
       , "proc"
-      , "setref"
+      , "set"
       , "then"
       , "zero?"
       ]

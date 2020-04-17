@@ -10,16 +10,14 @@ data Value
   = NumberVal Number
   | BoolVal Bool
   | ProcedureVal Procedure
-  | RefVal Store.Ref
 
-type Environment = Env.Env Id Value Expr
+type Environment = Env.Env Id Store.Ref
 type Store = Store.Store Value
 
 instance Show Value where
   show (NumberVal n) = show n
   show (BoolVal b) = if b then "True" else "False"
   show (ProcedureVal _) = "<<proc>>"
-  show (RefVal r) = "<<ref:" ++ show r ++ ">>"
 
 run :: String -> Value
 run = valueOfProgram . parse
@@ -29,12 +27,16 @@ valueOfProgram (Program expr) =
   fst (valueOfExpr expr initEnv initStore)
   where
     initEnv =
-      Env.extend "i" (NumberVal 1)
-        (Env.extend "v" (NumberVal 5)
-          (Env.extend "x" (NumberVal 10)
+      Env.extend "i" iRef
+        (Env.extend "v" vRef
+          (Env.extend "x" xRef
             Env.empty))
 
-    initStore = Store.empty
+    initStore = iStore
+
+    (xRef, xStore) = Store.newref (NumberVal 10) Store.empty
+    (vRef, vStore) = Store.newref (NumberVal 5) xStore
+    (iRef, iStore) = Store.newref (NumberVal 1) vStore
 
 valueOfExpr :: Expr -> Environment -> Store -> (Value, Store)
 valueOfExpr expr env store =
@@ -43,7 +45,7 @@ valueOfExpr expr env store =
       (NumberVal n, store)
 
     Var v ->
-      (Env.apply env v procedureVal, store)
+      (Store.deref (Env.apply env v) store, store)
 
     Diff a b ->
       let
@@ -70,8 +72,9 @@ valueOfExpr expr env store =
     Let var e body ->
       let
         (val, store1) = valueOfExpr e env store
+        (ref, store2) = Store.newref val store1
       in
-        valueOfExpr body (Env.extend var val env) store1
+        valueOfExpr body (Env.extend var ref env) store2
 
     Proc var body ->
       (procedureVal var body env, store)
@@ -84,32 +87,27 @@ valueOfExpr expr env store =
         applyProcedure (toProcedure fVal) argVal store2
 
     Letrec recProcs e ->
-      valueOfExpr e (Env.extendRec recProcs env) store
+      let
+        (nextEnv, nextStore) = extendRec recProcs env store
+
+        extendRec [] env store = (env, store)
+        extendRec ((name, param, body):recProcs) env store =
+          let
+            (ref, store1) =
+              Store.newref (procedureVal param body nextEnv) store
+          in
+            extendRec recProcs (Env.extend name ref env) store1
+      in
+        valueOfExpr e nextEnv nextStore
 
     Begin exprs ->
       valueOfSequence exprs env store
 
-    Newref e ->
+    Assign var e ->
       let
         (val, store1) = valueOfExpr e env store
-        (ref, store2) = Store.newref val store1
       in
-        (RefVal ref, store2)
-
-    Deref ref ->
-      let
-        (refVal, store1) = valueOfExpr ref env store
-        val = Store.deref (toRef refVal) store1
-      in
-        (val, store1)
-
-    Setref ref e ->
-      let
-        (refVal, store1) = valueOfExpr ref env store
-        (val, store2) = valueOfExpr e env store1
-        store3 = Store.setref (toRef refVal) val store2
-      in
-        (val, store3)
+        (val, Store.setref (Env.apply env var) val store1)
 
 valueOfSequence :: [Expr] -> Environment -> Store -> (Value, Store)
 valueOfSequence [e] env store = valueOfExpr e env store
@@ -131,10 +129,6 @@ toProcedure :: Value -> Procedure
 toProcedure (ProcedureVal p) = p
 toProcedure x = error ("Expected a procedure: " ++ show x)
 
-toRef :: Value -> Store.Ref
-toRef (RefVal r) = r
-toRef x = error ("Expected a reference: " ++ show x)
-
 -- Procedure ADT
 
 data Procedure = Procedure Id Expr Environment
@@ -148,4 +142,7 @@ procedureVal var body env =
 
 applyProcedure :: Procedure -> Value -> Store -> (Value, Store)
 applyProcedure (Procedure var body env) val store =
-  valueOfExpr body (Env.extend var val env) store
+  let
+    (ref, nextStore) = Store.newref val store
+  in
+    valueOfExpr body (Env.extend var ref env) nextStore
