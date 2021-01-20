@@ -31,7 +31,7 @@
                (num-val n)]
 
     [var-exp (var)
-             (apply-env env var construct-proc-val)]
+             (apply-env env var)]
 
     [diff-exp (exp1 exp2)
               (let ([val1 (value-of-exp exp1 env)]
@@ -60,7 +60,7 @@
               (proc-val (procedure var body env))]
 
     [letrec-exp (proc-name bound-var proc-body letrec-body)
-                (value-of-exp letrec-body (extend-env-rec proc-name bound-var proc-body env))]
+                (value-of-exp letrec-body (extend-env-rec proc-name bound-var proc-body env construct-proc-val))]
 
     [call-exp (rator rand)
               (let ([proc (expval->proc (value-of-exp rator env))]
