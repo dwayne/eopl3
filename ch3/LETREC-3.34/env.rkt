@@ -15,44 +15,28 @@
 
  identifier? identifier=?)
 
-(define-datatype env env?
-  [empty]
-  [extend
-   (var identifier?)
-   (val any?)
-   (saved-env env?)]
-  [extend-rec
-   (p-name identifier?)
-   (b-var identifier?)
-   (p-body expression?)
-   (saved-env env?)])
-
 (define (empty-env)
-  (empty))
+  (lambda (search-var construct-proc-val)
+    (eopl:error 'apply-env "No binding for ~s" search-var)))
 
 (define (extend-env var val env)
-  (extend var val env))
+  (lambda (search-var construct-proc-val)
+    (if (identifier=? search-var var)
+        val
+        (apply-env env search-var construct-proc-val))))
 
 (define (extend-env-rec proc-name var proc-body env)
-  (extend-rec proc-name var proc-body env))
+  (letrec ([env-rec (lambda (search-var construct-proc-val)
+                      (if (identifier=? search-var proc-name)
+                          (construct-proc-val var proc-body env-rec)
+                          (apply-env env search-var construct-proc-val)))])
+    env-rec))
 
-(define (apply-env env1 search-var construct-proc-val)
-  (cases env env1
-    [empty ()
-           (eopl:error 'apply-env "No binding for ~s" search-var)]
+(define env? procedure?)
 
-    [extend (saved-var saved-val saved-env)
-            (if (identifier=? search-var saved-var)
-                saved-val
-                (apply-env saved-env search-var construct-proc-val))]
-
-    [extend-rec (p-name b-var p-body saved-env)
-                (if (identifier=? search-var p-name)
-                    (construct-proc-val b-var p-body env1)
-                    (apply-env saved-env search-var construct-proc-val))]))
+(define (apply-env env search-var construct-proc-val)
+  (env search-var construct-proc-val))
 
 (define identifier? symbol?)
 
 (define identifier=? eq?)
-
-(define (any? v) #t)
