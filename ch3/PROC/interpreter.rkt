@@ -40,11 +40,23 @@
                  (- (expval->num val1)
                     (expval->num val2))))]
 
+    [mult-exp (exp1 exp2)
+              (let ([val1 (value-of-exp exp1 env)]
+                    [val2 (value-of-exp exp2 env)])
+                (num-val
+                 (* (expval->num val1)
+                    (expval->num val2))))]
+
     [zero?-exp (exp1)
                (let ([val1 (value-of-exp exp1 env)])
                  (if (zero? (expval->num val1))
                      (bool-val #t)
                      (bool-val #f)))]
+
+    [add1-exp (exp1)
+               (let ([val1 (value-of-exp exp1 env)])
+                 (num-val
+                  (+ 1 (expval->num val1))))]
 
     [if-exp (exp1 exp2 exp3)
             (let ([val1 (value-of-exp exp1 env)])

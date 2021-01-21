@@ -17,6 +17,10 @@
  (a-program (diff-exp (const-exp 5) (var-exp 'y))))
 
 (check-equal?
+ (parse "*(5, y)")
+ (a-program (mult-exp (const-exp 5) (var-exp 'y))))
+
+(check-equal?
  (parse "zero?(z)")
  (a-program (zero?-exp (var-exp 'z))))
 

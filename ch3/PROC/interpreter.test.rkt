@@ -110,3 +110,20 @@ in let a = ((f 1) 2)
 CODE
   )
  (num-val 15))
+
+;; Exercise 3.37
+;;
+;; With lexical binding you get 25.
+
+(check-equal?
+ (run
+  #<<CODE
+let fact = proc (n) add1(n)
+in let fact = proc (n)
+                if zero?(n)
+                then 1
+                else *(n, (fact -(n, 1)))
+   in (fact 5)
+CODE
+  )
+ (num-val 25))

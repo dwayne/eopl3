@@ -8,7 +8,11 @@
 ;;
 ;;            ::= -(Expression, Expression)
 ;;
+;;            ::= *(Expression, Expression)
+;;
 ;;            ::= zero?(Expression)
+;;
+;;            ::= add1(Expression)
 ;;
 ;;            ::= if Expression then Expression else Expression
 ;;
@@ -28,7 +32,9 @@
  const-exp
  var-exp
  diff-exp
+ mult-exp
  zero?-exp
+ add1-exp
  if-exp
  let-exp
  proc-exp
@@ -55,8 +61,14 @@
     (expression ("-" "(" expression "," expression ")")
                 diff-exp)
 
+    (expression ("*" "(" expression "," expression ")")
+                mult-exp)
+
     (expression ("zero?" "(" expression ")")
                 zero?-exp)
+
+    (expression ("add1" "(" expression ")")
+                add1-exp)
 
     (expression ("if" expression "then" expression "else" expression)
                 if-exp)

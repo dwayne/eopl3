@@ -8,6 +8,8 @@
 ;;
 ;;            ::= -(Expression, Expression)
 ;;
+;;            ::= *(Expression, Expression)
+;;
 ;;            ::= zero?(Expression)
 ;;
 ;;            ::= if Expression then Expression else Expression
@@ -28,6 +30,7 @@
  const-exp
  var-exp
  diff-exp
+ mult-exp
  zero?-exp
  if-exp
  let-exp
@@ -54,6 +57,9 @@
 
     (expression ("-" "(" expression "," expression ")")
                 diff-exp)
+
+    (expression ("*" "(" expression "," expression ")")
+                mult-exp)
 
     (expression ("zero?" "(" expression ")")
                 zero?-exp)

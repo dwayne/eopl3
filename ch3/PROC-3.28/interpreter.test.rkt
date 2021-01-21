@@ -158,3 +158,32 @@ in let p = proc (z) a
 CODE
   )
  (num-val 2))
+
+;; Exercise 3.37
+;;
+;; With dynamic binding you get 120.
+
+(check-equal?
+ (run
+  #<<CODE
+let fact = proc (n) (addone n)
+in let fact = proc (n)
+                if zero?(n)
+                then 1
+                else *(n, (fact -(n, 1)))
+   in (fact 5)
+CODE
+  )
+ (num-val 120))
+
+;; The mutually recursive procedures even and odd from section 3.4
+
+(check-equal?
+ (run
+  #<<CODE
+let even = proc (x) if zero?(x) then 1 else (odd -(x, 1))
+in let odd = proc (x) if zero?(x) then 0 else (even -(x, 1))
+   in (odd 13)
+CODE
+  )
+ (num-val 1))
