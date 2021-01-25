@@ -34,6 +34,10 @@
  proc-exp
  call-exp
 
+ nameless-var-exp
+ nameless-let-exp
+ nameless-proc-exp
+
  ;; Parser
  parse)
 
@@ -68,7 +72,16 @@
                 proc-exp)
 
     (expression ("(" expression expression ")")
-                call-exp)))
+                call-exp)
+
+    (expression ("%lexref" number)
+                nameless-var-exp)
+
+    (expression ("%let" expression "in" expression)
+                nameless-let-exp)
+
+    (expression ("%lexproc" expression)
+                nameless-proc-exp)))
 
 (sllgen:make-define-datatypes scanner-spec grammar)
 

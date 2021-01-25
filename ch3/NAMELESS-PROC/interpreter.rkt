@@ -1,7 +1,8 @@
 #lang eopl
 
-(require "./env.rkt")
+(require "./nenv.rkt")
 (require "./parser.rkt")
+(require "./translator.rkt")
 
 (provide
 
@@ -12,70 +13,72 @@
  run)
 
 (define (run s)
-  (let ([init-env (extend-env
-                   'i (num-val 1)
-                   (extend-env
-                    'v (num-val 5)
-                    (extend-env
-                     'x (num-val 10)
-                     (empty-env))))])
-    (value-of-program (parse s) init-env)))
+  (let ([init-nenv (extend-nenv
+                    (num-val 1)
+                    (extend-nenv
+                     (num-val 5)
+                     (extend-nenv
+                      (num-val 10)
+                      (empty-nenv))))])
+    (value-of-program (translate (parse s)) init-nenv)))
 
-(define (value-of-program prog env)
+(define (value-of-program prog nenv)
   (cases program prog
-    [a-program (exp) (value-of-exp exp env)]))
+    [a-program (exp) (value-of-exp exp nenv)]))
 
-(define (value-of-exp exp env)
+(define (value-of-exp exp nenv)
   (cases expression exp
     [const-exp (n)
                (num-val n)]
 
-    [var-exp (var)
-             (apply-env env var)]
+    [nameless-var-exp (n)
+                      (apply-nenv nenv n)]
 
     [diff-exp (exp1 exp2)
-              (let ([val1 (value-of-exp exp1 env)]
-                    [val2 (value-of-exp exp2 env)])
+              (let ([val1 (value-of-exp exp1 nenv)]
+                    [val2 (value-of-exp exp2 nenv)])
                 (num-val
                  (- (expval->num val1)
                     (expval->num val2))))]
 
     [zero?-exp (exp1)
-               (let ([val1 (value-of-exp exp1 env)])
+               (let ([val1 (value-of-exp exp1 nenv)])
                  (if (zero? (expval->num val1))
                      (bool-val #t)
                      (bool-val #f)))]
 
     [if-exp (exp1 exp2 exp3)
-            (let ([val1 (value-of-exp exp1 env)])
+            (let ([val1 (value-of-exp exp1 nenv)])
               (if (expval->bool val1)
-                  (value-of-exp exp2 env)
-                  (value-of-exp exp3 env)))]
+                  (value-of-exp exp2 nenv)
+                  (value-of-exp exp3 nenv)))]
 
-    [let-exp (var exp1 body)
-             (let ([val1 (value-of-exp exp1 env)])
-               (value-of-exp body (extend-env var val1 env)))]
+    [nameless-let-exp (exp1 body)
+             (let ([val1 (value-of-exp exp1 nenv)])
+               (value-of-exp body (extend-nenv val1 nenv)))]
 
-    [proc-exp (var body)
-              (proc-val (procedure var body env))]
+    [nameless-proc-exp (body)
+              (proc-val (procedure body nenv))]
 
     [call-exp (rator rand)
-              (let ([proc (expval->proc (value-of-exp rator env))]
-                    [arg (value-of-exp rand env)])
-                (apply-procedure proc arg))]))
+              (let ([proc (expval->proc (value-of-exp rator nenv))]
+                    [arg (value-of-exp rand nenv)])
+                (apply-procedure proc arg))]
+
+    [else
+     (eopl:error 'value-of-exp "Invalid translated expression")]))
 
 ;; Procedure ADT
 
 (define-datatype proc proc?
   [procedure
-   (var identifier?)
    (body expression?)
-   (saved-env env?)])
+   (saved-nenv nenv?)])
 
 (define (apply-procedure proc1 val)
   (cases proc proc1
-    [procedure (var body saved-env)
-               (value-of-exp body (extend-env var val saved-env))]))
+    [procedure (body saved-nenv)
+               (value-of-exp body (extend-nenv val saved-nenv))]))
 
 ;; Values
 ;;
