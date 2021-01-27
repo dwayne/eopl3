@@ -27,6 +27,11 @@
                     (const-exp 1))))
 
 (check-equal?
+ (parse "cond zero?(0) ==> 1 end")
+ (a-program (cond-exp (list (zero?-exp (const-exp 0)))
+                      (list (const-exp 1)))))
+
+(check-equal?
  (parse "let n=10 in -(n, 1)")
  (a-program (let-exp 'n
                      (const-exp 10)

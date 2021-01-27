@@ -53,6 +53,9 @@
                   (value-of-exp exp2 nenv)
                   (value-of-exp exp3 nenv)))]
 
+    [cond-exp (conds exps)
+              (value-of-cond-exp conds exps nenv)]
+
     [nameless-let-exp (exp1 body)
              (let ([val1 (value-of-exp exp1 nenv)])
                (value-of-exp body (extend-nenv val1 nenv)))]
@@ -67,6 +70,14 @@
 
     [else
      (eopl:error 'value-of-exp "Invalid translated expression")]))
+
+(define (value-of-cond-exp conds exps nenv)
+  (if (null? conds)
+      (eopl:error 'cond "No condition is satisfied")
+      (let ([val1 (value-of-exp (car conds) nenv)])
+        (if (expval->bool val1)
+            (value-of-exp (car exps) nenv)
+            (value-of-cond-exp (cdr conds) (cdr exps) nenv)))))
 
 ;; Procedure ADT
 

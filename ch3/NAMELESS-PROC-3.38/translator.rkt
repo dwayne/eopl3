@@ -40,6 +40,10 @@
                     (translate-exp exp2 senv)
                     (translate-exp exp3 senv))]
 
+    [cond-exp (conds exps)
+              (cond-exp (translate-exps conds senv)
+                        (translate-exps exps senv))]
+
     [let-exp (var exp1 body)
              (nameless-let-exp
               (translate-exp exp1 senv)
@@ -55,3 +59,6 @@
 
     [else
      (eopl:error 'translate-exp "Invalid source expression: ~s" exp)]))
+
+(define (translate-exps exps senv)
+  (map (lambda (exp1) (translate-exp exp1 senv)) exps))

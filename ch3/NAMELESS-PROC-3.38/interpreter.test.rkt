@@ -110,3 +110,21 @@ in let a = ((f 1) 2)
 CODE
   )
  (num-val 15))
+
+;; Exercise 3.38
+;;
+;; Extend the lexical address translator and interpreter to handle cond from
+;; exercise 3.12.
+
+(check-equal?
+ (run
+  #<<CODE
+let x = 5
+in let y = 0
+   in cond
+        zero?(x) ==> y
+        zero?(y) ==> -(x, -(0, x))
+      end
+CODE
+  )
+ (num-val 10))

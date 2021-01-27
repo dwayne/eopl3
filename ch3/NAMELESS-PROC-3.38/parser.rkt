@@ -12,6 +12,8 @@
 ;;
 ;;            ::= if Expression then Expression else Expression
 ;;
+;;            ::= cond {Expression ==> Expression}* end
+;;
 ;;            ::= let Identifier = Expression in Expression
 ;;
 ;;            ::= proc (Identifier) Expression
@@ -30,6 +32,7 @@
  diff-exp
  zero?-exp
  if-exp
+ cond-exp
  let-exp
  proc-exp
  call-exp
@@ -64,6 +67,9 @@
 
     (expression ("if" expression "then" expression "else" expression)
                 if-exp)
+
+    (expression ("cond" (arbno expression "==>" expression) "end")
+                cond-exp)
 
     (expression ("let" identifier "=" expression "in" expression)
                 let-exp)
