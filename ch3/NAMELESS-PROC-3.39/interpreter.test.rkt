@@ -72,6 +72,25 @@ CODE
 (check-equal?
  (run
   #<<CODE
+unpack x y = list(1, 2)
+in -(y, x)
+CODE
+  )
+ (num-val 1))
+
+(check-equal?
+ (run
+  #<<CODE
+let u = 7
+in unpack x y = list(u, 3)
+   in -(x, y)
+CODE
+  )
+ (num-val 4))
+
+(check-equal?
+ (run
+  #<<CODE
 let f = proc (x) -(x, 11)
 in (f (f 77))
 CODE

@@ -16,6 +16,8 @@
 ;;
 ;;            ::= let Identifier = Expression in Expression
 ;;
+;;            ::= unpack {Identifier}* = Expression in Expression
+;;
 ;;            ::= proc (Identifier) Expression
 ;;
 ;;            ::= (Expression Expression)
@@ -34,11 +36,13 @@
  zero?-exp
  if-exp
  let-exp
+ unpack-exp
  proc-exp
  call-exp
 
  nameless-var-exp
  nameless-let-exp
+ nameless-unpack-exp
  nameless-proc-exp
 
  ;; Parser
@@ -74,6 +78,9 @@
     (expression ("let" identifier "=" expression "in" expression)
                 let-exp)
 
+    (expression ("unpack" (arbno identifier) "=" expression "in" expression)
+                unpack-exp)
+
     (expression ("proc" "(" identifier ")" expression)
                 proc-exp)
 
@@ -85,6 +92,9 @@
 
     (expression ("%let" expression "in" expression)
                 nameless-let-exp)
+
+    (expression ("%unpack" expression "in" expression)
+                nameless-unpack-exp)
 
     (expression ("%lexproc" expression)
                 nameless-proc-exp)))

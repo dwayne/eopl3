@@ -61,6 +61,10 @@
              (let ([val1 (value-of-exp exp1 nenv)])
                (value-of-exp body (extend-nenv val1 nenv)))]
 
+    [nameless-unpack-exp (exp1 body)
+                         (let ([val1 (value-of-exp exp1 nenv)])
+                           (value-of-exp body (extend-unpack-nenv (expval->list val1) nenv)))]
+
     [nameless-proc-exp (body)
               (proc-val (procedure body nenv))]
 

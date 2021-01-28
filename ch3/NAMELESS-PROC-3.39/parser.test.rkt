@@ -45,6 +45,19 @@
                      (diff-exp (var-exp 'n) (const-exp 1)))))
 
 (check-equal?
+ (parse "unpack x y z = list(1, 2, 3) in -(z, -(y, x))")
+ (a-program (unpack-exp
+             '(x y z)
+             (list-exp (list (const-exp 1)
+                             (const-exp 2)
+                             (const-exp 3)))
+             (diff-exp
+              (var-exp 'z)
+              (diff-exp
+               (var-exp 'y)
+               (var-exp 'x))))))
+
+(check-equal?
  (parse "proc (x) -(x, 1)")
  (a-program (proc-exp 'x (diff-exp (var-exp 'x)
                                    (const-exp 1)))))

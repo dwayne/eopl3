@@ -41,3 +41,18 @@ CODE
    (list-exp
     (list
      (nameless-var-exp 0))))))
+
+(check-equal?
+ (translate
+  (parse
+   #<<CODE
+unpack x y = list(1, 2)
+in -(y, x)
+CODE
+   ))
+ (a-program
+  (nameless-unpack-exp
+   (list-exp (list (const-exp 1) (const-exp 2)))
+   (diff-exp
+    (nameless-var-exp 0)
+    (nameless-var-exp 1)))))

@@ -48,6 +48,11 @@
               (translate-exp exp1 senv)
               (translate-exp body (extend-senv var senv)))]
 
+    [unpack-exp (vars exp1 body)
+                (nameless-unpack-exp
+                 (translate-exp exp1 senv)
+                 (translate-exp body (extend-unpack-senv vars senv)))]
+
     [proc-exp (var body)
               (nameless-proc-exp
                (translate-exp body (extend-senv var senv)))]

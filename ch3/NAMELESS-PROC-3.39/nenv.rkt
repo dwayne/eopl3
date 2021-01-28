@@ -7,6 +7,7 @@
  ;; Build
  empty-nenv
  extend-nenv
+ extend-unpack-nenv
 
  ;; Query
  nenv?
@@ -17,6 +18,13 @@
 
 (define (extend-nenv val nenv)
   (cons val nenv))
+
+(define (extend-unpack-nenv vals nenv)
+  (if (null? vals)
+      nenv
+      (extend-unpack-nenv
+       (cdr vals)
+       (cons (car vals) nenv))))
 
 (define (nenv? x)
   (list? x))
