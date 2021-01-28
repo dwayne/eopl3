@@ -26,3 +26,18 @@ CODE
      (diff-exp
       (nameless-var-exp 2)
       (nameless-var-exp 1)))))))
+
+(check-equal?
+ (translate
+  (parse
+   #<<CODE
+let x = 17
+in list(x)
+CODE
+   ))
+ (a-program
+  (nameless-let-exp
+   (const-exp 17)
+   (list-exp
+    (list
+     (nameless-var-exp 0))))))

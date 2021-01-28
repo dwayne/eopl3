@@ -29,6 +29,10 @@
  (num-val 3))
 
 (check-equal?
+ (run "list(i, v, x)")
+ (list-val (list (num-val 1) (num-val 5) (num-val 10))))
+
+(check-equal?
  (run
   #<<CODE
 let x = 33

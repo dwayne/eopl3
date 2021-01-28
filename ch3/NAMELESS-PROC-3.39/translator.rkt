@@ -32,6 +32,9 @@
               (diff-exp (translate-exp exp1 senv)
                         (translate-exp exp2 senv))]
 
+    [list-exp (exps)
+              (list-exp (map (lambda (exp) (translate-exp exp senv)) exps))]
+
     [zero?-exp (exp1)
                (zero?-exp (translate-exp exp1 senv))]
 

@@ -7,7 +7,7 @@
 (provide
 
  ;; Expressed Values
- num-val bool-val
+ num-val bool-val list-val
 
  ;; Interpreter
  run)
@@ -40,6 +40,10 @@
                 (num-val
                  (- (expval->num val1)
                     (expval->num val2))))]
+
+    [list-exp (exps)
+              (list-val
+               (map (lambda (exp) (value-of-exp exp nenv)) exps))]
 
     [zero?-exp (exp1)
                (let ([val1 (value-of-exp exp1 nenv)])
@@ -82,13 +86,14 @@
 
 ;; Values
 ;;
-;; ExpVal = Int + Bool + Proc
+;; ExpVal = Int + Bool + Proc + List[ExpVal]
 ;; DenVal = ExpVal
 
 (define-datatype expval expval?
   [num-val (n number?)]
   [bool-val (b boolean?)]
-  [proc-val (p proc?)])
+  [proc-val (p proc?)]
+  [list-val (l list?)])
 
 (define (expval->num val)
   (cases expval val
@@ -104,3 +109,8 @@
   (cases expval val
     [proc-val (p) p]
     [else (eopl:error 'expval->proc "Not a procedure: ~s" val)]))
+
+(define (expval->list val)
+  (cases expval val
+    [list-val (l) l]
+    [else (eopl:error 'expval->proc "Not a list: ~s" val)]))

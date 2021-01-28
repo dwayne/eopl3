@@ -8,6 +8,8 @@
 ;;
 ;;            ::= -(Expression, Expression)
 ;;
+;;            ::= list({Expression}*(,))
+;;
 ;;            ::= zero?(Expression)
 ;;
 ;;            ::= if Expression then Expression else Expression
@@ -28,6 +30,7 @@
  const-exp
  var-exp
  diff-exp
+ list-exp
  zero?-exp
  if-exp
  let-exp
@@ -58,6 +61,9 @@
 
     (expression ("-" "(" expression "," expression ")")
                 diff-exp)
+
+    (expression ("list" "(" (separated-list expression ",") ")")
+                list-exp)
 
     (expression ("zero?" "(" expression ")")
                 zero?-exp)
