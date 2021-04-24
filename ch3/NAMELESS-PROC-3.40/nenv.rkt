@@ -10,7 +10,8 @@
 
  ;; Query
  nenv?
- apply-nenv)
+ apply-nenv
+ apply-nenv-rec)
 
 (define (empty-nenv)
   '())
@@ -27,5 +28,14 @@
         (error 'apply-nenv "Lexical address not found: ~s" n)
         (if (= i 0)
             (car lst)
+            (helper (cdr lst) (- i 1)))))
+  (helper nenv n))
+
+(define (apply-nenv-rec nenv n construct-proc-val)
+  (define (helper lst i)
+    (if (null? lst)
+        (error 'apply-nenv "Lexical address not found: ~s" n)
+        (if (= i 0)
+            (construct-proc-val (car lst) lst)
             (helper (cdr lst) (- i 1)))))
   (helper nenv n))

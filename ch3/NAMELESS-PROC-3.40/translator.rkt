@@ -25,8 +25,10 @@
                (const-exp n)]
 
     [var-exp (var)
-             (nameless-var-exp
-              (apply-senv senv var))]
+             (let ([result (apply-senv senv var)])
+               (if (cdr result)
+                   (nameless-letrec-var-exp (car result))
+                   (nameless-var-exp (car result))))]
 
     [diff-exp (exp1 exp2)
               (diff-exp (translate-exp exp1 senv)
@@ -48,6 +50,12 @@
     [proc-exp (var body)
               (nameless-proc-exp
                (translate-exp body (extend-senv var senv)))]
+
+    [letrec-exp (proc-name bound-var proc-body letrec-body)
+                (let ([next-senv (extend-senv-rec proc-name senv)])
+                  (nameless-letrec-exp
+                   (translate-exp proc-body (extend-senv bound-var next-senv))
+                   (translate-exp letrec-body next-senv)))]
 
     [call-exp (rator rand)
               (call-exp (translate-exp rator senv)

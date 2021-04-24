@@ -34,6 +34,9 @@
     [nameless-var-exp (n)
                       (apply-nenv nenv n)]
 
+    [nameless-letrec-var-exp (n)
+                             (apply-nenv-rec nenv n construct-proc-val)]
+
     [diff-exp (exp1 exp2)
               (let ([val1 (value-of-exp exp1 nenv)]
                     [val2 (value-of-exp exp2 nenv)])
@@ -54,11 +57,14 @@
                   (value-of-exp exp3 nenv)))]
 
     [nameless-let-exp (exp1 body)
-             (let ([val1 (value-of-exp exp1 nenv)])
-               (value-of-exp body (extend-nenv val1 nenv)))]
+                      (let ([val1 (value-of-exp exp1 nenv)])
+                        (value-of-exp body (extend-nenv val1 nenv)))]
 
     [nameless-proc-exp (body)
-              (proc-val (procedure body nenv))]
+                       (proc-val (procedure body nenv))]
+
+    [nameless-letrec-exp (proc-body letrec-body)
+                         (value-of-exp letrec-body (extend-nenv proc-body nenv))]
 
     [call-exp (rator rand)
               (let ([proc (expval->proc (value-of-exp rator nenv))]
@@ -67,6 +73,9 @@
 
     [else
      (eopl:error 'value-of-exp "Invalid translated expression")]))
+
+(define (construct-proc-val body saved-env)
+  (proc-val (procedure body saved-env)))
 
 ;; Procedure ADT
 

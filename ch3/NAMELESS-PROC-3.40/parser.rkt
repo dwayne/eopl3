@@ -16,6 +16,8 @@
 ;;
 ;;            ::= proc (Identifier) Expression
 ;;
+;;            ::= letrec Identifier (Identifier) = Expression in Expression
+;;
 ;;            ::= (Expression Expression)
 
 (provide
@@ -32,10 +34,13 @@
  if-exp
  let-exp
  proc-exp
+ letrec-exp
  call-exp
 
  nameless-var-exp
+ nameless-letrec-var-exp
  nameless-let-exp
+ nameless-letrec-exp
  nameless-proc-exp
 
  ;; Parser
@@ -71,14 +76,23 @@
     (expression ("proc" "(" identifier ")" expression)
                 proc-exp)
 
+    (expression ("letrec" identifier "(" identifier ")" "=" expression "in" expression)
+                letrec-exp)
+
     (expression ("(" expression expression ")")
                 call-exp)
 
     (expression ("%lexref" number)
                 nameless-var-exp)
 
+    (expression ("%letrec-lexref" number)
+                nameless-letrec-var-exp)
+
     (expression ("%let" expression "in" expression)
                 nameless-let-exp)
+
+    (expression ("%letrec" expression "in" expression)
+                nameless-letrec-exp)
 
     (expression ("%lexproc" expression)
                 nameless-proc-exp)))
