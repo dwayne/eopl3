@@ -110,3 +110,25 @@ in let a = ((f 1) 2)
 CODE
   )
  (num-val 15))
+
+;; Tests for Exercise 3.41
+
+(check-equal?
+ (run
+  #<<CODE
+let x = 30
+in let x = -(x, 1)
+       y = -(x, 2)
+   in -(x, y)
+CODE
+  )
+ (num-val 1))
+
+(check-equal?
+ (run
+  #<<CODE
+let add = proc (x, y) -(x, -(0, y))
+in (add 3 4)
+CODE
+  )
+ (num-val 7))

@@ -17,12 +17,13 @@ CODE
    ))
  (a-program
   (nameless-let-exp
-   (const-exp 37)
+   (list (const-exp 37))
    (nameless-proc-exp
     (nameless-let-exp
+     (list
+      (diff-exp
+       (nameless-var-exp 0 0)
+       (nameless-var-exp 1 0)))
      (diff-exp
-      (nameless-var-exp 0)
-      (nameless-var-exp 1))
-     (diff-exp
-      (nameless-var-exp 2)
-      (nameless-var-exp 1)))))))
+      (nameless-var-exp 2 0)
+      (nameless-var-exp 1 0)))))))

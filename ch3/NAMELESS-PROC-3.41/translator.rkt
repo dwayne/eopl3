@@ -9,13 +9,7 @@
  translate)
 
 (define (translate prog)
-  (let ([init-senv (extend-senv
-                    'i
-                    (extend-senv
-                     'v
-                     (extend-senv
-                      'x
-                      (empty-senv))))])
+  (let ([init-senv (extend-senv '(i v x) (empty-senv))])
     (cases program prog
       [a-program (exp) (a-program (translate-exp exp init-senv))])))
 
@@ -25,8 +19,8 @@
                (const-exp n)]
 
     [var-exp (var)
-             (nameless-var-exp
-              (apply-senv senv var))]
+             (let ([result (apply-senv senv var)])
+               (nameless-var-exp (car result) (cdr result)))]
 
     [diff-exp (exp1 exp2)
               (diff-exp (translate-exp exp1 senv)
@@ -40,18 +34,18 @@
                     (translate-exp exp2 senv)
                     (translate-exp exp3 senv))]
 
-    [let-exp (var exp1 body)
+    [let-exp (vars exps body)
              (nameless-let-exp
-              (translate-exp exp1 senv)
-              (translate-exp body (extend-senv var senv)))]
+              (map (lambda (exp1) (translate-exp exp1 senv)) exps)
+              (translate-exp body (extend-senv vars senv)))]
 
-    [proc-exp (var body)
+    [proc-exp (vars body)
               (nameless-proc-exp
-               (translate-exp body (extend-senv var senv)))]
+               (translate-exp body (extend-senv vars senv)))]
 
-    [call-exp (rator rand)
+    [call-exp (rator rands)
               (call-exp (translate-exp rator senv)
-                        (translate-exp rand senv))]
+                        (map (lambda (rand) (translate-exp rand senv)) rands))]
 
     [else
      (eopl:error 'translate-exp "Invalid source expression: ~s" exp)]))

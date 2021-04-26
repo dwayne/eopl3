@@ -12,11 +12,11 @@
 ;;
 ;;            ::= if Expression then Expression else Expression
 ;;
-;;            ::= let Identifier = Expression in Expression
+;;            ::= let {Identifier = Expression}* in Expression
 ;;
-;;            ::= proc (Identifier) Expression
+;;            ::= proc ({Identifier}*(,)) Expression
 ;;
-;;            ::= (Expression Expression)
+;;            ::= (Expression {Expression}*)
 
 (provide
 
@@ -65,19 +65,19 @@
     (expression ("if" expression "then" expression "else" expression)
                 if-exp)
 
-    (expression ("let" identifier "=" expression "in" expression)
+    (expression ("let" (arbno identifier "=" expression) "in" expression)
                 let-exp)
 
-    (expression ("proc" "(" identifier ")" expression)
+    (expression ("proc" "(" (separated-list identifier ",") ")" expression)
                 proc-exp)
 
-    (expression ("(" expression expression ")")
+    (expression ("(" expression (arbno expression) ")")
                 call-exp)
 
-    (expression ("%lexref" number)
+    (expression ("%lexref" number number)
                 nameless-var-exp)
 
-    (expression ("%let" expression "in" expression)
+    (expression ("%let" (arbno expression) "in" expression)
                 nameless-let-exp)
 
     (expression ("%lexproc" expression)

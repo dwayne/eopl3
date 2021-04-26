@@ -13,13 +13,7 @@
  run)
 
 (define (run s)
-  (let ([init-nenv (extend-nenv
-                    (num-val 1)
-                    (extend-nenv
-                     (num-val 5)
-                     (extend-nenv
-                      (num-val 10)
-                      (empty-nenv))))])
+  (let ([init-nenv (extend-nenv (list (num-val 1) (num-val 5) (num-val 10)) (empty-nenv))])
     (value-of-program (translate (parse s)) init-nenv)))
 
 (define (value-of-program prog nenv)
@@ -31,8 +25,8 @@
     [const-exp (n)
                (num-val n)]
 
-    [nameless-var-exp (n)
-                      (apply-nenv nenv n)]
+    [nameless-var-exp (depth position)
+                      (apply-nenv nenv depth position)]
 
     [diff-exp (exp1 exp2)
               (let ([val1 (value-of-exp exp1 nenv)]
@@ -53,17 +47,17 @@
                   (value-of-exp exp2 nenv)
                   (value-of-exp exp3 nenv)))]
 
-    [nameless-let-exp (exp1 body)
-             (let ([val1 (value-of-exp exp1 nenv)])
-               (value-of-exp body (extend-nenv val1 nenv)))]
+    [nameless-let-exp (exps body)
+             (let ([vals (map (lambda (exp1) (value-of-exp exp1 nenv)) exps)])
+               (value-of-exp body (extend-nenv vals nenv)))]
 
     [nameless-proc-exp (body)
               (proc-val (procedure body nenv))]
 
-    [call-exp (rator rand)
+    [call-exp (rator rands)
               (let ([proc (expval->proc (value-of-exp rator nenv))]
-                    [arg (value-of-exp rand nenv)])
-                (apply-procedure proc arg))]
+                    [args (map (lambda (rand) (value-of-exp rand nenv)) rands)])
+                (apply-procedure proc args))]
 
     [else
      (eopl:error 'value-of-exp "Invalid translated expression")]))
@@ -75,10 +69,10 @@
    (body expression?)
    (saved-nenv nenv?)])
 
-(define (apply-procedure proc1 val)
+(define (apply-procedure proc1 vals)
   (cases proc proc1
     [procedure (body saved-nenv)
-               (value-of-exp body (extend-nenv val saved-nenv))]))
+               (value-of-exp body (extend-nenv vals saved-nenv))]))
 
 ;; Values
 ;;
