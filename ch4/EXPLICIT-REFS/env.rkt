@@ -22,9 +22,9 @@
    (val any?)
    (saved-env env?)]
   [extend-rec
-   (p-name identifier?)
-   (b-var identifier?)
-   (p-body expression?)
+   (p-names (list-of identifier?))
+   (b-vars (list-of identifier?))
+   (p-bodies (list-of expression?))
    (saved-env env?)])
 
 (define (empty-env)
@@ -33,10 +33,16 @@
 (define (extend-env var val env)
   (extend var val env))
 
-(define (extend-env-rec proc-name var proc-body env)
-  (extend-rec proc-name var proc-body env))
+(define (extend-env-rec proc-names vars proc-bodies env)
+  (extend-rec proc-names vars proc-bodies env))
 
 (define (apply-env env1 search-var construct-proc-val)
+  (define (find-rec-proc p-names b-vars p-bodies)
+    (if (null? p-names)
+        #f
+        (if (identifier=? search-var (car p-names))
+            (list (car b-vars) (car p-bodies))
+            (find-rec-proc (cdr p-names) (cdr b-vars) (cdr p-bodies)))))
   (cases env env1
     [empty ()
            (eopl:error 'apply-env "No binding for ~s" search-var)]
@@ -46,10 +52,13 @@
                 saved-val
                 (apply-env saved-env search-var construct-proc-val))]
 
-    [extend-rec (p-name b-var p-body saved-env)
-                (if (identifier=? search-var p-name)
-                    (construct-proc-val b-var p-body env1)
-                    (apply-env saved-env search-var construct-proc-val))]))
+    [extend-rec (p-names b-vars p-bodies saved-env)
+                (let ([result (find-rec-proc p-names b-vars p-bodies)])
+                  (if result
+                      (let ([b-var (car result)]
+                            [p-body (cadr result)])
+                        (construct-proc-val b-var p-body env1))
+                      (apply-env saved-env search-var construct-proc-val)))]))
 
 (define identifier? symbol?)
 

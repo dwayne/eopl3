@@ -59,8 +59,8 @@
     [proc-exp (var body)
               (proc-val (procedure var body env))]
 
-    [letrec-exp (proc-name bound-var proc-body letrec-body)
-                (value-of-exp letrec-body (extend-env-rec proc-name bound-var proc-body env))]
+    [letrec-exp (proc-names bound-vars proc-bodies letrec-body)
+                (value-of-exp letrec-body (extend-env-rec proc-names bound-vars proc-bodies env))]
 
     [call-exp (rator rand)
               (let ([proc (expval->proc (value-of-exp rator env))]

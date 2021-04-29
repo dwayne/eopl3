@@ -16,7 +16,7 @@
 ;;
 ;;            ::= proc (Identifier) Expression
 ;;
-;;            ::= letrec Identifier (Identifier) = Expression in Expression
+;;            ::= letrec {Identifier (Identifier) = Expression}* in Expression
 ;;
 ;;            ::= (Expression Expression)
 
@@ -70,7 +70,7 @@
     (expression ("proc" "(" identifier ")" expression)
                 proc-exp)
 
-    (expression ("letrec" identifier "(" identifier ")" "=" expression "in" expression)
+    (expression ("letrec" (arbno identifier "(" identifier ")" "=" expression) "in" expression)
                 letrec-exp)
 
     (expression ("(" expression expression ")")

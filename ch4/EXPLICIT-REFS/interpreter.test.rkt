@@ -121,3 +121,15 @@ in (double 6)
 CODE
   )
  (num-val 12))
+
+;; Multideclaration letrec
+
+(check-equal?
+ (run
+  #<<CODE
+letrec f(x) = (g x)
+       g(y) = y
+in (f 2)
+CODE
+  )
+ (num-val 2))

@@ -39,10 +39,21 @@
 
 (check-equal?
  (parse "letrec f(x) = a in b")
- (a-program (letrec-exp 'f
-                        'x
-                        (var-exp 'a)
+ (a-program (letrec-exp '(f)
+                        '(x)
+                        (list (var-exp 'a))
                         (var-exp 'b))))
+
+(check-equal?
+ (parse "letrec f(x) = (g x) g(y) = y in (f 2)")
+ (a-program (letrec-exp '(f g)
+                        '(x y)
+                        (list
+                         (call-exp (var-exp 'g)
+                                   (var-exp 'x))
+                         (var-exp 'y))
+                        (call-exp (var-exp 'f)
+                                  (const-exp 2)))))
 
 (check-equal?
  (parse "(f x)")
