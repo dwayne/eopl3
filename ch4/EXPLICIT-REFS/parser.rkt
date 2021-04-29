@@ -19,6 +19,14 @@
 ;;            ::= letrec {Identifier (Identifier) = Expression}* in Expression
 ;;
 ;;            ::= (Expression Expression)
+;;
+;;            ::= begin Expression {; Expression}* end
+;;
+;;            ::= newref(Expression)
+;;
+;;            ::= deref(Expression)
+;;
+;;            ::= setref(Expression, Expression)
 
 (provide
 
@@ -36,6 +44,10 @@
  proc-exp
  letrec-exp
  call-exp
+ begin-exp
+ newref-exp
+ deref-exp
+ setref-exp
 
  ;; Parser
  parse)
@@ -74,7 +86,19 @@
                 letrec-exp)
 
     (expression ("(" expression expression ")")
-                call-exp)))
+                call-exp)
+
+    (expression ("begin" expression (arbno ";" expression) "end")
+                begin-exp)
+
+    (expression ("newref" "(" expression ")")
+                newref-exp)
+
+    (expression ("deref" "(" expression ")")
+                deref-exp)
+
+    (expression ("setref" "(" expression "," expression ")")
+                setref-exp)))
 
 (sllgen:make-define-datatypes scanner-spec grammar)
 

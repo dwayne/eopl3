@@ -59,3 +59,24 @@
  (parse "(f x)")
  (a-program (call-exp (var-exp 'f)
                       (var-exp 'x))))
+
+(check-equal?
+ (parse "begin 5; 4; 3 end")
+ (a-program (begin-exp
+              (const-exp 5)
+              (list
+               (const-exp 4)
+               (const-exp 3)))))
+
+(check-equal?
+ (parse "newref(0)")
+ (a-program (newref-exp (const-exp 0))))
+
+(check-equal?
+ (parse "deref(x)")
+ (a-program (deref-exp (var-exp 'x))))
+
+(check-equal?
+ (parse "setref(x, 1)")
+ (a-program (setref-exp (var-exp 'x)
+                        (const-exp 1))))
