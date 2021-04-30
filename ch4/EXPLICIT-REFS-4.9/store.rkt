@@ -29,27 +29,23 @@
 ;; deref       : Ref -> ExpVal
 ;; setref      : Ref x ExpVal -> Unspecified
 
+(struct store (locations next-ref))
+
 (define (empty-store)
-  '())
+  (store (make-vector 64) 0))
 
 (define (newref val)
-  (let ([next-ref (length the-store)])
-    (set! the-store (append the-store (list val)))
+  (let ([next-ref (store-next-ref the-store)]
+        [locations (store-locations the-store)])
+    (vector-set! locations next-ref val)
+    (set! the-store (struct-copy store the-store [next-ref (+ next-ref 1)]))
     next-ref))
 
 (define (deref ref)
-  (list-ref the-store ref))
+  (vector-ref (store-locations the-store) ref))
 
 (define (setref! ref val)
-  (define (helper lst r)
-    (cond
-      [(null? lst)
-       (error 'invalid-reference)]
-      [(zero? r)
-       (cons val (cdr lst))]
-      [else
-       (cons (car lst) (helper (cdr lst) (- r 1)))]))
-  (set! the-store (helper the-store ref)))
+  (vector-set! (store-locations the-store) ref val))
 
 (define (reference? x)
   (integer? x))
