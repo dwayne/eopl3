@@ -140,21 +140,21 @@ CODE
  (run
   #<<CODE
 let x = newref(0)
-in letrec even(dummy)
+in letrec even()
           = if zero?(deref(x))
             then 1
             else begin
                    setref(x, -(deref(x), 1));
-                   (odd 888)
+                   (odd)
                  end
-          odd(dummy)
+          odd()
           = if zero?(deref(x))
             then 0
             else begin
                    setref(x, -(deref(x), 1));
-                   (even 888)
+                   (even)
                  end
-   in begin setref(x, 13); (odd 888) end
+   in begin setref(x, 13); (odd) end
 CODE
   )
  (num-val 1))
@@ -163,13 +163,13 @@ CODE
  (run
   #<<CODE
 let g = let counter = newref(0)
-        in proc(dummy)
+        in proc()
              begin
                setref(counter, -(deref(counter), -(0, 1)));
                deref(counter)
              end
-in let a = (g 11)
-   in let b = (g 11)
+in let a = (g)
+   in let b = (g)
       in -(a, b)
 CODE
   )
@@ -178,14 +178,14 @@ CODE
 (check-equal?
  (run
   #<<CODE
-let g = proc(dummy)
+let g = proc()
           let counter = newref(0)
           in begin
                setref(counter, -(deref(counter), -(0, 1)));
                deref(counter)
              end
-in let a = (g 11)
-   in let b = (g 11)
+in let a = (g)
+   in let b = (g)
       in -(a, b)
 CODE
   )
@@ -202,3 +202,13 @@ in begin
 CODE
   )
  (num-val 11))
+
+(check-equal?
+ (run
+  #<<CODE
+let add = proc(a, b) -(a, -(0, b))
+in let x = newref(0)
+   in (add deref(newref(5)) begin setref(x, -(deref(x), -(0, 1))); deref(x) end)
+CODE
+  )
+ (num-val 6))

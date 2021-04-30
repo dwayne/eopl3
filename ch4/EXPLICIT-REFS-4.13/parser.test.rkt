@@ -34,31 +34,31 @@
 
 (check-equal?
  (parse "proc (x) -(x, 1)")
- (a-program (proc-exp 'x (diff-exp (var-exp 'x)
+ (a-program (proc-exp '(x) (diff-exp (var-exp 'x)
                                    (const-exp 1)))))
 
 (check-equal?
  (parse "letrec f(x) = a in b")
  (a-program (letrec-exp '(f)
-                        '(x)
+                        '((x))
                         (list (var-exp 'a))
                         (var-exp 'b))))
 
 (check-equal?
  (parse "letrec f(x) = (g x) g(y) = y in (f 2)")
  (a-program (letrec-exp '(f g)
-                        '(x y)
+                        '((x) (y))
                         (list
                          (call-exp (var-exp 'g)
-                                   (var-exp 'x))
+                                   (list (var-exp 'x)))
                          (var-exp 'y))
                         (call-exp (var-exp 'f)
-                                  (const-exp 2)))))
+                                  (list (const-exp 2))))))
 
 (check-equal?
  (parse "(f x)")
  (a-program (call-exp (var-exp 'f)
-                      (var-exp 'x))))
+                      (list (var-exp 'x)))))
 
 (check-equal?
  (parse "begin 5; 4; 3 end")
