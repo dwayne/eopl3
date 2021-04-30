@@ -80,3 +80,18 @@
  (parse "setref(x, 1)")
  (a-program (setref-exp (var-exp 'x)
                         (const-exp 1))))
+
+(check-equal?
+ (parse "list()")
+ (a-program (list-exp '())))
+
+(check-equal?
+ (parse "list(1)")
+ (a-program (list-exp (list (const-exp 1)))))
+
+(check-equal?
+ (parse "list(1, 2, 3)")
+ (a-program (list-exp (list
+                       (const-exp 1)
+                       (const-exp 2)
+                       (const-exp 3)))))

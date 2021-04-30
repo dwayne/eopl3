@@ -27,6 +27,8 @@
 ;;            ::= deref(Expression)
 ;;
 ;;            ::= setref(Expression, Expression)
+;;
+;;            ::= list({Expression}*(,))
 
 (provide
 
@@ -48,6 +50,7 @@
  newref-exp
  deref-exp
  setref-exp
+ list-exp
 
  ;; Parser
  parse)
@@ -98,7 +101,10 @@
                 deref-exp)
 
     (expression ("setref" "(" expression "," expression ")")
-                setref-exp)))
+                setref-exp)
+
+    (expression ("list" "(" (separated-list expression ",") ")")
+                list-exp)))
 
 (sllgen:make-define-datatypes scanner-spec grammar)
 

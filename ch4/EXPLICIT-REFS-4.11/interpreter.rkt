@@ -7,7 +7,7 @@
 (provide
 
  ;; Expressed Values
- num-val bool-val
+ num-val bool-val list-val
 
  ;; Interpreter
  run)
@@ -84,7 +84,10 @@
                 (let ([ref (expval->ref (value-of-exp exp1 env))]
                       [val (value-of-exp exp2 env)])
                   (setref! ref val)
-                  (num-val 23))]))
+                  (num-val 23))]
+
+    [list-exp (exps)
+              (list-val (value-of-list-exp exps env))]))
 
 (define (value-of-begin-exp exps env)
   (if (null? (cdr exps))
@@ -92,6 +95,9 @@
       (begin
         (value-of-exp (car exps) env)
         (value-of-begin-exp (cdr exps) env))))
+
+(define (value-of-list-exp exps env)
+  (map (lambda (exp) (value-of-exp exp env)) exps))
 
 (define (construct-proc-val var body saved-env)
   (proc-val (procedure var body saved-env)))
@@ -111,14 +117,15 @@
 
 ;; Values
 ;;
-;; ExpVal = Int + Bool + Proc + Ref(ExpVal)
+;; ExpVal = Int + Bool + Proc + Ref(ExpVal) + List(ExpVal)
 ;; DenVal = ExpVal
 
 (define-datatype expval expval?
   [num-val (n number?)]
   [bool-val (b boolean?)]
   [proc-val (p proc?)]
-  [ref-val (r reference?)])
+  [ref-val (r reference?)]
+  [list-val (l list?)])
 
 (define (expval->num val)
   (cases expval val
@@ -139,3 +146,8 @@
   (cases expval val
     [ref-val (r) r]
     [else (eopl:error 'expval->ref "Not a reference: ~s" val)]))
+
+(define (expval->list val)
+  (cases expval val
+    [list-val (l) l]
+    [else (eopl:error 'expval->list "Not a list: ~s" val)]))

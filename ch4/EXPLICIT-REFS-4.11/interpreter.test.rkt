@@ -202,3 +202,36 @@ in begin
 CODE
   )
  (num-val 11))
+
+(check-equal?
+ (run
+  #<<CODE
+let x = 4
+in list(x, -(x, 1), -(x, 3))
+CODE
+  )
+ (list-val (list (num-val 4) (num-val 3) (num-val 1))))
+
+(check-equal?
+ (run
+  #<<CODE
+let x = newref(1)
+in list(
+     begin
+       setref(x, -(deref(x), -(0, 1)));
+       deref(x)
+     end,
+     deref(newref(-(deref(x), -(0, 1)))),
+     begin
+       setref(x, 5);
+       4
+     end,
+     deref(x)
+   )
+CODE
+  )
+ (list-val (list
+            (num-val 2)
+            (num-val 3)
+            (num-val 4)
+            (num-val 5))))
