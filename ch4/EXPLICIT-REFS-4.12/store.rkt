@@ -2,45 +2,27 @@
 
 (provide
 
- initialize-store!
-
+ empty-store
  newref
  deref
  setref!
 
+ store?
  reference?)
-
-;; One store shared via a global variable.
-
-(define the-store 'uninitialized)
-
-(define (initialize-store!)
-  (set! the-store (empty-store)))
-
-;; Why is this needed?
-;;
-;; (define (get-store)
-;;   the-store)
-
-;; The main Store API
-;;
-;; empty-store : () -> Store
-;; newref      : ExpVal -> Ref
-;; deref       : Ref -> ExpVal
-;; setref      : Ref x ExpVal -> Unspecified
 
 (define (empty-store)
   '())
 
-(define (newref val)
-  (let ([next-ref (length the-store)])
-    (set! the-store (append the-store (list val)))
-    next-ref))
+(define (newref store val)
+  (let ([next-ref (length store)])
+    (list
+     (append store (list val))
+     next-ref)))
 
-(define (deref ref)
-  (list-ref the-store ref))
+(define (deref store ref)
+  (list-ref store ref))
 
-(define (setref! ref val)
+(define (setref! store ref val)
   (define (helper lst r)
     (cond
       [(null? lst)
@@ -49,7 +31,10 @@
        (cons val (cdr lst))]
       [else
        (cons (car lst) (helper (cdr lst) (- r 1)))]))
-  (set! the-store (helper the-store ref)))
+  (helper store ref))
+
+(define (store? x)
+  (list? x))
 
 (define (reference? x)
   (integer? x))
