@@ -69,14 +69,5 @@
                (const-exp 3)))))
 
 (check-equal?
- (parse "newref(0)")
- (a-program (newref-exp (const-exp 0))))
-
-(check-equal?
- (parse "deref(x)")
- (a-program (deref-exp (var-exp 'x))))
-
-(check-equal?
- (parse "setref(x, 1)")
- (a-program (setref-exp (var-exp 'x)
-                        (const-exp 1))))
+ (parse "set x = 1")
+ (a-program (assign-exp 'x (const-exp 1))))

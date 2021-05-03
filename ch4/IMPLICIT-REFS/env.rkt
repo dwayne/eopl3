@@ -1,6 +1,7 @@
 #lang eopl
 
 (require "./parser.rkt")
+(require "./store.rkt")
 
 (provide
 
@@ -30,8 +31,8 @@
 (define (empty-env)
   (empty))
 
-(define (extend-env var val env)
-  (extend var val env))
+(define (extend-env var ref env)
+  (extend var ref env))
 
 (define (extend-env-rec proc-names vars proc-bodies env)
   (extend-rec proc-names vars proc-bodies env))
@@ -57,7 +58,7 @@
                   (if result
                       (let ([b-var (car result)]
                             [p-body (cadr result)])
-                        (construct-proc-val b-var p-body env1))
+                        (newref (construct-proc-val b-var p-body env1)))
                       (apply-env saved-env search-var construct-proc-val)))]))
 
 (define identifier? symbol?)
