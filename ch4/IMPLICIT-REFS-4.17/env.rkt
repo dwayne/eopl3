@@ -20,19 +20,25 @@
   [empty]
   [extend
    (var identifier?)
-   (val any?)
+   (val reference?)
    (saved-env env?)]
   [extend-rec
    (p-names (list-of identifier?))
-   (b-vars (list-of identifier?))
+   (b-vars (list-of (list-of identifier?)))
    (p-bodies (list-of expression?))
    (saved-env env?)])
 
 (define (empty-env)
   (empty))
 
-(define (extend-env var ref env)
-  (extend var ref env))
+(define (extend-env vars refs env)
+  (if (null? vars)
+      env
+      (extend (car vars)
+              (car refs)
+              (extend-env (cdr vars)
+                          (cdr refs)
+                          env))))
 
 (define (extend-env-rec proc-names vars proc-bodies env)
   (extend-rec proc-names vars proc-bodies env))

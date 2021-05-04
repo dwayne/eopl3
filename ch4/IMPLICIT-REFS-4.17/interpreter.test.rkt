@@ -134,27 +134,27 @@ CODE
   )
  (num-val 2))
 
-;; IMPLICIT-REF tests
+;; IMPLICIT-REFS tests
 
 (check-equal?
  (run
   #<<CODE
 let x = 0
-in letrec even(dummy)
+in letrec even()
           = if zero?(x)
             then 1
             else begin
                    set x = -(x, 1);
-                   (odd 888)
+                   (odd)
                  end
-          odd(dummy)
+          odd()
           = if zero?(x)
             then 0
             else begin
                    set x = -(x, 1);
-                   (even 888)
+                   (even)
                  end
-   in begin set x = 13; (odd 888) end
+   in begin set x = 13; (odd) end
 CODE
   )
  (num-val 1))
@@ -163,14 +163,35 @@ CODE
  (run
   #<<CODE
 let g = let counter = 0
-        in proc(dummy)
+        in proc()
              begin
                set counter = -(counter, -(0, 1));
                counter
              end
-in let a = (g 11)
-   in let b = (g 11)
+in let a = (g)
+   in let b = (g)
       in -(a, b)
 CODE
   )
  (num-val -1))
+
+;; IMPLICIT-REFS-4.17 tests
+
+(check-equal?
+ (run
+  #<<CODE
+let a = 1
+    b = 2
+in -(a, -(0, b))
+CODE
+  )
+ (num-val 3))
+
+(check-equal?
+ (run
+  #<<CODE
+let add = proc(a, b) -(a, -(0, b))
+in (add 1 2)
+CODE
+  )
+ (num-val 3))

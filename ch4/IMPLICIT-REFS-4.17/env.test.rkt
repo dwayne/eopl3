@@ -4,15 +4,9 @@
 
 (require rackunit)
 
-(let ([env (extend-env
-            'd 6
-            (extend-env
-             'y 8
-             (extend-env
-              'x 7
-              (extend-env
-               'y 14
-               (empty-env)))))])
+(let ([env (extend-env '(d y) '(6 8)
+                       (extend-env '(x y) '(7 14)
+                                   (empty-env)))])
 
   (check-eq? (apply-env env 'd #f) 6)
   (check-eq? (apply-env env 'y #f) 8)
