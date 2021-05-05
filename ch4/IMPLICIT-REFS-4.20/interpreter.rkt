@@ -15,11 +15,11 @@
 (define (run s)
   (initialize-store!)
   (let ([init-env (extend-env
-                   'i (newref (num-val 1))
+                   'i (expval-val (num-val 1))
                    (extend-env
-                    'v (newref (num-val 5))
+                    'v (expval-val (num-val 5))
                     (extend-env
-                     'x (newref (num-val 10))
+                     'x (expval-val (num-val 10))
                      (empty-env))))])
     (value-of-program (parse s) init-env)))
 
@@ -33,7 +33,9 @@
                (num-val n)]
 
     [var-exp (var)
-             (deref (apply-env env var construct-proc-val))]
+             (cases denval (apply-env env var construct-proc-val)
+               [ref-val (r) (deref r)]
+               [expval-val (v) v])]
 
     [diff-exp (exp1 exp2)
               (let ([val1 (value-of-exp exp1 env)]
@@ -56,7 +58,11 @@
 
     [let-exp (var exp1 body)
              (let ([val1 (value-of-exp exp1 env)])
-               (value-of-exp body (extend-env var (newref val1) env)))]
+               (value-of-exp body (extend-env var (expval-val val1) env)))]
+
+    [letmutable-exp (var exp1 body)
+             (let ([val1 (value-of-exp exp1 env)])
+               (value-of-exp body (extend-env var (ref-val (newref val1)) env)))]
 
     [proc-exp (var body)
               (proc-val (procedure var body env))]
@@ -74,7 +80,7 @@
 
     [assign-exp (var exp1)
              (let ([val1 (value-of-exp exp1 env)]
-                   [ref (apply-env env var construct-proc-val)])
+                   [ref (denval->ref (apply-env env var construct-proc-val))])
                (setref! ref val1)
                (num-val 27))]))
 
@@ -86,7 +92,7 @@
         (value-of-begin-exp (cdr exps) env))))
 
 (define (construct-proc-val var body saved-env)
-  (proc-val (procedure var body saved-env)))
+  (expval-val (proc-val (procedure var body saved-env))))
 
 ;; Procedure ADT
 
@@ -99,12 +105,12 @@
 (define (apply-procedure proc1 val)
   (cases proc proc1
     [procedure (var body saved-env)
-               (value-of-exp body (extend-env var (newref val) saved-env))]))
+               (value-of-exp body (extend-env var (expval-val val) saved-env))]))
 
 ;; Values
 ;;
 ;; ExpVal = Int + Bool + Proc
-;; DenVal = Ref(ExpVal)
+;; DenVal = Ref(ExpVal) + ExpVal
 
 (define-datatype expval expval?
   [num-val (n number?)]
@@ -125,3 +131,17 @@
   (cases expval val
     [proc-val (p) p]
     [else (eopl:error 'expval->proc "Not a procedure: ~s" val)]))
+
+(define-datatype denval denval?
+  [ref-val (r reference?)]
+  [expval-val (v expval?)])
+
+(define (denval->ref val)
+  (cases denval val
+    [ref-val (r) r]
+    [else (eopl:error 'denval->ref "Not a reference: ~s" val)]))
+
+(define (denval->expval val)
+  (cases denval val
+    [expval-val (v) v]
+    [else (eopl:error 'denval->expval "Not an expressed value: ~s" val)]))

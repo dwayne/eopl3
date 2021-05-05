@@ -58,7 +58,7 @@
                   (if result
                       (let ([b-var (car result)]
                             [p-body (cadr result)])
-                        (newref (construct-proc-val b-var p-body env1)))
+                        (construct-proc-val b-var p-body env1))
                       (apply-env saved-env search-var construct-proc-val)))]))
 
 (define identifier? symbol?)

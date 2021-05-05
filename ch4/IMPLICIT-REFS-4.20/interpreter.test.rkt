@@ -139,7 +139,7 @@ CODE
 (check-equal?
  (run
   #<<CODE
-let x = 0
+letmutable x = 0
 in letrec even(dummy)
           = if zero?(x)
             then 1
@@ -162,7 +162,7 @@ CODE
 (check-equal?
  (run
   #<<CODE
-let g = let counter = 0
+let g = letmutable counter = 0
         in proc(dummy)
              begin
                set counter = -(counter, -(0, 1));
@@ -174,3 +174,8 @@ in let a = (g 11)
 CODE
   )
  (num-val -1))
+
+;; Test that you cannot set an immutable variable
+
+(check-exn #rx"Not a reference"
+           (lambda () (run "let x = 0 in begin set x = 1; x end")))

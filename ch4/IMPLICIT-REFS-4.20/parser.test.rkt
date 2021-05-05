@@ -33,6 +33,12 @@
                      (diff-exp (var-exp 'n) (const-exp 1)))))
 
 (check-equal?
+ (parse "letmutable n=10 in -(n, 1)")
+ (a-program (letmutable-exp 'n
+                            (const-exp 10)
+                            (diff-exp (var-exp 'n) (const-exp 1)))))
+
+(check-equal?
  (parse "proc (x) -(x, 1)")
  (a-program (proc-exp 'x (diff-exp (var-exp 'x)
                                    (const-exp 1)))))
