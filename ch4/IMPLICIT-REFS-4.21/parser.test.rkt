@@ -71,3 +71,9 @@
 (check-equal?
  (parse "set x = 1")
  (a-program (assign-exp 'x (const-exp 1))))
+
+(check-equal?
+ (parse "setdynamic n=10 during -(n, 1)")
+ (a-program (setdynamic-exp 'n
+                            (const-exp 10)
+                            (diff-exp (var-exp 'n) (const-exp 1)))))

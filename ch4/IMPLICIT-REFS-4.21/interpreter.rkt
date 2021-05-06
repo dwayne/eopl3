@@ -76,7 +76,16 @@
              (let ([val1 (value-of-exp exp1 env)]
                    [ref (apply-env env var)])
                (setref! ref val1)
-               (num-val 27))]))
+               (num-val 27))]
+
+    [setdynamic-exp (var exp1 body)
+                    (let ([val1 (value-of-exp exp1 env)]
+                          [ref (apply-env env var)])
+                      (let ([val-prev (deref ref)])
+                        (setref! ref val1)
+                        (let ([val2 (value-of-exp body env)])
+                          (setref! ref val-prev)
+                          val2)))]))
 
 (define (value-of-begin-exp exps env)
   (if (null? (cdr exps))

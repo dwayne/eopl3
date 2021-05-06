@@ -174,3 +174,39 @@ in let a = (g 11)
 CODE
   )
  (num-val -1))
+
+;; setdynamic tests
+
+(check-equal?
+ (run
+  #<<CODE
+let x = 11
+in let p = proc(y) -(y, x)
+   in -(setdynamic x = 17 during (p 22),
+        (p 13))
+CODE
+  )
+ (num-val 3))
+
+(check-equal?
+ (run
+  #<<CODE
+let x = 11
+in let p = proc(y) -(y, x)
+   in -(setdynamic x = begin set x = 10; 17 end during (p 22),
+        (p 13))
+CODE
+  )
+ (num-val 2))
+
+(check-equal?
+ (run
+  #<<CODE
+letrec f(a) = if zero?(a) then 0 else -(1, -(0, (f -(a, 1))))
+       g(b) = if zero?(b) then 0 else -(2, -(0, (g -(b, 1))))
+in let p = proc (y) (f y)
+   in -(setdynamic f = g during (p 10),
+        (p 5))
+CODE
+  )
+ (num-val 15))

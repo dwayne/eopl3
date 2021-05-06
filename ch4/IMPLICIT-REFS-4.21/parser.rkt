@@ -23,6 +23,8 @@
 ;;            ::= begin Expression {; Expression}* end
 ;;
 ;;            ::= set Identifier = Expression
+;;
+;;            ::= setdynamic Identifier = Expression in Expression
 
 (provide
 
@@ -42,6 +44,7 @@
  call-exp
  begin-exp
  assign-exp
+ setdynamic-exp
 
  ;; Parser
  parse)
@@ -86,7 +89,10 @@
                 begin-exp)
 
     (expression ("set" identifier "=" expression)
-                assign-exp)))
+                assign-exp)
+
+    (expression ("setdynamic" identifier "=" expression "during" expression)
+                setdynamic-exp)))
 
 (sllgen:make-define-datatypes scanner-spec grammar)
 
