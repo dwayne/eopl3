@@ -71,3 +71,23 @@
 (check-equal?
  (parse "set x = 1")
  (a-program (assign-exp 'x (const-exp 1))))
+
+(check-equal?
+ (parse "pair(1, 2)")
+ (a-program (newpair-exp (const-exp 1) (const-exp 2))))
+
+(check-equal?
+ (parse "left(pair(1, 2))")
+ (a-program (left-exp (newpair-exp (const-exp 1) (const-exp 2)))))
+
+(check-equal?
+ (parse "right(pair(1, 2))")
+ (a-program (right-exp (newpair-exp (const-exp 1) (const-exp 2)))))
+
+(check-equal?
+ (parse "setleft(pair(1, 2), 3)")
+ (a-program (setleft-exp (newpair-exp (const-exp 1) (const-exp 2)) (const-exp 3))))
+
+(check-equal?
+ (parse "setright(pair(1, 2), 4)")
+ (a-program (setright-exp (newpair-exp (const-exp 1) (const-exp 2)) (const-exp 4))))

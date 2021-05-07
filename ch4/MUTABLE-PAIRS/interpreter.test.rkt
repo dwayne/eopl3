@@ -174,3 +174,50 @@ in let a = (g 11)
 CODE
   )
  (num-val -1))
+
+;; MUTABLE-PAIRS tests
+
+(check-equal?
+ (run "let p = pair(1, 2) in left(p)")
+ (num-val 1))
+
+(check-equal?
+ (run "let p = pair(1, 2) in right(p)")
+ (num-val 2))
+
+(check-equal?
+ (run
+  #<<CODE
+let p = pair(1, 2)
+in begin
+     setleft(p, 3);
+     left(p)
+   end
+CODE
+  )
+ (num-val 3))
+
+(check-equal?
+ (run
+  #<<CODE
+let p = pair(1, 2)
+in begin
+     setright(p, 4);
+     right(p)
+   end
+CODE
+  )
+ (num-val 4))
+
+(check-equal?
+ (run
+  #<<CODE
+let glo = pair(11, 22)
+in let f = proc(loc)
+            let x = setright(loc, left(loc))
+            in let y = setleft(glo, 99)
+               in -(left(loc), right(loc))
+   in (f glo)
+CODE
+  )
+ (num-val 88))

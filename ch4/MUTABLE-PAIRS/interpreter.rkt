@@ -1,6 +1,7 @@
 #lang eopl
 
 (require "./env.rkt")
+(require "./mutpair.rkt")
 (require "./parser.rkt")
 (require "./store.rkt")
 
@@ -73,10 +74,35 @@
                (value-of-begin-exp (cons exp1 exps) env)]
 
     [assign-exp (var exp1)
-             (let ([val1 (value-of-exp exp1 env)]
-                   [ref (apply-env env var construct-proc-val)])
-               (setref! ref val1)
-               (num-val 27))]))
+                (let ([val1 (value-of-exp exp1 env)]
+                      [ref (apply-env env var construct-proc-val)])
+                  (setref! ref val1)
+                  (num-val 27))]
+
+    [newpair-exp (exp1 exp2)
+                 (let ([val1 (value-of-exp exp1 env)]
+                       [val2 (value-of-exp exp2 env)])
+                   (mutpair-val (newpair val1 val2)))]
+
+    [left-exp (exp1)
+              (let ([val1 (value-of-exp exp1 env)])
+                (left (expval->mutpair val1)))]
+
+    [right-exp (exp1)
+               (let ([val1 (value-of-exp exp1 env)])
+                 (right (expval->mutpair val1)))]
+
+    [setleft-exp (exp1 exp2)
+                 (let ([val1 (value-of-exp exp1 env)]
+                       [val2 (value-of-exp exp2 env)])
+                   (setleft (expval->mutpair val1) val2)
+                   (num-val 82))]
+
+    [setright-exp (exp1 exp2)
+                  (let ([val1 (value-of-exp exp1 env)]
+                        [val2 (value-of-exp exp2 env)])
+                    (setright (expval->mutpair val1) val2)
+                    (num-val 83))]))
 
 (define (value-of-begin-exp exps env)
   (if (null? (cdr exps))
@@ -103,13 +129,15 @@
 
 ;; Values
 ;;
-;; ExpVal = Int + Bool + Proc
-;; DenVal = Ref(ExpVal)
+;; ExpVal  = Int + Bool + Proc + MutPair
+;; DenVal  = Ref(ExpVal)
+;; MutPair = Ref(ExpVal) x Ref(ExpVal)
 
 (define-datatype expval expval?
   [num-val (n number?)]
   [bool-val (b boolean?)]
-  [proc-val (p proc?)])
+  [proc-val (p proc?)]
+  [mutpair-val (m mutpair?)])
 
 (define (expval->num val)
   (cases expval val
@@ -125,3 +153,8 @@
   (cases expval val
     [proc-val (p) p]
     [else (eopl:error 'expval->proc "Not a procedure: ~s" val)]))
+
+(define (expval->mutpair val)
+  (cases expval val
+    [mutpair-val (m) m]
+    [else (eopl:error 'expval->mutpair "Not a mutable pair: ~s" val)]))

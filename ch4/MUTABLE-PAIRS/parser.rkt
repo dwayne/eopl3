@@ -23,6 +23,16 @@
 ;;            ::= begin Expression {; Expression}* end
 ;;
 ;;            ::= set Identifier = Expression
+;;
+;;            ::= pair(Expression, Expression)
+;;
+;;            ::= left(Expression)
+;;
+;;            ::= right(Expression)
+;;
+;;            ::= setleft(Expression, Expression)
+;;
+;;            ::= setright(Expression, Expression)
 
 (provide
 
@@ -42,6 +52,11 @@
  call-exp
  begin-exp
  assign-exp
+ newpair-exp
+ left-exp
+ right-exp
+ setleft-exp
+ setright-exp
 
  ;; Parser
  parse)
@@ -86,7 +101,22 @@
                 begin-exp)
 
     (expression ("set" identifier "=" expression)
-                assign-exp)))
+                assign-exp)
+
+    (expression ("pair" "(" expression "," expression ")")
+                newpair-exp)
+
+    (expression ("left" "(" expression ")")
+                left-exp)
+
+    (expression ("right" "(" expression ")")
+                right-exp)
+
+    (expression ("setleft" "(" expression "," expression ")")
+                setleft-exp)
+
+    (expression ("setright" "(" expression "," expression ")")
+                setright-exp)))
 
 (sllgen:make-define-datatypes scanner-spec grammar)
 
