@@ -12,35 +12,27 @@
 
  mutpair?)
 
-(define-datatype mutpair mutpair?
-  [a-pair (left-loc reference?)
-          (right-loc reference?)])
+(define (mutpair? v)
+  (reference? v))
 
 ;; newpair : ExpVal x ExpVal -> MutPair
 (define (newpair val1 val2)
-  (a-pair (newref val1)
-          (newref val2)))
+  (let ([r1 (newref val1)]
+        [r2 (newref val2)])
+    r1))
 
 ;; left : MutPair -> ExpVal
 (define (left p)
-  (cases mutpair p
-    [a-pair (left-loc right-loc)
-            (deref left-loc)]))
+  (deref p))
 
 ;; right : MutPair -> ExpVal
 (define (right p)
-  (cases mutpair p
-    [a-pair (left-loc right-loc)
-            (deref right-loc)]))
+  (deref (+ p 1)))
 
 ;; setleft : MutPair x ExpVal -> Unspecified
 (define (setleft p val)
-  (cases mutpair p
-    [a-pair (left-loc right-loc)
-            (setref! left-loc val)]))
+  (setref! p val))
 
 ;; setright : MutPair x ExpVal -> Unspecified
 (define (setright p val)
-  (cases mutpair p
-    [a-pair (left-loc right-loc)
-            (setref! right-loc val)]))
+   (setref! (+ p 1) val))
