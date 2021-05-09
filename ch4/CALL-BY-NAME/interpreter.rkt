@@ -33,7 +33,10 @@
                (num-val n)]
 
     [var-exp (var)
-             (deref (apply-env env var construct-proc-val))]
+             (let ([val (deref (apply-env env var construct-proc-val))])
+               (if (expval? val)
+                   val
+                   (value-of-thunk val)))]
 
     [diff-exp (exp1 exp2)
               (let ([val1 (value-of-exp exp1 env)]
@@ -81,7 +84,7 @@
 (define (value-of-operand exp env)
   (cases expression exp
     [var-exp (var) (apply-env env var construct-proc-val)]
-    [else (newref (value-of-exp exp env))]))
+    [else (newref (a-thunk exp env))]))
 
 (define (value-of-begin-exp exps env)
   (if (null? (cdr exps))
@@ -110,7 +113,7 @@
 ;; Values
 ;;
 ;; ExpVal = Int + Bool + Proc
-;; DenVal = Ref(ExpVal)
+;; DenVal = Ref(ExpVal + Thunk)
 
 (define-datatype expval expval?
   [num-val (n number?)]
@@ -131,3 +134,12 @@
   (cases expval val
     [proc-val (p) p]
     [else (eopl:error 'expval->proc "Not a procedure: ~s" val)]))
+
+(define-datatype thunk thunk?
+  [a-thunk
+   (exp expression?)
+   (env env?)])
+
+(define (value-of-thunk t)
+  (cases thunk t
+    [a-thunk (exp env) (value-of-exp exp env)]))

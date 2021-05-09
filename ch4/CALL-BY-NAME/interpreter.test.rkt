@@ -230,3 +230,15 @@ in let p = proc (x) proc (y)
 CODE
   )
  (num-val 4))
+
+;; CALL-BY-NAME tests
+
+(check-equal?
+ (run
+  #<<CODE
+letrec loop(x) = (loop x)
+in let f = proc (z) 11
+   in (f (loop 0))
+CODE
+  )
+ (num-val 11))
