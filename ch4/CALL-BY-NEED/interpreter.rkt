@@ -33,10 +33,13 @@
                (num-val n)]
 
     [var-exp (var)
-             (let ([val (deref (apply-env env var construct-proc-val))])
-               (if (expval? val)
-                   val
-                   (value-of-thunk val)))]
+             (let ([ref (apply-env env var construct-proc-val)])
+               (let ([denval (deref ref)])
+                 (if (expval? denval)
+                     denval
+                     (let ([val (value-of-thunk denval)])
+                       (setref! ref val)
+                       val))))]
 
     [diff-exp (exp1 exp2)
               (let ([val1 (value-of-exp exp1 env)]
