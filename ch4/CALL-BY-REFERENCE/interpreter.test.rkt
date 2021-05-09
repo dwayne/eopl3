@@ -174,3 +174,59 @@ in let a = (g 11)
 CODE
   )
  (num-val -1))
+
+;; CALL-BY-REFERENCE tests
+
+(check-equal?
+ (run
+  #<<CODE
+let p = proc (x) set x = 4
+in let a = 3
+   in begin (p a); a end
+CODE
+  )
+ (num-val 4))
+
+(check-equal?
+ (run
+  #<<CODE
+let f = proc (x) set x = 44
+in let g = proc (y) (f y)
+   in let z = 55
+      in begin (g z); z end
+CODE
+  )
+ (num-val 44))
+
+(check-equal?
+ (run
+  #<<CODE
+let swap = proc (x) proc (y)
+             let temp = x
+             in begin
+                  set x = y;
+                  set y = temp
+                end
+in let a = 33
+   in let b = 44
+      in begin
+           ((swap a) b);
+           -(a, b)
+         end
+CODE
+  )
+ (num-val 11))
+
+(check-equal?
+ (run
+  #<<CODE
+let b = 3
+in let p = proc (x) proc (y)
+             begin
+               set x = 4;
+               y
+             end
+   in ((p b) b)
+CODE
+  )
+ (num-val 4))

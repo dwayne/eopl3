@@ -66,7 +66,7 @@
 
     [call-exp (rator rand)
               (let ([proc (expval->proc (value-of-exp rator env))]
-                    [arg (value-of-exp rand env)])
+                    [arg (value-of-operand rand env)])
                 (apply-procedure proc arg))]
 
     [begin-exp (exp1 exps)
@@ -77,6 +77,11 @@
                    [ref (apply-env env var construct-proc-val)])
                (setref! ref val1)
                (num-val 27))]))
+
+(define (value-of-operand exp env)
+  (cases expression exp
+    [var-exp (var) (apply-env env var construct-proc-val)]
+    [else (newref (value-of-exp exp env))]))
 
 (define (value-of-begin-exp exps env)
   (if (null? (cdr exps))
@@ -96,10 +101,11 @@
    (body expression?)
    (saved-env env?)])
 
+;; apply-procedure : Proc x DenVal -> ExpVal
 (define (apply-procedure proc1 val)
   (cases proc proc1
     [procedure (var body saved-env)
-               (value-of-exp body (extend-env var (newref val) saved-env))]))
+               (value-of-exp body (extend-env var val saved-env))]))
 
 ;; Values
 ;;
