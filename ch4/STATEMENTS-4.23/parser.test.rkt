@@ -53,6 +53,10 @@
  (a-program (var-stmt '(x y) (print-stmt (var-exp 'x)))))
 
 (check-equal?
+ (parse "read x")
+ (a-program (read-stmt 'x)))
+
+(check-equal?
  (parse "f = x")
  (a-program (assign-stmt 'f (var-exp 'x))))
 

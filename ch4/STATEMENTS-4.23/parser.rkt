@@ -14,6 +14,8 @@
 ;;
 ;;            ::= var {Identifier}*(,) ; Statement
 ;;
+;;            ::= read Identifier
+;;
 ;; Expression ::= Number
 ;;
 ;;            ::= Identifier
@@ -55,6 +57,7 @@
  if-stmt
  while-stmt
  var-stmt
+ read-stmt
 
  expression expression?
  const-exp
@@ -101,6 +104,9 @@
 
     (statement ("var" (separated-list identifier ",") ";" statement)
                var-stmt)
+
+    (statement ("read" identifier)
+               read-stmt)
 
     (expression (number)
                 const-exp)

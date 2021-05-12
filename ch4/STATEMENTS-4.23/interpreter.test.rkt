@@ -1,5 +1,6 @@
 #lang racket
 
+(require "./input.rkt")
 (require "./interpreter.rkt")
 
 (require rackunit)
@@ -218,3 +219,15 @@ var f, x; { f = proc(x) proc(y) *(x, y);
 CODE
   )
  (list (num-val 12)))
+
+;; STATEMENT-4.23 tests
+
+(check-equal?
+ (begin
+   (initialize-input! '(3 4))
+   (run
+    #<<CODE
+var x,y; {read x; read y; print +(x,y)}
+CODE
+    ))
+ (list (num-val 7)))

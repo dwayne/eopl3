@@ -1,6 +1,7 @@
 #lang eopl
 
 (require "./env.rkt")
+(require "./input.rkt")
 (require "./parser.rkt")
 (require "./screen.rkt")
 (require "./store.rkt")
@@ -54,7 +55,11 @@
                 (value-of-while-stmt exp body env)]
 
     [var-stmt (vars body)
-              (value-of-stmt body (bind-uninitialized-vars vars env))])
+              (value-of-stmt body (bind-uninitialized-vars vars env))]
+
+    [read-stmt (var)
+               (let ([ref (apply-env env var construct-proc-val)])
+                 (setref! ref (num-val (getint))))])
   #t)
 
 (define (value-of-exp exp env)
