@@ -12,6 +12,8 @@
 ;;
 ;;            ::= while Expression Statement
 ;;
+;;            ::= do Statement while Expression
+;;
 ;;            ::= var {Identifier}*(,) ; Statement
 ;;
 ;; Expression ::= Number
@@ -54,6 +56,7 @@
  block-stmt
  if-stmt
  while-stmt
+ do-while-stmt
  var-stmt
 
  expression expression?
@@ -98,6 +101,9 @@
 
     (statement ("while" expression statement)
                while-stmt)
+
+    (statement ("do" statement "while" expression)
+               do-while-stmt)
 
     (statement ("var" (separated-list identifier ",") ";" statement)
                var-stmt)

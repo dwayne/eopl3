@@ -218,3 +218,34 @@ var f, x; { f = proc(x) proc(y) *(x, y);
 CODE
   )
  (list (num-val 12)))
+
+;; STATEMENTS-4.24 tests
+
+(check-equal?
+ (run
+  #<<CODE
+var x,y; { x = 4;
+           y = 1;
+           do { y = *(y, x); x = -(x, 1) } while not(zero?(x));
+           print y }
+CODE
+  )
+ (list (num-val 24)))
+
+;; See the difference between while and do-while
+
+(check-equal?
+ (run
+  #<<CODE
+do print 4 while not(zero?(0))
+CODE
+  )
+ (list (num-val 4)))
+
+(check-equal?
+ (run
+  #<<CODE
+while not(zero?(0)) print 4
+CODE
+  )
+ '())

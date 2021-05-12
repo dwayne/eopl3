@@ -37,6 +37,11 @@
                         (assign-stmt 'f (const-exp 1)))))
 
 (check-equal?
+ (parse "do f = 1 while b")
+ (a-program (do-while-stmt (assign-stmt 'f (const-exp 1))
+                           (var-exp 'b))))
+
+(check-equal?
  (parse "var; {}")
  (a-program (var-stmt '() (block-stmt '()))))
 

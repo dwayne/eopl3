@@ -53,6 +53,9 @@
     [while-stmt (exp body)
                 (value-of-while-stmt exp body env)]
 
+    [do-while-stmt (body exp)
+                   (value-of-do-while-stmt body exp env)]
+
     [var-stmt (vars body)
               (value-of-stmt body (bind-uninitialized-vars vars env))])
   #t)
@@ -139,6 +142,13 @@
         (begin
           (value-of-stmt stmt env)
           (value-of-while-stmt exp stmt env))
+        #t)))
+
+(define (value-of-do-while-stmt stmt exp env)
+  (value-of-stmt stmt env)
+  (let ([val (value-of-exp exp env)])
+    (if (expval->bool val)
+        (value-of-do-while-stmt stmt exp env)
         #t)))
 
 (define (bind-uninitialized-vars vars env)
