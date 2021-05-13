@@ -33,6 +33,12 @@
 ;;            ::= setleft(Expression, Expression)
 ;;
 ;;            ::= setright(Expression, Expression)
+;;
+;;            ::= newarray(Expression, Expression)
+;;
+;;            ::= arrayref(Expression, Expression)
+;;
+;;            ::= arrayset(Expression, Expression, Expression)
 
 (provide
 
@@ -57,6 +63,9 @@
  right-exp
  setleft-exp
  setright-exp
+ newarray-exp
+ arrayref-exp
+ arrayset-exp
 
  ;; Parser
  parse)
@@ -116,7 +125,16 @@
                 setleft-exp)
 
     (expression ("setright" "(" expression "," expression ")")
-                setright-exp)))
+                setright-exp)
+
+    (expression ("newarray" "(" expression "," expression ")")
+                newarray-exp)
+
+    (expression ("arrayref" "(" expression "," expression ")")
+                arrayref-exp)
+
+    (expression ("arrayset" "(" expression "," expression "," expression ")")
+                arrayset-exp)))
 
 (sllgen:make-define-datatypes scanner-spec grammar)
 

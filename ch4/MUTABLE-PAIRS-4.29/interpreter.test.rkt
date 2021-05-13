@@ -221,3 +221,22 @@ in let f = proc(loc)
 CODE
   )
  (num-val 88))
+
+;; Exercise 4.29 tests
+
+(check-equal?
+ (run
+  #<<CODE
+let a = newarray(2, -(0, 99))
+in let p = proc (x)
+             let v = arrayref(x, 1)
+             in arrayset(x, 1, -(v, -(0, 1)))
+   in begin
+        arrayset(a, 1, 0);
+        (p a);
+        (p a);
+        arrayref(a, 1)
+      end
+CODE
+  )
+ (num-val 2))

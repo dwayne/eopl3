@@ -1,6 +1,7 @@
 #lang eopl
 
 (require "./env.rkt")
+(require "./array.rkt")
 (require "./mutpair.rkt")
 (require "./parser.rkt")
 (require "./store.rkt")
@@ -102,7 +103,24 @@
                   (let ([val1 (value-of-exp exp1 env)]
                         [val2 (value-of-exp exp2 env)])
                     (setright (expval->mutpair val1) val2)
-                    (num-val 83))]))
+                    (num-val 83))]
+
+    [newarray-exp (exp1 exp2)
+                  (let ([size (expval->num (value-of-exp exp1 env))]
+                        [default (value-of-exp exp2 env)])
+                    (arrval-val (newarray size default)))]
+
+    [arrayref-exp (exp1 exp2)
+                  (let ([arr (expval->arrval (value-of-exp exp1 env))]
+                        [index (expval->num (value-of-exp exp2 env))])
+                    (arrayref arr index))]
+
+    [arrayset-exp (exp1 exp2 exp3)
+                  (let ([arr (expval->arrval (value-of-exp exp1 env))]
+                        [index (expval->num (value-of-exp exp2 env))]
+                        [val (value-of-exp exp3 env)])
+                    (arrayset arr index val)
+                    (num-val 84))]))
 
 (define (value-of-begin-exp exps env)
   (if (null? (cdr exps))
@@ -129,15 +147,17 @@
 
 ;; Values
 ;;
-;; ExpVal  = Int + Bool + Proc + MutPair
+;; ExpVal  = Int + Bool + Proc + MutPair + ArrVal
 ;; DenVal  = Ref(ExpVal)
 ;; MutPair = Ref(ExpVal) x Ref(ExpVal)
+;; ArrVal  = (Ref(ExpVal))*
 
 (define-datatype expval expval?
   [num-val (n number?)]
   [bool-val (b boolean?)]
   [proc-val (p proc?)]
-  [mutpair-val (m mutpair?)])
+  [mutpair-val (m mutpair?)]
+  [arrval-val (a array?)])
 
 (define (expval->num val)
   (cases expval val
@@ -158,3 +178,8 @@
   (cases expval val
     [mutpair-val (m) m]
     [else (eopl:error 'expval->mutpair "Not a mutable pair: ~s" val)]))
+
+(define (expval->arrval val)
+  (cases expval val
+    [arrval-val (a) a]
+    [else (eopl:error 'expval->arrval "Not an array: ~s" val)]))
