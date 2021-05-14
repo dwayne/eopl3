@@ -14,11 +14,11 @@
 ;;
 ;;            ::= let Identifier = Expression in Expression
 ;;
-;;            ::= proc (Identifier) Expression
+;;            ::= proc ({Identifier}*(,)) Expression
 ;;
 ;;            ::= letrec {Identifier (Identifier) = Expression}* in Expression
 ;;
-;;            ::= (Expression Expression)
+;;            ::= (Expression {Expression}*)
 ;;
 ;;            ::= begin Expression {; Expression}* end
 ;;
@@ -73,13 +73,13 @@
     (expression ("let" identifier "=" expression "in" expression)
                 let-exp)
 
-    (expression ("proc" "(" identifier ")" expression)
+    (expression ("proc" "(" (separated-list identifier ",") ")" expression)
                 proc-exp)
 
     (expression ("letrec" (arbno identifier "(" identifier ")" "=" expression) "in" expression)
                 letrec-exp)
 
-    (expression ("(" expression expression ")")
+    (expression ("(" expression (arbno expression) ")")
                 call-exp)
 
     (expression ("begin" expression (arbno ";" expression) "end")

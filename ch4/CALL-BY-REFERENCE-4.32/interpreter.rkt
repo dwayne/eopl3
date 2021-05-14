@@ -15,12 +15,12 @@
 (define (run s)
   (initialize-store!)
   (let ([init-env (extend-env
-                   'i (newref (num-val 1))
-                   (extend-env
-                    'v (newref (num-val 5))
-                    (extend-env
-                     'x (newref (num-val 10))
-                     (empty-env))))])
+                   '(i v x)
+                   (list
+                    (newref (num-val 1))
+                    (newref (num-val 5))
+                    (newref (num-val 10)))
+                   (empty-env))])
     (value-of-program (parse s) init-env)))
 
 (define (value-of-program prog env)
@@ -56,27 +56,30 @@
 
     [let-exp (var exp1 body)
              (let ([val1 (value-of-exp exp1 env)])
-               (value-of-exp body (extend-env var (newref val1) env)))]
+               (value-of-exp body (extend-env (list var) (list (newref val1)) env)))]
 
-    [proc-exp (var body)
-              (proc-val (procedure var body env))]
+    [proc-exp (vars body)
+              (proc-val (procedure vars body env))]
 
     [letrec-exp (proc-names bound-vars proc-bodies letrec-body)
                 (value-of-exp letrec-body (extend-env-rec proc-names bound-vars proc-bodies env))]
 
-    [call-exp (rator rand)
+    [call-exp (rator rands)
               (let ([proc (expval->proc (value-of-exp rator env))]
-                    [arg (value-of-operand rand env)])
-                (apply-procedure proc arg))]
+                    [args (value-of-operands rands env)])
+                (apply-procedure proc args))]
 
     [begin-exp (exp1 exps)
                (value-of-begin-exp (cons exp1 exps) env)]
 
     [assign-exp (var exp1)
-             (let ([val1 (value-of-exp exp1 env)]
-                   [ref (apply-env env var construct-proc-val)])
-               (setref! ref val1)
-               (num-val 27))]))
+                (let ([val1 (value-of-exp exp1 env)]
+                      [ref (apply-env env var construct-proc-val)])
+                  (setref! ref val1)
+                  (num-val 27))]))
+
+(define (value-of-operands exps env)
+  (map (lambda (exp) (value-of-operand exp env)) exps))
 
 (define (value-of-operand exp env)
   (cases expression exp
@@ -90,22 +93,22 @@
         (value-of-exp (car exps) env)
         (value-of-begin-exp (cdr exps) env))))
 
-(define (construct-proc-val var body saved-env)
-  (proc-val (procedure var body saved-env)))
+(define (construct-proc-val vars body saved-env)
+  (proc-val (procedure vars body saved-env)))
 
 ;; Procedure ADT
 
 (define-datatype proc proc?
   [procedure
-   (var identifier?)
+   (vars (list-of identifier?))
    (body expression?)
    (saved-env env?)])
 
-;; apply-procedure : Proc x DenVal -> ExpVal
-(define (apply-procedure proc1 val)
+;; apply-procedure : Proc x List(DenVal) -> ExpVal
+(define (apply-procedure proc1 vals)
   (cases proc proc1
-    [procedure (var body saved-env)
-               (value-of-exp body (extend-env var val saved-env))]))
+    [procedure (vars body saved-env)
+               (value-of-exp body (extend-env vars vals saved-env))]))
 
 ;; Values
 ;;

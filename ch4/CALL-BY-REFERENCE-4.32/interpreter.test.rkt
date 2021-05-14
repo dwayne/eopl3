@@ -230,3 +230,56 @@ in let p = proc (x) proc (y)
 CODE
   )
  (num-val 4))
+
+;; Exercise 4.32
+
+(check-equal?
+ (run
+  #<<CODE
+let f = proc () 5
+in (f)
+CODE
+  )
+ (num-val 5))
+
+(check-equal?
+ (run
+  #<<CODE
+let add = proc (a, b) -(a, -(0, b))
+in (add 3 4)
+CODE
+  )
+ (num-val 7))
+
+(check-equal?
+ (run
+  #<<CODE
+let swap = proc (x, y)
+             let temp = x
+             in begin
+                  set x = y;
+                  set y = temp
+                end
+in let a = 33
+   in let b = 44
+      in begin
+           (swap a b);
+           -(a, b)
+         end
+CODE
+  )
+ (num-val 11))
+
+(check-equal?
+ (run
+  #<<CODE
+let b = 3
+in let p = proc (x, y)
+             begin
+               set x = 4;
+               y
+             end
+   in (p b b)
+CODE
+  )
+ (num-val 4))
