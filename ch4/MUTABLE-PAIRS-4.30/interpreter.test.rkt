@@ -240,3 +240,15 @@ in let p = proc (x)
 CODE
   )
  (num-val 2))
+
+;; Exercise 4.30 tests
+
+(check-equal?
+ (run
+  #<<CODE
+let arr = newarray(10, 0)
+in let n = arraylength(arr)
+   in -(n, -(0, n))
+CODE
+  )
+ (num-val 20))

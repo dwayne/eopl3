@@ -120,7 +120,11 @@
                         [index (expval->num (value-of-exp exp2 env))]
                         [val (value-of-exp exp3 env)])
                     (arrayset arr index val)
-                    (num-val 84))]))
+                    (num-val 84))]
+
+    [arraylength-exp (exp1)
+                     (let ([arr (expval->arrval (value-of-exp exp1 env))])
+                       (num-val (arraylength arr)))]))
 
 (define (value-of-begin-exp exps env)
   (if (null? (cdr exps))

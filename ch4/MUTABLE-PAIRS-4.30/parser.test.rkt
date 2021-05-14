@@ -103,3 +103,7 @@
 (check-equal?
  (parse "arrayset(x, 1, 2)")
  (a-program (arrayset-exp (var-exp 'x) (const-exp 1) (const-exp 2))))
+
+(check-equal?
+ (parse "arraylength(arr)")
+ (a-program (arraylength-exp (var-exp 'arr))))

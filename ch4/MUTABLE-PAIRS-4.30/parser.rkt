@@ -39,6 +39,8 @@
 ;;            ::= arrayref(Expression, Expression)
 ;;
 ;;            ::= arrayset(Expression, Expression, Expression)
+;;
+;;            ::= arraylength(Expression)
 
 (provide
 
@@ -66,6 +68,7 @@
  newarray-exp
  arrayref-exp
  arrayset-exp
+ arraylength-exp
 
  ;; Parser
  parse)
@@ -134,7 +137,10 @@
                 arrayref-exp)
 
     (expression ("arrayset" "(" expression "," expression "," expression ")")
-                arrayset-exp)))
+                arrayset-exp)
+
+    (expression ("arraylength" "(" expression ")")
+                arraylength-exp)))
 
 (sllgen:make-define-datatypes scanner-spec grammar)
 
