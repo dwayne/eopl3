@@ -49,16 +49,16 @@
  (a-program (letrec-exp '(f g)
                         '(x y)
                         (list
-                         (call-exp (var-exp 'g)
-                                   (var-exp 'x))
+                         (cbr-exp (var-exp 'g)
+                                  (var-exp 'x))
                          (var-exp 'y))
-                        (call-exp (var-exp 'f)
-                                  (const-exp 2)))))
+                        (cbr-exp (var-exp 'f)
+                                 (const-exp 2)))))
 
 (check-equal?
  (parse "(f x)")
- (a-program (call-exp (var-exp 'f)
-                      (var-exp 'x))))
+ (a-program (cbr-exp (var-exp 'f)
+                     (var-exp 'x))))
 
 (check-equal?
  (parse "begin 5; 4; 3 end")

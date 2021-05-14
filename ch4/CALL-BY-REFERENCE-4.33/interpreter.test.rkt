@@ -230,3 +230,18 @@ in let p = proc (x) proc (y)
 CODE
   )
  (num-val 4))
+
+;; Exercise 4.33 tests
+
+;; Illustration of the difference between call-by-value and call-by-reference
+;; This example was given on pg 130 of the book
+
+(check-equal?
+ (run
+  #<<CODE
+let p = proc (x) set x = 4
+in let a = 3
+   in begin [p a]; a end
+CODE
+  )
+ (num-val 3))

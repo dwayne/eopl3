@@ -20,6 +20,8 @@
 ;;
 ;;            ::= (Expression Expression)
 ;;
+;;            ::= [Expression Expression]
+;;
 ;;            ::= begin Expression {; Expression}* end
 ;;
 ;;            ::= set Identifier = Expression
@@ -39,7 +41,8 @@
  let-exp
  proc-exp
  letrec-exp
- call-exp
+ cbr-exp
+ cbv-exp
  begin-exp
  assign-exp
 
@@ -80,7 +83,10 @@
                 letrec-exp)
 
     (expression ("(" expression expression ")")
-                call-exp)
+                cbr-exp)
+
+    (expression ("[" expression expression "]")
+                cbv-exp)
 
     (expression ("begin" expression (arbno ";" expression) "end")
                 begin-exp)
