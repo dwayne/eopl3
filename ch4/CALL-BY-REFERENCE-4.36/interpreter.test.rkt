@@ -256,3 +256,28 @@ in let a = newarray(2, 0)
 CODE
   )
  (num-val 11))
+
+;; What should happen in the following case?
+
+(check-equal?
+ (run
+  #<<CODE
+let swap = proc (x) proc (y)
+             let temp = x
+             in begin
+                  set x = y;
+                  set y = temp
+                end
+in let a = newarray(3, 0)
+   in let i = 0
+      in let j = 2
+         in begin
+              arrayset(a, 0, 1);
+              arrayset(a, 1, 33);
+              arrayset(a, 2, 44);
+              ((swap arrayref(a, arrayref(a, i))) arrayref(a, j));
+              -(arrayref(a, 1), arrayref(a, 2))
+            end
+CODE
+  )
+ (num-val 11))
