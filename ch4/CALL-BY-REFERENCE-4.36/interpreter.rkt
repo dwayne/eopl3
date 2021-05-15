@@ -98,8 +98,16 @@
 
 (define (value-of-operand exp env)
   (cases expression exp
-    [var-exp (var) (apply-env env var construct-proc-val)]
-    [else (newref (value-of-exp exp env))]))
+    [var-exp (var)
+             (apply-env env var construct-proc-val)]
+
+    [arrayref-exp (exp1 exp2)
+                  (let ([arr (expval->arrval (value-of-exp exp1 env))]
+                        [index (expval->num (value-of-exp exp2 env))])
+                    (indextoref arr index))]
+
+    [else
+     (newref (value-of-exp exp env))]))
 
 (define (value-of-begin-exp exps env)
   (if (null? (cdr exps))

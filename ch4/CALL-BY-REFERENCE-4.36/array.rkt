@@ -10,6 +10,8 @@
  arrayref
  arrayset
 
+ indextoref
+
  array?)
 
 (define (array? v)
@@ -36,3 +38,7 @@
 ;; arrayset : Array -> Int -> ExpVal -> Unspecified
 (define (arrayset array index val)
   (setref! (+ array index) val))
+
+;; indextoref : Array -> Int -> Reference
+(define (indextoref array index)
+  (+ array index))

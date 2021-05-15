@@ -233,7 +233,7 @@ CODE
 
 ;; Exercise 4.36 tests
 
-;; Notice how swap doesn't work for array references
+;; Notice how swap works as expected for array references
 
 (check-equal?
  (run
@@ -255,4 +255,4 @@ in let a = newarray(2, 0)
             end
 CODE
   )
- (num-val -11))
+ (num-val 11))
