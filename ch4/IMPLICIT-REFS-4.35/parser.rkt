@@ -6,6 +6,8 @@
 ;;
 ;;            ::= Identifier
 ;;
+;;            ::= ref Identifier
+;;
 ;;            ::= -(Expression, Expression)
 ;;
 ;;            ::= zero?(Expression)
@@ -33,6 +35,7 @@
  expression expression?
  const-exp
  var-exp
+ ref-exp
  diff-exp
  zero?-exp
  if-exp
@@ -60,6 +63,9 @@
 
     (expression (identifier)
                 var-exp)
+
+    (expression ("ref" identifier)
+                ref-exp)
 
     (expression ("-" "(" expression "," expression ")")
                 diff-exp)

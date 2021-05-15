@@ -35,6 +35,9 @@
     [var-exp (var)
              (deref (apply-env env var construct-proc-val))]
 
+    [ref-exp (var)
+             (ref-val (apply-env env var construct-proc-val))]
+
     [diff-exp (exp1 exp2)
               (let ([val1 (value-of-exp exp1 env)]
                     [val2 (value-of-exp exp2 env)])
@@ -56,7 +59,7 @@
 
     [let-exp (var exp1 body)
              (let ([val1 (value-of-exp exp1 env)])
-               (value-of-exp body (extend-env var (newref val1) env)))]
+               (value-of-exp body (extend-env var (maybe-newref val1) env)))]
 
     [proc-exp (var body)
               (proc-val (procedure var body env))]
@@ -88,6 +91,11 @@
 (define (construct-proc-val var body saved-env)
   (proc-val (procedure var body saved-env)))
 
+(define (maybe-newref val)
+  (cases expval val
+    [ref-val (r) r]
+    [else (newref val)]))
+
 ;; Procedure ADT
 
 (define-datatype proc proc?
@@ -99,17 +107,18 @@
 (define (apply-procedure proc1 val)
   (cases proc proc1
     [procedure (var body saved-env)
-               (value-of-exp body (extend-env var (newref val) saved-env))]))
+               (value-of-exp body (extend-env var (maybe-newref val) saved-env))]))
 
 ;; Values
 ;;
-;; ExpVal = Int + Bool + Proc
+;; ExpVal = Int + Bool + Proc + Ref(ExpVal)
 ;; DenVal = Ref(ExpVal)
 
 (define-datatype expval expval?
   [num-val (n number?)]
   [bool-val (b boolean?)]
-  [proc-val (p proc?)])
+  [proc-val (p proc?)]
+  [ref-val (r reference?)])
 
 (define (expval->num val)
   (cases expval val
@@ -125,3 +134,8 @@
   (cases expval val
     [proc-val (p) p]
     [else (eopl:error 'expval->proc "Not a procedure: ~s" val)]))
+
+(define (expval->ref val)
+  (cases expval val
+    [ref-val (r) r]
+    [else (eopl:error 'expval->ref "Not a reference: ~s" val)]))

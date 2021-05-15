@@ -174,3 +174,37 @@ in let a = (g 11)
 CODE
   )
  (num-val -1))
+
+;; Exercise 4.35 tests
+
+(check-equal?
+ (run
+  #<<CODE
+let a = 3
+in let b = 4
+   in let swap = proc (x) proc (y)
+                   let temp = x
+                   in begin
+                        set x = y;
+                        set y = temp
+                      end
+      in begin ((swap a) b); -(a, b) end
+CODE
+  )
+ (num-val -1))
+
+(check-equal?
+ (run
+  #<<CODE
+let a = 3
+in let b = 4
+   in let swap = proc (x) proc (y)
+                   let temp = x
+                   in begin
+                        set x = y;
+                        set y = temp
+                      end
+      in begin ((swap ref a) ref b); -(a, b) end
+CODE
+  )
+ (num-val 1))

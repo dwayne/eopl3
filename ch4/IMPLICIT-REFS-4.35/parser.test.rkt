@@ -13,6 +13,10 @@
  (a-program (var-exp 'x)))
 
 (check-equal?
+ (parse "ref x")
+ (a-program (ref-exp 'x)))
+
+(check-equal?
  (parse "-(5, y)")
  (a-program (diff-exp (const-exp 5) (var-exp 'y))))
 
