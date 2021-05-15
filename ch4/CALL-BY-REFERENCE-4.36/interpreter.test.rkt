@@ -230,3 +230,29 @@ in let p = proc (x) proc (y)
 CODE
   )
  (num-val 4))
+
+;; Exercise 4.36 tests
+
+;; Notice how swap doesn't work for array references
+
+(check-equal?
+ (run
+  #<<CODE
+let swap = proc (x) proc (y)
+             let temp = x
+             in begin
+                  set x = y;
+                  set y = temp
+                end
+in let a = newarray(2, 0)
+   in let i = 0
+      in let j = 1
+         in begin
+              arrayset(a, i, 33);
+              arrayset(a, j, 44);
+              ((swap arrayref(a, i)) arrayref(a, j));
+              -(arrayref(a, i), arrayref(a, j))
+            end
+CODE
+  )
+ (num-val -11))

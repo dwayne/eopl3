@@ -1,5 +1,6 @@
 #lang eopl
 
+(require "./array.rkt")
 (require "./env.rkt")
 (require "./parser.rkt")
 (require "./store.rkt")
@@ -73,10 +74,27 @@
                (value-of-begin-exp (cons exp1 exps) env)]
 
     [assign-exp (var exp1)
-             (let ([val1 (value-of-exp exp1 env)]
-                   [ref (apply-env env var construct-proc-val)])
-               (setref! ref val1)
-               (num-val 27))]))
+                (let ([val1 (value-of-exp exp1 env)]
+                      [ref (apply-env env var construct-proc-val)])
+                  (setref! ref val1)
+                  (num-val 27))]
+
+    [newarray-exp (exp1 exp2)
+                  (let ([size (expval->num (value-of-exp exp1 env))]
+                        [default (value-of-exp exp2 env)])
+                    (arrval-val (newarray size default)))]
+
+    [arrayref-exp (exp1 exp2)
+                  (let ([arr (expval->arrval (value-of-exp exp1 env))]
+                        [index (expval->num (value-of-exp exp2 env))])
+                    (arrayref arr index))]
+
+    [arrayset-exp (exp1 exp2 exp3)
+                  (let ([arr (expval->arrval (value-of-exp exp1 env))]
+                        [index (expval->num (value-of-exp exp2 env))]
+                        [val (value-of-exp exp3 env)])
+                    (arrayset arr index val)
+                    (num-val 84))]))
 
 (define (value-of-operand exp env)
   (cases expression exp
@@ -109,13 +127,15 @@
 
 ;; Values
 ;;
-;; ExpVal = Int + Bool + Proc
+;; ExpVal = Int + Bool + Proc + ArrVal
 ;; DenVal = Ref(ExpVal)
+;; ArrVal  = (Ref(ExpVal))*
 
 (define-datatype expval expval?
   [num-val (n number?)]
   [bool-val (b boolean?)]
-  [proc-val (p proc?)])
+  [proc-val (p proc?)]
+  [arrval-val (a array?)])
 
 (define (expval->num val)
   (cases expval val
@@ -131,3 +151,8 @@
   (cases expval val
     [proc-val (p) p]
     [else (eopl:error 'expval->proc "Not a procedure: ~s" val)]))
+
+(define (expval->arrval val)
+  (cases expval val
+    [arrval-val (a) a]
+    [else (eopl:error 'expval->arrval "Not an array: ~s" val)]))

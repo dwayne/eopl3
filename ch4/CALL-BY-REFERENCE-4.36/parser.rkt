@@ -23,6 +23,12 @@
 ;;            ::= begin Expression {; Expression}* end
 ;;
 ;;            ::= set Identifier = Expression
+;;
+;;            ::= newarray(Expression, Expression)
+;;
+;;            ::= arrayref(Expression, Expression)
+;;
+;;            ::= arrayset(Expression, Expression, Expression)
 
 (provide
 
@@ -42,6 +48,9 @@
  call-exp
  begin-exp
  assign-exp
+ newarray-exp
+ arrayref-exp
+ arrayset-exp
 
  ;; Parser
  parse)
@@ -86,7 +95,16 @@
                 begin-exp)
 
     (expression ("set" identifier "=" expression)
-                assign-exp)))
+                assign-exp)
+
+    (expression ("newarray" "(" expression "," expression ")")
+                newarray-exp)
+
+    (expression ("arrayref" "(" expression "," expression ")")
+                arrayref-exp)
+
+    (expression ("arrayset" "(" expression "," expression "," expression ")")
+                arrayset-exp)))
 
 (sllgen:make-define-datatypes scanner-spec grammar)
 

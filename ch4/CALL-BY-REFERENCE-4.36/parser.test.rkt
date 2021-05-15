@@ -71,3 +71,15 @@
 (check-equal?
  (parse "set x = 1")
  (a-program (assign-exp 'x (const-exp 1))))
+
+(check-equal?
+ (parse "newarray(2, -(0, 99))")
+ (a-program (newarray-exp (const-exp 2) (diff-exp (const-exp 0) (const-exp 99)))))
+
+(check-equal?
+ (parse "arrayref(x, 1)")
+ (a-program (arrayref-exp (var-exp 'x) (const-exp 1))))
+
+(check-equal?
+ (parse "arrayset(x, 1, 2)")
+ (a-program (arrayset-exp (var-exp 'x) (const-exp 1) (const-exp 2))))
