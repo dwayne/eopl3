@@ -33,6 +33,12 @@
                      (diff-exp (var-exp 'n) (const-exp 1)))))
 
 (check-equal?
+ (parse "letref a=b in a")
+ (a-program (letref-exp 'a
+                        (var-exp 'b)
+                        (var-exp 'a))))
+
+(check-equal?
  (parse "proc (x) -(x, 1)")
  (a-program (proc-exp 'x (diff-exp (var-exp 'x)
                                    (const-exp 1)))))

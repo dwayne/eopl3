@@ -58,6 +58,16 @@
              (let ([val1 (value-of-exp exp1 env)])
                (value-of-exp body (extend-env var (newref val1) env)))]
 
+    [letref-exp (var1 exp1 body)
+                (cases expression exp1
+                  [var-exp (var2)
+                           (let ([ref (apply-env env var2 construct-proc-val)])
+                             (value-of-exp body (extend-env var1 ref env)))]
+
+                  [else
+                   (let ([val1 (value-of-exp exp1 env)])
+                     (value-of-exp body (extend-env var1 (newref val1) env)))])]
+
     [proc-exp (var body)
               (proc-val (procedure var body env))]
 
@@ -73,10 +83,10 @@
                (value-of-begin-exp (cons exp1 exps) env)]
 
     [assign-exp (var exp1)
-             (let ([val1 (value-of-exp exp1 env)]
-                   [ref (apply-env env var construct-proc-val)])
-               (setref! ref val1)
-               (num-val 27))]))
+                (let ([val1 (value-of-exp exp1 env)]
+                      [ref (apply-env env var construct-proc-val)])
+                  (setref! ref val1)
+                  (num-val 27))]))
 
 (define (value-of-operand exp env)
   (cases expression exp

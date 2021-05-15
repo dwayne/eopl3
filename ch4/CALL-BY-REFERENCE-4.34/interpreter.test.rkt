@@ -230,3 +230,32 @@ in let p = proc (x) proc (y)
 CODE
   )
  (num-val 4))
+
+;; Exercise 4.34 tests
+
+
+(check-equal?
+ (run
+  #<<CODE
+let a = 1
+in let b = a
+   in begin
+       set b = 2;
+       a
+      end
+CODE
+  )
+ (num-val 1))
+
+(check-equal?
+ (run
+  #<<CODE
+let a = 1
+in letref b = a
+   in begin
+       set b = 2;
+       a
+      end
+CODE
+  )
+ (num-val 2))
