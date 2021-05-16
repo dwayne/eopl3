@@ -69,6 +69,17 @@
                     [arg (value-of-operand rand env)])
                 (apply-procedure proc arg))]
 
+    [cbvr-exp (rator rand)
+              (let ([proc (expval->proc (value-of-exp rator env))])
+                (cases expression rand
+                  [var-exp (var)
+                           (let ([arg (newref (value-of-exp rand env))])
+                             (let ([val (apply-procedure proc arg)])
+                               (setref! (apply-env env var construct-proc-val) (deref arg))
+                               val))]
+
+                  [else (eopl:error 'value-of-exp "The actual parameter must be a variable: ~s" rand)]))]
+
     [begin-exp (exp1 exps)
                (value-of-begin-exp (cons exp1 exps) env)]
 

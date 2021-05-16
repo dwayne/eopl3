@@ -230,3 +230,83 @@ in let p = proc (x) proc (y)
 CODE
   )
  (num-val 4))
+
+;; CALL-BY-VALUE-RESULT tests
+
+(check-equal?
+ (run
+  #<<CODE
+let p = proc (x) set x = 4
+in let a = 3
+   in begin [p a]; a end
+CODE
+  )
+ (num-val 4))
+
+(check-equal?
+ (run
+  #<<CODE
+let f = proc (x) set x = 44
+in let g = proc (y) [f y]
+   in let z = 55
+      in begin [g z]; z end
+CODE
+  )
+ (num-val 44))
+
+(check-equal?
+ (run
+  #<<CODE
+let swap = proc (x) proc (y)
+             let temp = x
+             in begin
+                  set x = y;
+                  set y = temp
+                end
+in let a = 33
+   in let b = 44
+      in begin
+           [[swap a] b];
+           -(a, b)
+         end
+CODE
+  )
+ (num-val 0)) ;; using call-by-reference the value is 11
+
+;; so call-by-value-result does not allow curried procedures
+;; to work in the way we expect with regards to updating parameters
+;; only the last parameter reflects the change
+
+;; see below for more examples
+
+(check-equal?
+ (run
+  #<<CODE
+let f = proc (x) set x = -(x, 1)
+in let a = 5
+   in begin [f a]; a end
+CODE
+  )
+ (num-val 4))
+
+(check-equal?
+ (run
+  #<<CODE
+let f = proc (x) proc (y) set x = -(x, 1)
+in let a = 5
+   in let b = 10
+      in begin [[f a] b]; a end
+CODE
+  )
+ (num-val 5))
+
+(check-equal?
+ (run
+  #<<CODE
+let f = proc (x) proc (y) set y = -(y, 1)
+in let a = 5
+   in let b = 10
+      in begin [[f a] b]; b end
+CODE
+  )
+ (num-val 9))

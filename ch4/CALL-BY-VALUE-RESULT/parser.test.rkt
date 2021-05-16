@@ -61,6 +61,11 @@
                       (var-exp 'x))))
 
 (check-equal?
+ (parse "[f x]")
+ (a-program (cbvr-exp (var-exp 'f)
+                      (var-exp 'x))))
+
+(check-equal?
  (parse "begin 5; 4; 3 end")
  (a-program (begin-exp
               (const-exp 5)
