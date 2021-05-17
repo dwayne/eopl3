@@ -242,3 +242,18 @@ in let f = proc (z) 11
 CODE
   )
  (num-val 11))
+
+;; Exercise 4.39
+
+(check-equal?
+ (run
+  #<<CODE
+let double = proc (x) -(x, -(0, x))
+in let a = 2
+   in begin
+        (double begin set a = -(a, 1); 8 end);
+        a
+      end
+CODE
+  )
+ (num-val 0))
