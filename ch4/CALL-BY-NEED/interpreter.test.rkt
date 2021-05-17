@@ -242,3 +242,46 @@ in let f = proc (z) 11
 CODE
   )
  (num-val 11))
+
+;; Exercise 4.38
+;;
+;; A variant of exercise 3.25 that works under call-by-need
+
+(check-equal?
+ (run
+  #<<CODE
+let makerec = proc (f)
+                let d = proc (x) (f (x x))
+                in (f (d d))
+in let maketimesfour = proc (f)
+                         proc (x)
+                           if zero?(x)
+                           then 0
+                           else -((f -(x, 1)), -(0, 4))
+   in let timesfour = (makerec maketimesfour)
+      in (timesfour 3)
+CODE
+  )
+ (num-val 12))
+
+;; Does the original program in exercise 3.25 work under call-by-need?
+
+(check-equal?
+ (run
+  #<<CODE
+let makerec = proc (f)
+                let d = proc (x)
+                          proc (z) ((f (x x)) z)
+                in proc (n) ((f (d d)) n)
+in let maketimesfour = proc (f)
+                         proc (x)
+                           if zero?(x)
+                           then 0
+                           else -((f -(x, 1)), -(0, 4))
+   in let timesfour = (makerec maketimesfour)
+      in (timesfour 3)
+CODE
+  )
+ (num-val 12))
+
+;; Answer: Yes!

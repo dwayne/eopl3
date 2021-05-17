@@ -127,3 +127,40 @@ in let fact = proc (n)
 CODE
   )
  (num-val 25))
+
+;; Exercise 4.38
+;;
+;; What happens if the program below is run under call-by-value?
+
+;; Uncomment to see what happens:
+;(check-equal?
+; (run
+;  #<<CODE
+;let makerec = proc (f)
+;                let d = proc (x) (f (x x))
+;                in (f (d d))
+;in let maketimesfour = proc (f)
+;                         proc (x)
+;                           if zero?(x)
+;                           then 0
+;                           else -((f -(x, 1)), -(0, 4))
+;   in let timesfour = (makerec maketimesfour)
+;      in (timesfour 3)
+;CODE
+;  )
+; (num-val 12))
+
+;; Answer: It loops indefinitely until it runs out of memory.
+;;
+;; Why?
+;;
+;; Because
+;;
+;; (timesfour 3)
+;; = ((makerec maketimesfour) 3)
+;; = ((maketimesfour (d d)) 3)
+;; = ((maketimesfour (maketimesfour (d d))) 3)
+;; = ((maketimesfour (maketimesfour (maketimesfour (d d)))) 3)
+;; = ...
+;;
+;; i.e. (f (d d)) expands indefinitely under call-by-value.
