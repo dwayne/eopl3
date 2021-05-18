@@ -64,6 +64,10 @@
              (let ([val1 (value-of-exp exp1 env)])
                (value-of-exp body (extend-env var (newref val1) env)))]
 
+    [lazylet-exp (var exp1 body)
+                 (let ([ref (value-of-operand exp1 env)])
+                   (value-of-exp body (extend-env var ref env)))]
+
     [proc-exp (var body)
               (proc-val (procedure var body env))]
 
@@ -79,10 +83,10 @@
                (value-of-begin-exp (cons exp1 exps) env)]
 
     [assign-exp (var exp1)
-             (let ([val1 (value-of-exp exp1 env)]
-                   [ref (apply-env env var construct-proc-val)])
-               (setref! ref val1)
-               (num-val 27))]))
+                (let ([val1 (value-of-exp exp1 env)]
+                      [ref (apply-env env var construct-proc-val)])
+                  (setref! ref val1)
+                  (num-val 27))]))
 
 (define (value-of-operand exp env)
   (cases expression exp

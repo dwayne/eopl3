@@ -300,3 +300,29 @@ in let a = 2
 CODE
   )
  (num-val 1))
+
+;; Exercise 4.42 tests
+
+(check-equal?
+ (run
+  #<<CODE
+letrec loop(x) = (loop x)
+in lazylet a = (loop 0)
+   in 5
+CODE
+  )
+ (num-val 5))
+
+;; However, if we use "eager" let then it runs indefinitely
+;; or until it runs out of memory
+
+;; Uncomment to see what happens
+;(check-equal?
+; (run
+;  #<<CODE
+;letrec loop(x) = (loop x)
+;in let a = (loop 0)
+;   in 5
+;CODE
+;  )
+; (num-val 5))

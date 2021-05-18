@@ -14,6 +14,8 @@
 ;;
 ;;            ::= let Identifier = Expression in Expression
 ;;
+;;            ::= lazylet Identifier = Expression in Expression
+;;
 ;;            ::= proc (Identifier) Expression
 ;;
 ;;            ::= letrec {Identifier (Identifier) = Expression}* in Expression
@@ -37,6 +39,7 @@
  zero?-exp
  if-exp
  let-exp
+ lazylet-exp
  proc-exp
  letrec-exp
  call-exp
@@ -72,6 +75,9 @@
 
     (expression ("let" identifier "=" expression "in" expression)
                 let-exp)
+
+    (expression ("lazylet" identifier "=" expression "in" expression)
+                lazylet-exp)
 
     (expression ("proc" "(" identifier ")" expression)
                 proc-exp)
