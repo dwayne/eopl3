@@ -87,6 +87,11 @@
 (define (value-of-operand exp env)
   (cases expression exp
     [var-exp (var) (apply-env env var construct-proc-val)]
+
+    ; Avoid making thunks for constants and procedures
+    [const-exp (n) (newref (value-of-exp exp env))]
+    [proc-exp (var body) (newref (value-of-exp exp env))]
+
     [else (newref (a-thunk exp env))]))
 
 (define (value-of-begin-exp exps env)
