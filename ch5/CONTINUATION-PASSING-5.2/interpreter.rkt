@@ -64,54 +64,71 @@
 
 ;; Continuations
 ;;
-;; It uses a procedural representation.
+;; It uses a data structure representation.
 
-(define (end-cont)
-  (lambda (val)
-    (eopl:printf "End of computation.~%")
-    val))
-
-(define (zero1-cont cont)
-  (lambda (val)
-    ; (apply-cont cont (if (zero? (expval->num val))
-    ;                      (bool-val #t)
-    ;                      (bool-val #f)))
-    ; This can be simplified to:
-    (apply-cont cont (bool-val (zero? (expval->num val))))))
-
-(define (let-exp-cont var body env cont)
-  (lambda (val)
-    (value-of-exp body (extend-env var val env) cont)))
-
-(define (if-test-cont exp2 exp3 env cont)
-  (lambda (val)
-    (if (expval->bool val)
-        (value-of-exp exp2 env cont)
-        (value-of-exp exp3 env cont))))
-
-(define (diff1-cont exp2 env cont)
-  (lambda (val1)
-    (value-of-exp exp2 env (diff2-cont val1 cont))))
-
-(define (diff2-cont val1 cont)
-  (lambda (val2)
-    (apply-cont
-     cont
-     (num-val
-      (- (expval->num val1)
-         (expval->num val2))))))
-
-(define (rator-cont rand env cont)
-  (lambda (proc-val)
-    (value-of-exp rand env (rand-cont proc-val cont))))
-
-(define (rand-cont proc-val cont)
-  (lambda (arg)
-    (apply-procedure (expval->proc proc-val) arg cont)))
+(define-datatype continuation continuation?
+  [end-cont]
+  [zero1-cont
+   (cont continuation?)]
+  [let-exp-cont
+   (var identifier?)
+   (body expression?)
+   (env env?)
+   (cont continuation?)]
+  [if-test-cont
+   (exp2 expression?)
+   (exp3 expression?)
+   (env env?)
+   (cont continuation?)]
+  [diff1-cont
+   (exp2 expression?)
+   (env env?)
+   (cont continuation?)]
+  [diff2-cont
+   (val1 expval?)
+   (cont continuation?)]
+  [rator-cont
+   (rand expression?)
+   (env env?)
+   (cont continuation?)]
+  [rand-cont
+   (proc-val expval?)
+   (cont continuation?)])
 
 ;; Cont x ExpVal -> FinalAnswer
-(define (apply-cont cont val)
-  (cont val))
+(define (apply-cont c val)
+  (cases continuation c
+    [end-cont ()
+              (begin
+                (eopl:printf "End of computation.~%")
+                val)]
+
+    [zero1-cont (cont)
+                (apply-cont cont (bool-val (zero? (expval->num val))))]
+
+    [let-exp-cont (var body env cont)
+                  (value-of-exp body (extend-env var val env) cont)]
+
+    [if-test-cont (exp2 exp3 env cont)
+                  (if (expval->bool val)
+                      (value-of-exp exp2 env cont)
+                      (value-of-exp exp3 env cont))]
+
+    [diff1-cont (exp2 env cont)
+                (value-of-exp exp2 env (diff2-cont val cont))]
+
+    [diff2-cont (val1 cont)
+                (apply-cont
+                 cont
+                 (num-val
+                  (- (expval->num val1)
+                     (expval->num val))))]
+
+    [rator-cont (rand env cont)
+                (value-of-exp rand env (rand-cont val cont))]
+
+    [rand-cont (proc-val cont)
+               (apply-procedure (expval->proc proc-val) val cont)]))
 
 ;; Procedure ADT
 
