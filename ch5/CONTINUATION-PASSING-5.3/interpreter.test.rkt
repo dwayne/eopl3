@@ -121,3 +121,25 @@ in (double 6)
 CODE
   )
  (num-val 12))
+
+;; let2 tests
+
+(check-equal?
+ (run
+  #<<CODE
+let2 x = 33
+     y = 22
+in if zero?(-(x, 11)) then -(y, 2) else -(y, 4)
+CODE
+  )
+ (num-val 18))
+
+(check-equal?
+ (run
+  #<<CODE
+let2 a = 5
+     b = 15
+in -(b, a)
+CODE
+  )
+ (num-val 10))

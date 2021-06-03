@@ -47,6 +47,9 @@
     [let-exp (var exp1 body)
              (value-of-exp exp1 env (let-exp-cont var body env cont))]
 
+    [let2-exp (var1 exp1 var2 exp2 body)
+              (value-of-exp exp1 env (let2-exp1-cont var1 var2 exp2 body env cont))]
+
     [proc-exp (var body)
               (apply-cont cont (proc-val (procedure var body env)))]
 
@@ -82,6 +85,14 @@
 (define (let-exp-cont var body env cont)
   (lambda (val)
     (value-of-exp body (extend-env var val env) cont)))
+
+(define (let2-exp1-cont var1 var2 exp2 body env cont)
+  (lambda (val1)
+    (value-of-exp exp2 env (let2-exp2-cont var1 val1 var2 body env cont))))
+
+(define (let2-exp2-cont var1 val1 var2 body env cont)
+  (lambda (val2)
+    (value-of-exp body (extend-env var2 val2 (extend-env var1 val1 env)) cont)))
 
 (define (if-test-cont exp2 exp3 env cont)
   (lambda (val)

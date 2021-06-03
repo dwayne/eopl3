@@ -14,6 +14,10 @@
 ;;
 ;;            ::= let Identifier = Expression in Expression
 ;;
+;;            ::= let2 Identifier = Expression
+;;                     Identifier = Expression
+;;                in Expression
+;;
 ;;            ::= proc (Identifier) Expression
 ;;
 ;;            ::= letrec Identifier (Identifier) = Expression in Expression
@@ -33,6 +37,7 @@
  zero?-exp
  if-exp
  let-exp
+ let2-exp
  proc-exp
  letrec-exp
  call-exp
@@ -66,6 +71,9 @@
 
     (expression ("let" identifier "=" expression "in" expression)
                 let-exp)
+
+    (expression ("let2" identifier "=" expression identifier "=" expression "in" expression)
+                let2-exp)
 
     (expression ("proc" "(" identifier ")" expression)
                 proc-exp)
