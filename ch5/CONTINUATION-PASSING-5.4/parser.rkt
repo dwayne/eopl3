@@ -18,6 +18,11 @@
 ;;                     Identifier = Expression
 ;;                in Expression
 ;;
+;;            ::= let3 Identifier = Expression
+;;                     Identifier = Expression
+;;                     Identifier = Expression
+;;                in Expression
+;;
 ;;            ::= proc (Identifier) Expression
 ;;
 ;;            ::= letrec Identifier (Identifier) = Expression in Expression
@@ -38,6 +43,7 @@
  if-exp
  let-exp
  let2-exp
+ let3-exp
  proc-exp
  letrec-exp
  call-exp
@@ -74,6 +80,9 @@
 
     (expression ("let2" identifier "=" expression identifier "=" expression "in" expression)
                 let2-exp)
+
+    (expression ("let3" identifier "=" expression identifier "=" expression identifier "=" expression "in" expression)
+                let3-exp)
 
     (expression ("proc" "(" identifier ")" expression)
                 proc-exp)

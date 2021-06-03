@@ -41,6 +41,16 @@
                       (diff-exp (var-exp 'b) (var-exp 'a)))))
 
 (check-equal?
+ (parse "let3 a=1 b=2 c=3 in -(c, -(b, a))")
+ (a-program (let3-exp 'a
+                      (const-exp 1)
+                      'b
+                      (const-exp 2)
+                      'c
+                      (const-exp 3)
+                      (diff-exp (var-exp 'c) (diff-exp (var-exp 'b) (var-exp 'a))))))
+
+(check-equal?
  (parse "proc (x) -(x, 1)")
  (a-program (proc-exp 'x (diff-exp (var-exp 'x)
                                    (const-exp 1)))))

@@ -143,3 +143,26 @@ in -(b, a)
 CODE
   )
  (num-val 10))
+
+(check-equal?
+ (run
+  #<<CODE
+let2 a = 100
+     b = -(a, 1)
+in b
+CODE
+  )
+ (num-val 99))
+
+;; let3 tests
+
+(check-equal?
+ (run
+  #<<CODE
+let3 z = 5
+     x = 3
+     y = -(x, 1)
+in let x = 4 in -(z, -(x, y))
+CODE
+  )
+ (num-val 3))

@@ -50,6 +50,9 @@
     [let2-exp (var1 exp1 var2 exp2 body)
               (value-of-exp exp1 env (let2-exp1-cont var1 var2 exp2 body env cont))]
 
+    [let3-exp (var1 exp1 var2 exp2 var3 exp3 body)
+              (value-of-exp exp1 env (let3-exp1-cont var1 var2 exp2 var3 exp3 body env cont))]
+
     [proc-exp (var body)
               (apply-cont cont (proc-val (procedure var body env)))]
 
@@ -88,11 +91,26 @@
 
 (define (let2-exp1-cont var1 var2 exp2 body env cont)
   (lambda (val1)
-    (value-of-exp exp2 env (let2-exp2-cont var1 val1 var2 body env cont))))
+    (let ([env1 (extend-env var1 val1 env)])
+      (value-of-exp exp2 env1 (let2-exp2-cont var2 body env1 cont)))))
 
-(define (let2-exp2-cont var1 val1 var2 body env cont)
+(define (let2-exp2-cont var2 body env1 cont)
   (lambda (val2)
-    (value-of-exp body (extend-env var2 val2 (extend-env var1 val1 env)) cont)))
+    (value-of-exp body (extend-env var2 val2 env1) cont)))
+
+(define (let3-exp1-cont var1 var2 exp2 var3 exp3 body env cont)
+  (lambda (val1)
+    (let ([env1 (extend-env var1 val1 env)])
+      (value-of-exp exp2 env1 (let3-exp2-cont var2 var3 exp3 body env1 cont)))))
+
+(define (let3-exp2-cont var2 var3 exp3 body env1 cont)
+  (lambda (val2)
+    (let ([env2 (extend-env var2 val2 env1)])
+      (value-of-exp exp3 env2 (let3-exp3-cont var3 body env2 cont)))))
+
+(define (let3-exp3-cont var3 body env2 cont)
+  (lambda (val3)
+    (value-of-exp body (extend-env var3 val3 env2) cont)))
 
 (define (if-test-cont exp2 exp3 env cont)
   (lambda (val)
