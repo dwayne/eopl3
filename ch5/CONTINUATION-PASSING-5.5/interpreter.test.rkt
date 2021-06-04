@@ -121,3 +121,39 @@ in (double 6)
 CODE
   )
  (num-val 12))
+
+;; List tests
+
+(check-equal?
+ (run "emptylist")
+ (list-val '()))
+
+(check-equal?
+ (run "cons(5, emptylist)")
+ (list-val (list (num-val 5))))
+
+(check-equal?
+ (run "car(cons(x, emptylist))")
+ (num-val 10))
+
+(check-equal?
+ (run "cdr(cons(x, emptylist))")
+ (list-val '()))
+
+(check-equal?
+ (run "if null?(emptylist) then 0 else 1")
+ (num-val 0))
+
+(check-equal?
+ (run
+  #<<LET
+let x = 4
+in cons(x,
+        cons(cons(-(x, 1),
+                  emptylist),
+             emptylist))
+LET
+  )
+ ; (4 (3))
+ (list-val (list (num-val 4)
+                 (list-val (list (num-val 3))))))

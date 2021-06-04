@@ -6,7 +6,7 @@
 (provide
 
  ;; Expressed Values
- num-val bool-val
+ num-val bool-val list-val
 
  ;; Interpreter
  run)
@@ -40,6 +40,21 @@
 
     [zero?-exp (exp1)
                (value-of-exp exp1 env (zero1-cont cont))]
+
+    [cons-exp (exp1 exp2)
+              (value-of-exp exp1 env (cons1-cont exp2 env cont))]
+
+    [car-exp (exp1)
+             (value-of-exp exp1 env (car-cont cont))]
+
+    [cdr-exp (exp1)
+             (value-of-exp exp1 env (cdr-cont cont))]
+
+    [null?-exp (exp1)
+               (value-of-exp exp1 env (null-cont cont))]
+
+    [emptylist-exp ()
+                   (apply-cont cont (list-val '()))]
 
     [if-exp (exp1 exp2 exp3)
             (value-of-exp exp1 env (if-test-cont exp2 exp3 env cont))]
@@ -78,6 +93,26 @@
     ;                      (bool-val #f)))
     ; This can be simplified to:
     (apply-cont cont (bool-val (zero? (expval->num val))))))
+
+(define (cons1-cont exp2 env cont)
+  (lambda (val1)
+    (value-of-exp exp2 env (cons2-cont val1 cont))))
+
+(define (cons2-cont val1 cont)
+  (lambda (val2)
+    (apply-cont cont (list-val (cons val1 (expval->list val2))))))
+
+(define (car-cont cont)
+  (lambda (val1)
+    (apply-cont cont (car (expval->list val1)))))
+
+(define (cdr-cont cont)
+  (lambda (val1)
+    (apply-cont cont (list-val (cdr (expval->list val1))))))
+
+(define (null-cont cont)
+  (lambda (val1)
+    (apply-cont cont (bool-val (null? (expval->list val1))))))
 
 (define (let-exp-cont var body env cont)
   (lambda (val)
@@ -128,13 +163,14 @@
 
 ;; Values
 ;;
-;; ExpVal = Int + Bool + Proc
+;; ExpVal = Int + Bool + Proc + List[EvalVal]
 ;; DenVal = ExpVal
 
 (define-datatype expval expval?
   [num-val (n number?)]
   [bool-val (b boolean?)]
-  [proc-val (p proc?)])
+  [proc-val (p proc?)]
+  [list-val (l list?)])
 
 (define (expval->num val)
   (cases expval val
@@ -150,3 +186,8 @@
   (cases expval val
     [proc-val (p) p]
     [else (eopl:error 'expval->proc "Not a procedure: ~s" val)]))
+
+(define (expval->list val)
+  (cases expval val
+    [list-val (l) l]
+    [else (eopl:error 'expval->list "Not a list: ~s" val)]))

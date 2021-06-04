@@ -27,6 +27,31 @@
                     (const-exp 1))))
 
 (check-equal?
+ (parse "emptylist")
+ (a-program (emptylist-exp)))
+
+(check-equal?
+ (parse "cons(5, emptylist)")
+ (a-program (cons-exp (const-exp 5)
+                      (emptylist-exp))))
+
+(check-equal?
+ (parse "car(cons(x, emptylist))")
+ (a-program (car-exp (cons-exp (var-exp 'x)
+                               (emptylist-exp)))))
+
+(check-equal?
+ (parse "cdr(cons(x, emptylist))")
+ (a-program (cdr-exp (cons-exp (var-exp 'x)
+                               (emptylist-exp)))))
+
+(check-equal?
+ (parse "if null?(emptylist) then 0 else 1")
+ (a-program (if-exp (null?-exp (emptylist-exp))
+                    (const-exp 0)
+                    (const-exp 1))))
+
+(check-equal?
  (parse "let n=10 in -(n, 1)")
  (a-program (let-exp 'n
                      (const-exp 10)
