@@ -56,6 +56,9 @@
     [emptylist-exp ()
                    (apply-cont cont (list-val '()))]
 
+    [list-exp (exps)
+              (value-of-list-exp exps env cont)]
+
     [if-exp (exp1 exp2 exp3)
             (value-of-exp exp1 env (if-test-cont exp2 exp3 env cont))]
 
@@ -76,6 +79,11 @@
 
 (define (construct-proc-val var body saved-env)
   (proc-val (procedure var body saved-env)))
+
+(define (value-of-list-exp exps env cont)
+  (if (null? exps)
+      (apply-cont cont (list-val '()))
+      (value-of-exp (car exps) env (list-head-cont (cdr exps) env cont))))
 
 ;; Continuations
 ;;
@@ -113,6 +121,14 @@
 (define (null-cont cont)
   (lambda (val1)
     (apply-cont cont (bool-val (null? (expval->list val1))))))
+
+(define (list-head-cont tail env cont)
+  (lambda (head-val)
+    (value-of-list-exp tail env (list-tail-cont head-val cont))))
+
+(define (list-tail-cont head-val cont)
+  (lambda (tail-val)
+    (apply-cont cont (list-val (cons head-val (expval->list tail-val))))))
 
 (define (let-exp-cont var body env cont)
   (lambda (val)

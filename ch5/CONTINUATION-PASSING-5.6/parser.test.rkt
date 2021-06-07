@@ -46,6 +46,22 @@
                                (emptylist-exp)))))
 
 (check-equal?
+ (parse "list()")
+ (a-program (list-exp '())))
+
+(check-equal?
+ (parse "list(1)")
+ (a-program (list-exp (list (const-exp 1)))))
+
+(check-equal?
+ (parse "list(1, if zero?(i) then x else -(0, x))")
+ (a-program (list-exp (list (const-exp 1)
+                            (if-exp (zero?-exp (var-exp 'i))
+                                    (var-exp 'x)
+                                    (diff-exp (const-exp 0)
+                                              (var-exp 'x)))))))
+
+(check-equal?
  (parse "if null?(emptylist) then 0 else 1")
  (a-program (if-exp (null?-exp (emptylist-exp))
                     (const-exp 0)
