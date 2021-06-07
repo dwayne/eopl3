@@ -181,3 +181,16 @@ LET
 (check-equal?
  (run "car(cdr(list(1,if zero?(0) then 2 else 4,3)))")
  (num-val 2))
+
+;; Test multideclaration let
+
+(check-equal?
+ (run
+  #<<LET
+let x = 30
+in let x = -(x,1)
+       y = -(x,2)
+   in -(x,y)
+LET
+  )
+ (num-val 1))

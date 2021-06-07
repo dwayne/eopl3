@@ -62,8 +62,8 @@
     [if-exp (exp1 exp2 exp3)
             (value-of-exp exp1 env (if-test-cont exp2 exp3 env cont))]
 
-    [let-exp (var exp1 body)
-             (value-of-exp exp1 env (let-exp-cont var body env cont))]
+    [let-exp (vars exps body)
+             (value-of-let-exps exps env (let-exps-cont vars body env cont) '())]
 
     [proc-exp (var body)
               (apply-cont cont (proc-val (procedure var body env)))]
@@ -84,6 +84,11 @@
   (if (null? exps)
       (apply-cont cont (list-val '()))
       (value-of-exp (car exps) env (list-head-cont (cdr exps) env cont))))
+
+(define (value-of-let-exps exps env cont vals)
+  (if (null? exps)
+      (apply-cont cont (list-val (reverse vals)))
+      (value-of-exp (car exps) env (let-head-cont (cdr exps) vals env cont))))
 
 ;; Continuations
 ;;
@@ -130,9 +135,13 @@
   (lambda (tail-val)
     (apply-cont cont (list-val (cons head-val (expval->list tail-val))))))
 
-(define (let-exp-cont var body env cont)
+(define (let-exps-cont vars body env cont)
+  (lambda (vals)
+    (value-of-exp body (extend-env-parallel vars (expval->list vals) env) cont)))
+
+(define (let-head-cont tail vals env cont)
   (lambda (val)
-    (value-of-exp body (extend-env var val env) cont)))
+    (value-of-let-exps tail env cont (cons val vals))))
 
 (define (if-test-cont exp2 exp3 env cont)
   (lambda (val)

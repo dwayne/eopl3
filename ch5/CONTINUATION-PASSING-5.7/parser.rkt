@@ -24,7 +24,7 @@
 ;;
 ;;            ::= if Expression then Expression else Expression
 ;;
-;;            ::= let Identifier = Expression in Expression
+;;            ::= let {Identifier = Expression}* in Expression
 ;;
 ;;            ::= proc (Identifier) Expression
 ;;
@@ -100,7 +100,7 @@
     (expression ("if" expression "then" expression "else" expression)
                 if-exp)
 
-    (expression ("let" identifier "=" expression "in" expression)
+    (expression ("let" (arbno identifier "=" expression) "in" expression)
                 let-exp)
 
     (expression ("proc" "(" identifier ")" expression)
