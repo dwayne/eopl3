@@ -57,13 +57,13 @@
                    (apply-cont cont (list-val '()))]
 
     [list-exp (exps)
-              (value-of-list-exp exps env cont)]
+              (value-of-exps exps env cont)]
 
     [if-exp (exp1 exp2 exp3)
             (value-of-exp exp1 env (if-test-cont exp2 exp3 env cont))]
 
     [let-exp (vars exps body)
-             (value-of-let-exps exps env (let-exps-cont vars body env cont) '())]
+             (value-of-exps exps env (let-exps-cont vars body env cont))]
 
     [proc-exp (vars body)
               (apply-cont cont (proc-val (procedure vars body env)))]
@@ -80,20 +80,10 @@
 (define (construct-proc-val vars body saved-env)
   (proc-val (procedure vars body saved-env)))
 
-(define (value-of-list-exp exps env cont)
+(define (value-of-exps exps env cont)
   (if (null? exps)
       (apply-cont cont (list-val '()))
-      (value-of-exp (car exps) env (list-head-cont (cdr exps) env cont))))
-
-(define (value-of-let-exps exps env cont vals)
-  (if (null? exps)
-      (apply-cont cont (list-val (reverse vals)))
-      (value-of-exp (car exps) env (let-head-cont (cdr exps) vals env cont))))
-
-(define (value-of-rands-exp rands env cont)
-  (if (null? rands)
-      (apply-cont cont (list-val '()))
-      (value-of-exp (car rands) env (rands-head-cont (cdr rands) env cont))))
+      (value-of-exp (car exps) env (head-cont (cdr exps) env cont))))
 
 ;; Continuations
 ;;
@@ -132,21 +122,9 @@
   (lambda (val1)
     (apply-cont cont (bool-val (null? (expval->list val1))))))
 
-(define (list-head-cont tail env cont)
-  (lambda (head-val)
-    (value-of-list-exp tail env (list-tail-cont head-val cont))))
-
-(define (list-tail-cont head-val cont)
-  (lambda (tail-val)
-    (apply-cont cont (list-val (cons head-val (expval->list tail-val))))))
-
 (define (let-exps-cont vars body env cont)
   (lambda (vals)
     (value-of-exp body (extend-env-parallel vars (expval->list vals) env) cont)))
-
-(define (let-head-cont tail vals env cont)
-  (lambda (val)
-    (value-of-let-exps tail env cont (cons val vals))))
 
 (define (if-test-cont exp2 exp3 env cont)
   (lambda (val)
@@ -168,17 +146,17 @@
 
 (define (rator-cont rands env cont)
   (lambda (proc-val)
-    (value-of-rands-exp rands env (rands-cont proc-val cont))))
+    (value-of-exps rands env (rands-cont proc-val cont))))
 
 (define (rands-cont proc-val cont)
   (lambda (args-val)
     (apply-procedure (expval->proc proc-val) (expval->list args-val) cont)))
 
-(define (rands-head-cont tail env cont)
+(define (head-cont tail env cont)
   (lambda (head)
-    (value-of-rands-exp tail env (rands-tail-cont head cont))))
+    (value-of-exps tail env (tail-cont head cont))))
 
-(define (rands-tail-cont head cont)
+(define (tail-cont head cont)
   (lambda (tail)
     (apply-cont cont (list-val (cons head (expval->list tail))))))
 
