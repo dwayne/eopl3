@@ -194,3 +194,13 @@ in let x = -(x,1)
 LET
   )
  (num-val 1))
+
+;; Test multiargument procedures
+
+(check-equal?
+ (run "let f = proc () 1 in (f)")
+ (num-val 1))
+
+(check-equal?
+ (run "let g = proc (x, y, z) -(z, -(y, x)) in (g 1 2 3)")
+ (num-val 2))

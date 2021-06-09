@@ -92,8 +92,8 @@ LET
 
 (check-equal?
  (parse "proc (x) -(x, 1)")
- (a-program (proc-exp 'x (diff-exp (var-exp 'x)
-                                   (const-exp 1)))))
+ (a-program (proc-exp '(x) (diff-exp (var-exp 'x)
+                                     (const-exp 1)))))
 
 (check-equal?
  (parse "letrec f(x) = a in b")
@@ -105,4 +105,24 @@ LET
 (check-equal?
  (parse "(f x)")
  (a-program (call-exp (var-exp 'f)
-                      (var-exp 'x))))
+                      (list (var-exp 'x)))))
+
+;; Multiargument procedure tests
+
+(check-equal?
+ (parse "proc () 1")
+ (a-program (proc-exp '() (const-exp 1))))
+
+(check-equal?
+ (parse "proc (a, b, c) b")
+ (a-program (proc-exp '(a b c) (var-exp 'b))))
+
+(check-equal?
+ (parse "(f)")
+ (a-program (call-exp (var-exp 'f) '())))
+
+(check-equal?
+ (parse "(f 1 2 3)")
+ (a-program (call-exp (var-exp 'f) (list (const-exp 1)
+                                         (const-exp 2)
+                                         (const-exp 3)))))

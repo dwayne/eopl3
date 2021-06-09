@@ -65,8 +65,8 @@
     [let-exp (vars exps body)
              (value-of-let-exps exps env (let-exps-cont vars body env cont) '())]
 
-    [proc-exp (var body)
-              (apply-cont cont (proc-val (procedure var body env)))]
+    [proc-exp (vars body)
+              (apply-cont cont (proc-val (procedure vars body env)))]
 
     [letrec-exp (proc-name bound-var proc-body letrec-body)
                 (value-of-exp
@@ -74,11 +74,11 @@
                  (extend-env-rec proc-name bound-var proc-body env)
                  cont)]
 
-    [call-exp (rator rand)
-              (value-of-exp rator env (rator-cont rand env cont))]))
+    [call-exp (rator rands)
+              (value-of-exp rator env (rator-cont rands env cont))]))
 
-(define (construct-proc-val var body saved-env)
-  (proc-val (procedure var body saved-env)))
+(define (construct-proc-val vars body saved-env)
+  (proc-val (procedure vars body saved-env)))
 
 (define (value-of-list-exp exps env cont)
   (if (null? exps)
@@ -89,6 +89,11 @@
   (if (null? exps)
       (apply-cont cont (list-val (reverse vals)))
       (value-of-exp (car exps) env (let-head-cont (cdr exps) vals env cont))))
+
+(define (value-of-rands-exp rands env cont)
+  (if (null? rands)
+      (apply-cont cont (list-val '()))
+      (value-of-exp (car rands) env (rands-head-cont (cdr rands) env cont))))
 
 ;; Continuations
 ;;
@@ -161,13 +166,21 @@
       (- (expval->num val1)
          (expval->num val2))))))
 
-(define (rator-cont rand env cont)
+(define (rator-cont rands env cont)
   (lambda (proc-val)
-    (value-of-exp rand env (rand-cont proc-val cont))))
+    (value-of-rands-exp rands env (rands-cont proc-val cont))))
 
-(define (rand-cont proc-val cont)
-  (lambda (arg)
-    (apply-procedure (expval->proc proc-val) arg cont)))
+(define (rands-cont proc-val cont)
+  (lambda (args-val)
+    (apply-procedure (expval->proc proc-val) (expval->list args-val) cont)))
+
+(define (rands-head-cont tail env cont)
+  (lambda (head)
+    (value-of-rands-exp tail env (rands-tail-cont head cont))))
+
+(define (rands-tail-cont head cont)
+  (lambda (tail)
+    (apply-cont cont (list-val (cons head (expval->list tail))))))
 
 ;; Cont x ExpVal -> FinalAnswer
 (define (apply-cont cont val)
@@ -177,14 +190,14 @@
 
 (define-datatype proc proc?
   [procedure
-   (var identifier?)
+   (vars list?)
    (body expression?)
    (saved-env env?)])
 
-(define (apply-procedure proc1 val cont)
+(define (apply-procedure proc1 vals cont)
   (cases proc proc1
-    [procedure (var body saved-env)
-               (value-of-exp body (extend-env var val saved-env) cont)]))
+    [procedure (vars body saved-env)
+               (value-of-exp body (extend-env-parallel vars vals saved-env) cont)]))
 
 ;; Values
 ;;

@@ -62,7 +62,7 @@
 
     [extend-rec (p-name b-var p-body saved-env)
                 (if (identifier=? search-var p-name)
-                    (construct-proc-val b-var p-body env1)
+                    (construct-proc-val (list b-var) p-body env1)
                     (apply-env saved-env search-var construct-proc-val))]))
 
 (define (get-val search-var vars vals)
