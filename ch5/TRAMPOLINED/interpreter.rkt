@@ -21,12 +21,22 @@
                      (empty-env))))])
     (value-of-program (parse s) init-env (end-cont))))
 
+;; FinalAnswer = ExpVal
+;; Bounce = ExpVal U (() -> Bounce)
+
 ;; Program x Env x Cont -> FinalAnswer
 (define (value-of-program prog env cont)
   (cases program prog
-    [a-program (exp) (value-of-exp exp env cont)]))
+    [a-program (exp) (trampoline (value-of-exp exp env cont))]))
 
-;; Expression x Env x Cont -> FinalAnswer
+;; Bounce -> FinalAnswer
+(define (trampoline bounce)
+  ;; N.B. A procedural language would implement trampoline with a while loop.
+  (if (expval? bounce)
+      bounce
+      (trampoline (bounce))))
+
+;; Expression x Env x Cont -> Bounce
 (define (value-of-exp exp env cont)
   (cases expression exp
     [const-exp (n)
@@ -121,10 +131,12 @@
    (body expression?)
    (saved-env env?)])
 
+;; Proc -> ExpVal -> Cont -> Bounce
 (define (apply-procedure proc1 val cont)
-  (cases proc proc1
-    [procedure (var body saved-env)
-               (value-of-exp body (extend-env var val saved-env) cont)]))
+  (lambda ()
+    (cases proc proc1
+      [procedure (var body saved-env)
+                 (value-of-exp body (extend-env var val saved-env) cont)])))
 
 ;; Values
 ;;
