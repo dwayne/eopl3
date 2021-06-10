@@ -117,9 +117,9 @@
 
 (define (rand-cont proc-val cont)
   (lambda (arg)
-    (apply-procedure (expval->proc proc-val) arg cont)))
+    (lambda () (apply-procedure (expval->proc proc-val) arg cont))))
 
-;; Cont x ExpVal -> FinalAnswer
+;; Cont x ExpVal -> Bounce
 (define (apply-cont cont val)
   (cont val))
 
@@ -133,10 +133,9 @@
 
 ;; Proc -> ExpVal -> Cont -> Bounce
 (define (apply-procedure proc1 val cont)
-  (lambda ()
-    (cases proc proc1
-      [procedure (var body saved-env)
-                 (value-of-exp body (extend-env var val saved-env) cont)])))
+  (cases proc proc1
+    [procedure (var body saved-env)
+               (value-of-exp body (extend-env var val saved-env) cont)]))
 
 ;; Values
 ;;
