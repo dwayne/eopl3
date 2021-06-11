@@ -22,7 +22,6 @@
     (value-of-program (parse s) init-env (end-cont))))
 
 ;; FinalAnswer = ExpVal
-;; Bounce = ExpVal U (() -> Bounce)
 
 ;; Program x Env x Cont -> FinalAnswer
 (define (value-of-program prog env cont)
@@ -30,11 +29,14 @@
     [a-program (exp) (trampoline (value-of-exp exp env cont))]))
 
 ;; Bounce -> FinalAnswer
-(define (trampoline bounce)
+(define (trampoline b)
   ;; N.B. A procedural language would implement trampoline with a while loop.
-  (if (expval? bounce)
-      bounce
-      (trampoline (bounce))))
+  (cases bounce b
+    [end-bounce (val)
+                val]
+
+    [apply-cont-bounce (cont val)
+                       (trampoline (cont val))]))
 
 ;; Expression x Env x Cont -> Bounce
 (define (value-of-exp exp env cont)
@@ -79,7 +81,7 @@
 (define (end-cont)
   (lambda (val)
     (eopl:printf "End of computation.~%")
-    val))
+    (end-bounce val)))
 
 (define (zero1-cont cont)
   (lambda (val)
@@ -121,7 +123,7 @@
 
 ;; Cont x ExpVal -> Bounce
 (define (apply-cont cont val)
-  (lambda () (cont val)))
+  (apply-cont-bounce cont val))
 
 ;; Procedure ADT
 
@@ -136,6 +138,19 @@
   (cases proc proc1
     [procedure (var body saved-env)
                (value-of-exp body (extend-env var val saved-env) cont)]))
+
+;; Bounce ADT
+
+(define-datatype bounce bounce?
+  [end-bounce
+   (val expval?)]
+  [apply-cont-bounce
+   (cont continuation?)
+   (val expval?)])
+
+(define (continuation? x)
+  #t) ;; A continuation is really a 1-argument procedure that takes an expval?.
+;; FIXME: Figure out how to express that in code.
 
 ;; Values
 ;;
