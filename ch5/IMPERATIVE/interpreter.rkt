@@ -36,8 +36,6 @@
   (cases program prog
     [a-program (exp1)
                (set! exp exp1)
-               (set! env env)
-               (set! cont cont)
                (value-of-exp)]))
 
 ;; () -> FinalAnswer
@@ -45,53 +43,44 @@
 (define (value-of-exp)
   (cases expression exp
     [const-exp (n)
-               (set! cont cont)
                (set! val (num-val n))
                (apply-cont)]
 
     [var-exp (var)
-             (set! cont cont)
              (set! val (apply-env env var construct-proc-val))
              (apply-cont)]
 
     [diff-exp (exp1 exp2)
               (set! exp exp1)
-              (set! env env)
               (set! cont (diff1-cont exp2 env cont))
               (value-of-exp)]
 
     [zero?-exp (exp1)
                (set! exp exp1)
-               (set! env env)
                (set! cont (zero1-cont cont))
                (value-of-exp)]
 
     [if-exp (exp1 exp2 exp3)
             (set! exp exp1)
-            (set! env env)
             (set! cont (if-test-cont exp2 exp3 env cont))
             (value-of-exp)]
 
     [let-exp (var exp1 body)
              (set! exp exp1)
-             (set! env env)
              (set! cont (let-exp-cont var body env cont))
              (value-of-exp)]
 
     [proc-exp (var body)
-              (set! cont cont)
               (set! val (proc-val (procedure var body env)))
               (apply-cont)]
 
     [letrec-exp (proc-name bound-var proc-body letrec-body)
                 (set! exp letrec-body)
                 (set! env (extend-env-rec proc-name bound-var proc-body env))
-                (set! cont cont)
                 (value-of-exp)]
 
     [call-exp (rator rand)
               (set! exp rator)
-              (set! env env)
               (set! cont (rator-cont rand env cont))
               (value-of-exp)]))
 
@@ -204,7 +193,6 @@
     [procedure (var body saved-env)
                (set! exp body)
                (set! env (extend-env var val saved-env))
-               (set! cont cont)
                (value-of-exp)]))
 
 ;; Values
