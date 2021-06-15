@@ -11,6 +11,16 @@
  ;; Interpreter
  run)
 
+;; Registers
+
+(define exp 'uninitialized)   ;   exp : Exp
+(define exps 'uninitialized)  ;  exps : List(Exp)
+(define env 'uninitialized)   ;   env : Env
+(define cont 'uninitialized)  ;  cont : Cont
+(define val 'uninitialized)   ;   val : ExpVal
+(define vals 'uninitialized)  ;  vals : List(ExpVal)
+(define proc1 'uninitialized) ; proc1 : Proc
+
 (define (run s)
   (let ([init-env (extend-env
                    'i (num-val 1)
@@ -19,150 +29,254 @@
                     (extend-env
                      'x (num-val 10)
                      (empty-env))))])
-    (value-of-program (parse s) init-env (end-cont))))
+    (set! env init-env)
+    (set! cont (end-cont))
+    (value-of-program (parse s))))
 
-;; Program x Env x Cont -> FinalAnswer
-(define (value-of-program prog env cont)
+;; Program -> FinalAnswer
+;; Depends on: env, cont
+(define (value-of-program prog)
   (cases program prog
-    [a-program (exp) (value-of-exp exp env cont)]))
+    [a-program (exp1)
+               (set! exp exp1)
+               (value-of-exp)]))
 
-;; Expression x Env x Cont -> FinalAnswer
-(define (value-of-exp exp env cont)
+;; () -> FinalAnswer
+;; Depends on: exp, env, cont
+(define (value-of-exp)
   (cases expression exp
     [const-exp (n)
-               (apply-cont cont (num-val n))]
+               (set! val (num-val n))
+               (apply-cont)]
 
     [var-exp (var)
-             (apply-cont cont (apply-env env var construct-proc-val))]
+             (set! val (apply-env env var construct-proc-val))
+             (apply-cont)]
 
     [diff-exp (exp1 exp2)
-              (value-of-exp exp1 env (diff1-cont exp2 env cont))]
+              (set! exp exp1)
+              (set! cont (diff1-cont exp2 env cont))
+              (value-of-exp)]
 
     [zero?-exp (exp1)
-               (value-of-exp exp1 env (zero1-cont cont))]
+               (set! exp exp1)
+               (set! cont (zero1-cont cont))
+               (value-of-exp)]
 
     [cons-exp (exp1 exp2)
-              (value-of-exp exp1 env (cons1-cont exp2 env cont))]
+              (set! exp exp1)
+              (set! cont (cons1-cont exp2 env cont))
+              (value-of-exp)]
 
     [car-exp (exp1)
-             (value-of-exp exp1 env (car-cont cont))]
+             (set! exp exp1)
+             (set! cont (car-cont cont))
+             (value-of-exp)]
 
     [cdr-exp (exp1)
-             (value-of-exp exp1 env (cdr-cont cont))]
+             (set! exp exp1)
+             (set! cont (cdr-cont cont))
+             (value-of-exp)]
 
     [null?-exp (exp1)
-               (value-of-exp exp1 env (null-cont cont))]
+               (set! exp exp1)
+               (set! cont (null-cont cont))
+               (value-of-exp)]
 
     [emptylist-exp ()
-                   (apply-cont cont (list-val '()))]
+                   (set! val (list-val '()))
+                   (apply-cont)]
 
-    [list-exp (exps)
-              (value-of-exps exps env cont)]
+    [list-exp (exps1)
+              (set! exps exps1)
+              (value-of-exps)]
 
     [if-exp (exp1 exp2 exp3)
-            (value-of-exp exp1 env (if-test-cont exp2 exp3 env cont))]
+            (set! exp exp1)
+            (set! cont (if-test-cont exp2 exp3 env cont))
+            (value-of-exp)]
 
-    [let-exp (vars exps body)
-             (value-of-exps exps env (let-exps-cont vars body env cont))]
+    [let-exp (vars exps1 body)
+             (set! exps exps1)
+             (set! cont (let-exps-cont vars body env cont))
+             (value-of-exps)]
 
     [proc-exp (vars body)
-              (apply-cont cont (proc-val (procedure vars body env)))]
+              (set! val (proc-val (procedure vars body env)))
+              (apply-cont)]
 
     [letrec-exp (proc-name bound-var proc-body letrec-body)
-                (value-of-exp
-                 letrec-body
-                 (extend-env-rec proc-name bound-var proc-body env)
-                 cont)]
+                (set! exp letrec-body)
+                (set! env (extend-env-rec proc-name bound-var proc-body env))
+                (value-of-exp)]
 
     [call-exp (rator rands)
-              (value-of-exp rator env (rator-cont rands env cont))]))
+              (set! exp rator)
+              (set! cont (rator-cont rands env cont))
+              (value-of-exp)]))
 
 (define (construct-proc-val vars body saved-env)
   (proc-val (procedure vars body saved-env)))
 
-(define (value-of-exps exps env cont)
+;; () -> FinalAnswer
+;; Depends on: exps, env, cont
+(define (value-of-exps)
   (if (null? exps)
-      (apply-cont cont (list-val '()))
-      (value-of-exp (car exps) env (head-cont (cdr exps) env cont))))
+      (begin
+        (set! val (list-val '()))
+        (apply-cont))
+      (begin
+        (set! exp (car exps))
+        (set! cont (head-cont (cdr exps) env cont))
+        (value-of-exp))))
 
 ;; Continuations
 ;;
-;; It uses a procedural representation.
+;; It uses a data structure representation.
 
-(define (end-cont)
-  (lambda (val)
-    (eopl:printf "End of computation.~%")
-    val))
+(define-datatype continuation continuation?
+  [end-cont]
+  [zero1-cont
+   (saved-cont continuation?)]
+  [let-exps-cont
+   (vars list?)
+   (body expression?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [cons1-cont
+   (exp2 expression?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [cons2-cont
+   (val1 expval?)
+   (saved-cont continuation?)]
+  [car-cont
+   (saved-cont continuation?)]
+  [cdr-cont
+   (saved-cont continuation?)]
+  [null-cont
+   (saved-cont continuation?)]
+  [rator-cont
+   (rands list?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [rands-cont
+   (proc-val expval?)
+   (saved-cont continuation?)]
+  [head-cont
+   (tail list?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [tail-cont
+   (head expval?)
+   (saved-cont continuation?)]
+  [if-test-cont
+   (exp2 expression?)
+   (exp3 expression?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [diff1-cont
+   (exp2 expression?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [diff2-cont
+   (val1 expval?)
+   (saved-cont continuation?)])
 
-(define (zero1-cont cont)
-  (lambda (val)
-    ; (apply-cont cont (if (zero? (expval->num val))
-    ;                      (bool-val #t)
-    ;                      (bool-val #f)))
-    ; This can be simplified to:
-    (apply-cont cont (bool-val (zero? (expval->num val))))))
+;; () -> FinalAnswer
+;; Depends on: cont, val
+(define (apply-cont)
+  (cases continuation cont
+    [end-cont ()
+              (begin
+                (eopl:printf "End of computation.~%")
+                val)]
 
-(define (cons1-cont exp2 env cont)
-  (lambda (val1)
-    (value-of-exp exp2 env (cons2-cont val1 cont))))
+    [zero1-cont (saved-cont)
+                (set! cont saved-cont)
+                (set! val (bool-val (zero? (expval->num val))))
+                (apply-cont)]
 
-(define (cons2-cont val1 cont)
-  (lambda (val2)
-    (apply-cont cont (list-val (cons val1 (expval->list val2))))))
+    [let-exps-cont (vars body saved-env saved-cont)
+                   (set! exp body)
+                   (set! env (extend-env-parallel vars (expval->list val) saved-env))
+                   (set! cont saved-cont)
+                   (value-of-exp)]
 
-(define (car-cont cont)
-  (lambda (val1)
-    (apply-cont cont (car (expval->list val1)))))
+    [cons1-cont (exp2 saved-env saved-cont)
+                (set! exp exp2)
+                (set! env saved-env)
+                (set! cont (cons2-cont val saved-cont))
+                (value-of-exp)]
 
-(define (cdr-cont cont)
-  (lambda (val1)
-    (apply-cont cont (list-val (cdr (expval->list val1))))))
+    [cons2-cont (val1 saved-cont)
+                (set! cont saved-cont)
+                (set! val (list-val (cons val1 (expval->list val))))
+                (apply-cont)]
 
-(define (null-cont cont)
-  (lambda (val1)
-    (apply-cont cont (bool-val (null? (expval->list val1))))))
+    [car-cont (saved-cont)
+              (set! cont saved-cont)
+              (set! val (car (expval->list val)))
+              (apply-cont)]
 
-(define (let-exps-cont vars body env cont)
-  (lambda (vals)
-    (value-of-exp body (extend-env-parallel vars (expval->list vals) env) cont)))
+    [cdr-cont (saved-cont)
+              (set! cont saved-cont)
+              (set! val (list-val (cdr (expval->list val))))
+              (apply-cont)]
 
-(define (if-test-cont exp2 exp3 env cont)
-  (lambda (val)
-    (if (expval->bool val)
-        (value-of-exp exp2 env cont)
-        (value-of-exp exp3 env cont))))
+    [null-cont (saved-cont)
+               (set! cont saved-cont)
+               (set! val (bool-val (null? (expval->list val))))
+               (apply-cont)]
 
-(define (diff1-cont exp2 env cont)
-  (lambda (val1)
-    (value-of-exp exp2 env (diff2-cont val1 cont))))
+    [rator-cont (rands saved-env saved-cont)
+                (set! exps rands)
+                (set! env saved-env)
+                (set! cont (rands-cont val saved-cont))
+                (value-of-exps)]
 
-(define (diff2-cont val1 cont)
-  (lambda (val2)
-    (apply-cont
-     cont
-     (num-val
-      (- (expval->num val1)
-         (expval->num val2))))))
+    [rands-cont (proc-val saved-cont)
+                (set! proc1 (expval->proc proc-val))
+                (set! vals (expval->list val))
+                (set! cont saved-cont)
+                (apply-procedure)]
 
-(define (rator-cont rands env cont)
-  (lambda (proc-val)
-    (value-of-exps rands env (rands-cont proc-val cont))))
+    [head-cont (tail saved-env saved-cont)
+               (set! exps tail)
+               (set! env saved-env)
+               (set! cont (tail-cont val saved-cont))
+               (value-of-exps)]
 
-(define (rands-cont proc-val cont)
-  (lambda (args-val)
-    (apply-procedure (expval->proc proc-val) (expval->list args-val) cont)))
+    [tail-cont (head saved-cont)
+               (set! cont saved-cont)
+               (set! val  (list-val (cons head (expval->list val))))
+               (apply-cont)]
 
-(define (head-cont tail env cont)
-  (lambda (head)
-    (value-of-exps tail env (tail-cont head cont))))
+    [if-test-cont (exp2 exp3 saved-env saved-cont)
+                  (if (expval->bool val)
+                      (begin
+                        (set! exp exp2)
+                        (set! env saved-env)
+                        (set! cont saved-cont)
+                        (value-of-exp))
+                      (begin
+                        (set! exp exp3)
+                        (set! env saved-env)
+                        (set! cont saved-cont)
+                        (value-of-exp)))]
 
-(define (tail-cont head cont)
-  (lambda (tail)
-    (apply-cont cont (list-val (cons head (expval->list tail))))))
+    [diff1-cont (exp2 saved-env saved-cont)
+                (set! exp exp2)
+                (set! env saved-env)
+                (set! cont (diff2-cont val saved-cont))
+                (value-of-exp)]
 
-;; Cont x ExpVal -> FinalAnswer
-(define (apply-cont cont val)
-  (cont val))
+    [diff2-cont (val1 saved-cont)
+                (set! cont saved-cont)
+                (set! val (num-val
+                           (- (expval->num val1)
+                              (expval->num val))))
+                (apply-cont)]))
 
 ;; Procedure ADT
 
@@ -172,10 +286,14 @@
    (body expression?)
    (saved-env env?)])
 
-(define (apply-procedure proc1 vals cont)
+;; () -> FinalAnswer
+;; Depends on: proc1, vals, cont
+(define (apply-procedure)
   (cases proc proc1
     [procedure (vars body saved-env)
-               (value-of-exp body (extend-env-parallel vars vals saved-env) cont)]))
+               (set! exp body)
+               (set! env (extend-env-parallel vars vals saved-env))
+               (value-of-exp)]))
 
 ;; Values
 ;;
