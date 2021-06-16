@@ -126,3 +126,13 @@ LET
  (a-program (call-exp (var-exp 'f) (list (const-exp 1)
                                          (const-exp 2)
                                          (const-exp 3)))))
+
+;; Test try and raise
+
+(check-equal?
+ (parse "try 1 catch (x) 2")
+ (a-program (try-exp (const-exp 1) 'x (const-exp 2))))
+
+(check-equal?
+ (parse "raise 1")
+ (a-program (raise-exp (const-exp 1))))

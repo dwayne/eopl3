@@ -204,3 +204,28 @@ LET
 (check-equal?
  (run "let g = proc (x, y, z) -(z, -(y, x)) in (g 1 2 3)")
  (num-val 2))
+
+;; Test exception-handling
+
+(check-equal?
+ (run
+  #<<CODE
+let index =
+  proc (n)
+    letrec inner (lst)
+      = if null?(lst)
+        then raise 99
+        else if zero?(-(car(lst), n))
+             then 0
+             else -((inner cdr(lst)), -(0, 1))
+    in proc (lst)
+         try (inner lst)
+         catch (x) -(0, 1)
+in ((index 5) list(2, 3))
+CODE
+  )
+ (num-val -1))
+
+(check-exn
+ #rx"Uncaught exception: .*1"
+ (lambda () (run "raise 1")))

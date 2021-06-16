@@ -31,6 +31,10 @@
 ;;            ::= letrec Identifier (Identifier) = Expression in Expression
 ;;
 ;;            ::= (Expression {Expression}*)
+;;
+;;            ::= try Expression catch (Identifier) Expression
+;;
+;;            ::= raise Expression
 
 (provide
 
@@ -54,6 +58,8 @@
  proc-exp
  letrec-exp
  call-exp
+ try-exp
+ raise-exp
 
  ;; Parser
  parse)
@@ -110,7 +116,13 @@
                 letrec-exp)
 
     (expression ("(" expression (arbno expression) ")")
-                call-exp)))
+                call-exp)
+
+    (expression ("try" expression "catch" "(" identifier ")" expression)
+                try-exp)
+
+    (expression ("raise" expression)
+                raise-exp)))
 
 (sllgen:make-define-datatypes scanner-spec grammar)
 
