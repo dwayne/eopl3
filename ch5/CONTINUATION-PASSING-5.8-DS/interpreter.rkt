@@ -21,6 +21,8 @@
                      (empty-env))))])
     (value-of-program (parse s) init-env (end-cont))))
 
+;; FinalAnswer = ExpVal
+
 ;; Program x Env x Cont -> FinalAnswer
 (define (value-of-program prog env cont)
   (cases program prog
@@ -86,83 +88,109 @@
       (value-of-exp (car exps) env (head-cont (cdr exps) env cont))))
 
 ;; Continuations
-;;
-;; It uses a procedural representation.
 
-(define (end-cont)
-  (lambda (val)
-    (eopl:printf "End of computation.~%")
-    val))
-
-(define (zero1-cont cont)
-  (lambda (val)
-    ; (apply-cont cont (if (zero? (expval->num val))
-    ;                      (bool-val #t)
-    ;                      (bool-val #f)))
-    ; This can be simplified to:
-    (apply-cont cont (bool-val (zero? (expval->num val))))))
-
-(define (cons1-cont exp2 env cont)
-  (lambda (val1)
-    (value-of-exp exp2 env (cons2-cont val1 cont))))
-
-(define (cons2-cont val1 cont)
-  (lambda (val2)
-    (apply-cont cont (list-val (cons val1 (expval->list val2))))))
-
-(define (car-cont cont)
-  (lambda (val1)
-    (apply-cont cont (car (expval->list val1)))))
-
-(define (cdr-cont cont)
-  (lambda (val1)
-    (apply-cont cont (list-val (cdr (expval->list val1))))))
-
-(define (null-cont cont)
-  (lambda (val1)
-    (apply-cont cont (bool-val (null? (expval->list val1))))))
-
-(define (let-exps-cont vars body env cont)
-  (lambda (vals)
-    (value-of-exp body (extend-env-parallel vars (expval->list vals) env) cont)))
-
-(define (if-test-cont exp2 exp3 env cont)
-  (lambda (val)
-    (if (expval->bool val)
-        (value-of-exp exp2 env cont)
-        (value-of-exp exp3 env cont))))
-
-(define (diff1-cont exp2 env cont)
-  (lambda (val1)
-    (value-of-exp exp2 env (diff2-cont val1 cont))))
-
-(define (diff2-cont val1 cont)
-  (lambda (val2)
-    (apply-cont
-     cont
-     (num-val
-      (- (expval->num val1)
-         (expval->num val2))))))
-
-(define (rator-cont rands env cont)
-  (lambda (proc-val)
-    (value-of-exps rands env (rands-cont proc-val cont))))
-
-(define (rands-cont proc-val cont)
-  (lambda (args-val)
-    (apply-procedure (expval->proc proc-val) (expval->list args-val) cont)))
-
-(define (head-cont tail env cont)
-  (lambda (head)
-    (value-of-exps tail env (tail-cont head cont))))
-
-(define (tail-cont head cont)
-  (lambda (tail)
-    (apply-cont cont (list-val (cons head (expval->list tail))))))
+(define-datatype continuation continuation?
+  [end-cont]
+  [zero1-cont
+   (saved-cont continuation?)]
+  [cons1-cont
+   (exp2 expression?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [cons2-cont
+   (val1 expval?)
+   (saved-cont continuation?)]
+  [car-cont
+   (saved-cont continuation?)]
+  [cdr-cont
+   (saved-cont continuation?)]
+  [null-cont
+   (saved-cont continuation?)]
+  [let-exps-cont
+   (vars list?)
+   (body expression?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [if-test-cont
+   (exp2 expression?)
+   (exp3 expression?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [diff1-cont
+   (exp2 expression?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [diff2-cont
+   (val1 expval?)
+   (saved-cont continuation?)]
+  [rator-cont
+   (rands list?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [rands-cont
+   (proc-val expval?)
+   (saved-cont continuation?)]
+  [head-cont
+   (tail list?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [tail-cont
+   (head expval?)
+   (saved-cont continuation?)])
 
 ;; Cont x ExpVal -> FinalAnswer
 (define (apply-cont cont val)
-  (cont val))
+  (cases continuation cont
+    [end-cont ()
+              (eopl:printf "End of computation.~%")
+              val]
+
+    [zero1-cont (saved-cont)
+                (apply-cont saved-cont (bool-val (zero? (expval->num val))))]
+
+    [cons1-cont (exp2 saved-env saved-cont)
+                (value-of-exp exp2 saved-env (cons2-cont val saved-cont))]
+
+    [cons2-cont (val1 saved-cont)
+                (apply-cont saved-cont (list-val (cons val1 (expval->list val))))]
+
+    [car-cont (saved-cont)
+              (apply-cont saved-cont (car (expval->list val)))]
+
+    [cdr-cont (saved-cont)
+              (apply-cont saved-cont (list-val (cdr (expval->list val))))]
+
+    [null-cont (saved-cont)
+               (apply-cont saved-cont (bool-val (null? (expval->list val))))]
+
+    [let-exps-cont (vars body saved-env saved-cont)
+                   (value-of-exp body (extend-env-parallel vars (expval->list val) saved-env) saved-cont)]
+
+    [if-test-cont (exp2 exp3 saved-env saved-cont)
+                  (if (expval->bool val)
+                      (value-of-exp exp2 saved-env saved-cont)
+                      (value-of-exp exp3 saved-env saved-cont))]
+
+    [diff1-cont (exp2 saved-env saved-cont)
+                (value-of-exp exp2 saved-env (diff2-cont val saved-cont))]
+
+    [diff2-cont (val1 saved-cont)
+                (apply-cont saved-cont
+                            (num-val
+                             (- (expval->num val1)
+                                (expval->num val))))]
+
+    [rator-cont (rands saved-env saved-cont)
+                (value-of-exps rands saved-env (rands-cont val saved-cont))]
+
+    [rands-cont (proc-val saved-cont)
+                (apply-procedure (expval->proc proc-val) (expval->list val) saved-cont)]
+
+    [head-cont (tail saved-env saved-cont)
+               (value-of-exps tail saved-env (tail-cont val saved-cont))]
+
+    [tail-cont (head saved-cont)
+               (apply-cont saved-cont (list-val (cons head (expval->list val))))]))
 
 ;; Procedure ADT
 
