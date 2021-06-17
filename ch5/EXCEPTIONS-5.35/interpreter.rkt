@@ -19,7 +19,7 @@
                     (extend-env
                      'x (num-val 10)
                      (empty-env))))])
-    (value-of-program (parse s) init-env (end-cont #f))))
+    (value-of-program (parse s) init-env (end-cont))))
 
 ;; FinalAnswer = ExpVal
 
@@ -96,8 +96,7 @@
 ;; Continuations
 
 (define-datatype continuation continuation?
-  [end-cont
-   (saved-try-cont maybe-continuation?)]
+  [end-cont]
   [zero1-cont
    (saved-try-cont maybe-continuation?)
    (saved-cont continuation?)]
@@ -172,8 +171,8 @@
 ;; get-try-cont : Cont -> #f or Cont
 (define (get-try-cont cont)
   (cases continuation cont
-    [end-cont (saved-try-cont)
-              saved-try-cont]
+    [end-cont ()
+              #f]
 
     [zero1-cont (saved-try-cont saved-cont)
                 saved-try-cont]
@@ -226,7 +225,7 @@
 ;; Cont x ExpVal -> FinalAnswer
 (define (apply-cont cont val)
   (cases continuation cont
-    [end-cont (saved-try-cont)
+    [end-cont ()
               (eopl:printf "End of computation.~%")
               val]
 
