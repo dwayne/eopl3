@@ -80,7 +80,7 @@
               (value-of-exp rator env (rator-cont rands env (get-try-cont cont) cont))]
 
     [try-exp (exp1 var handler-exp)
-             (value-of-exp exp1 env (try-cont var handler-exp env (get-try-cont cont) cont))]
+             (value-of-exp exp1 env (try-cont var handler-exp env cont))]
 
     [raise-exp (exp1)
                (value-of-exp exp1 env (raise-cont (get-try-cont cont) cont))]))
@@ -162,7 +162,6 @@
    (var identifier?)
    (handler-exp expression?)
    (saved-env env?)
-   (saved-try-cont maybe-continuation?)
    (saved-cont continuation?)]
   [raise-cont
    (saved-try-cont maybe-continuation?)
@@ -219,7 +218,7 @@
     [tail-cont (head saved-try-cont saved-cont)
                saved-try-cont]
 
-    [try-cont (var handler-exp saved-env saved-try-cont saved-cont)
+    [try-cont (var handler-exp saved-env saved-cont)
               cont]
 
     [raise-cont (saved-try-cont saved-cont)
@@ -279,7 +278,7 @@
     [tail-cont (head saved-try-cont saved-cont)
                (apply-cont saved-cont (list-val (cons head (expval->list val))))]
 
-    [try-cont (var handler-exp saved-env saved-try-cont saved-cont)
+    [try-cont (var handler-exp saved-env saved-cont)
               (apply-cont saved-cont val)]
 
     [raise-cont (saved-try-cont saved-cont)
@@ -291,7 +290,7 @@
 ;; apply-hanlder : ExpVal -> Cont -> FinalAnswer
 (define (apply-handler val cont)
   (cases continuation cont
-    [try-cont (var handler-exp saved-env saved-try-cont saved-cont)
+    [try-cont (var handler-exp saved-env saved-cont)
               (value-of-exp handler-exp (extend-env var val saved-env) saved-cont)]
 
     [else
