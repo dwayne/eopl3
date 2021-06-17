@@ -83,7 +83,7 @@
              (value-of-exp exp1 env (try-cont var handler-exp env cont))]
 
     [raise-exp (exp1)
-               (value-of-exp exp1 env (raise-cont (get-try-cont cont) cont))]))
+               (value-of-exp exp1 env (raise-cont (get-try-cont cont)))]))
 
 (define (construct-proc-val vars body saved-env)
   (proc-val (procedure vars body saved-env)))
@@ -164,8 +164,7 @@
    (saved-env env?)
    (saved-cont continuation?)]
   [raise-cont
-   (saved-try-cont maybe-continuation?)
-   (saved-cont continuation?)])
+   (saved-try-cont maybe-continuation?)])
 
 (define (maybe-continuation? x)
   (or (eq? x #f) (continuation? x)))
@@ -221,7 +220,7 @@
     [try-cont (var handler-exp saved-env saved-cont)
               cont]
 
-    [raise-cont (saved-try-cont saved-cont)
+    [raise-cont (saved-try-cont)
                 saved-try-cont]))
 
 ;; Cont x ExpVal -> FinalAnswer
@@ -281,7 +280,7 @@
     [try-cont (var handler-exp saved-env saved-cont)
               (apply-cont saved-cont val)]
 
-    [raise-cont (saved-try-cont saved-cont)
+    [raise-cont (saved-try-cont)
                 (if (eq? saved-try-cont #f)
                     (report-uncaught-exception val)
                     (apply-handler val saved-try-cont))]))
