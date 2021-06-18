@@ -229,3 +229,30 @@ CODE
 (check-exn
  #rx"Uncaught exception: .*1"
  (lambda () (run "raise 1")))
+
+;; Test nested exception-handling
+
+(check-equal?
+ (run
+  #<<CODE
+let a = -(0, 10)
+in
+try
+  try
+    try
+      let b = -(0, a)
+      in
+      try
+        let c = 59
+        in raise c
+      catch (x)
+        raise -(x, a)
+    catch (x)
+      raise -(x, a)
+  catch (x)
+    raise -(-(x, a), a)
+catch (x)
+  if zero?(-(x, 99)) then 5 else 10
+CODE
+  )
+ (num-val 5))
