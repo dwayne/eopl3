@@ -207,10 +207,13 @@
                (value-of-exp exp2 saved-env (div2-cont val saved-cont))]
 
     [div2-cont (val1 saved-cont)
-               (apply-cont saved-cont
-                           (num-val
-                            (/ (expval->num val1)
-                               (expval->num val))))]
+               (let ([num2 (expval->num val)])
+                 (if (zero? num2)
+                     (value-of-exp (raise-exp (const-exp 0)) (empty-env) saved-cont)
+                     (apply-cont saved-cont
+                                 (num-val
+                                  (/ (expval->num val1)
+                                     num2)))))]
 
     [rator-cont (rands saved-env saved-cont)
                 (value-of-exps rands saved-env (rands-cont val saved-cont))]
@@ -271,10 +274,10 @@
                 (apply-handler val saved-cont)]
 
     [div1-cont (exp2 saved-env saved-cont)
-                (apply-handler val saved-cont)]
+               (apply-handler val saved-cont)]
 
     [div2-cont (val1 saved-cont)
-                (apply-handler val saved-cont)]
+               (apply-handler val saved-cont)]
 
     [rator-cont (rands saved-env saved-cont)
                 (apply-handler val saved-cont)]

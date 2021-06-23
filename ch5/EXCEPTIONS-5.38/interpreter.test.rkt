@@ -239,3 +239,13 @@ CODE
 (check-equal?
  (run "let y = 5 in div(15, y)")
  (num-val 3))
+
+;; Test raise an exception on division by zero
+
+(check-exn
+ #rx"Uncaught exception: .*0"
+ (lambda () (run "div(1, 0)")))
+
+(check-exn
+ #rx"Uncaught exception: .*0"
+ (lambda () (run "let x = 1 in -(2, div(1, -(x, x)))")))
