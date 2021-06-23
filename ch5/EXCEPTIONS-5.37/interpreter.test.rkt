@@ -229,3 +229,15 @@ CODE
 (check-exn
  #rx"Uncaught exception: .*1"
  (lambda () (run "raise 1")))
+
+;; Test raise an exception when a procedure is called with the wrong number of arguments
+
+(check-exn
+ #rx"Uncaught exception: .*999"
+ (lambda ()
+   (run
+    #<<CODE
+let inc = proc (n) -(n, -(0, 1))
+in (inc)
+CODE
+    )))

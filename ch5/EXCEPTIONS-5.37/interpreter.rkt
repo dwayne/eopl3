@@ -134,7 +134,7 @@
    (saved-env env?)
    (saved-cont continuation?)]
   [rands-cont
-   (proc-val expval?)
+   (proc1 proc?)
    (saved-cont continuation?)]
   [head-cont
    (tail list?)
@@ -194,10 +194,13 @@
                                 (expval->num val))))]
 
     [rator-cont (rands saved-env saved-cont)
-                (value-of-exps rands saved-env (rands-cont val saved-cont))]
+                (let ([proc1 (expval->proc val)])
+                  (if (same-number-of-arguments? proc1 rands)
+                      (value-of-exps rands saved-env (rands-cont proc1 saved-cont))
+                      (value-of-exp (raise-exp (const-exp 999)) saved-env saved-cont)))]
 
-    [rands-cont (proc-val saved-cont)
-                (apply-procedure (expval->proc proc-val) (expval->list val) saved-cont)]
+    [rands-cont (proc1 saved-cont)
+                (apply-procedure proc1 (expval->list val) saved-cont)]
 
     [head-cont (tail saved-env saved-cont)
                (value-of-exps tail saved-env (tail-cont val saved-cont))]
@@ -210,6 +213,13 @@
 
     [raise-cont (saved-cont)
                 (apply-handler val saved-cont)]))
+
+
+;; same-number-of-arguments? : Proc -> List[Expression] -> Bool
+(define (same-number-of-arguments? proc1 args)
+  (cases proc proc1
+    [procedure (vars body saved-env)
+               (equal? (length vars) (length args))]))
 
 
 ;; apply-hanlder : ExpVal -> Cont -> FinalAnswer
