@@ -197,7 +197,7 @@
                 (let ([proc1 (expval->proc val)])
                   (if (same-number-of-arguments? proc1 rands)
                       (value-of-exps rands saved-env (rands-cont proc1 saved-cont))
-                      (value-of-exp (raise-exp (const-exp 999)) saved-env saved-cont)))]
+                      (value-of-exp (raise-exp (const-exp 999)) (empty-env) saved-cont)))]
 
     [rands-cont (proc1 saved-cont)
                 (apply-procedure proc1 (expval->list val) saved-cont)]
