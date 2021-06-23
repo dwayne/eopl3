@@ -8,6 +8,8 @@
 ;;
 ;;            ::= -(Expression, Expression)
 ;;
+;;            ::= div(Expression, Expression)
+;;
 ;;            ::= zero?(Expression)
 ;;
 ;;            ::= cons(Expression, Expression)
@@ -46,6 +48,7 @@
  const-exp
  var-exp
  diff-exp
+ div-exp
  zero?-exp
  cons-exp
  car-exp
@@ -81,6 +84,9 @@
 
     (expression ("-" "(" expression "," expression ")")
                 diff-exp)
+
+    (expression ("div" "(" expression "," expression ")")
+                div-exp)
 
     (expression ("zero?" "(" expression ")")
                 zero?-exp)

@@ -229,3 +229,13 @@ CODE
 (check-exn
  #rx"Uncaught exception: .*1"
  (lambda () (run "raise 1")))
+
+;; Test division
+
+(check-equal?
+ (run "div(8, 2)")
+ (num-val 4))
+
+(check-equal?
+ (run "let y = 5 in div(15, y)")
+ (num-val 3))

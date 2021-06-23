@@ -40,6 +40,9 @@
     [diff-exp (exp1 exp2)
               (value-of-exp exp1 env (diff1-cont exp2 env cont))]
 
+    [div-exp (exp1 exp2)
+             (value-of-exp exp1 env (div1-cont exp2 env cont))]
+
     [zero?-exp (exp1)
                (value-of-exp exp1 env (zero1-cont cont))]
 
@@ -129,6 +132,13 @@
   [diff2-cont
    (val1 expval?)
    (saved-cont continuation?)]
+  [div1-cont
+   (exp2 expression?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [div2-cont
+   (val1 expval?)
+   (saved-cont continuation?)]
   [rator-cont
    (rands list?)
    (saved-env env?)
@@ -193,6 +203,15 @@
                              (- (expval->num val1)
                                 (expval->num val))))]
 
+    [div1-cont (exp2 saved-env saved-cont)
+               (value-of-exp exp2 saved-env (div2-cont val saved-cont))]
+
+    [div2-cont (val1 saved-cont)
+               (apply-cont saved-cont
+                           (num-val
+                            (/ (expval->num val1)
+                               (expval->num val))))]
+
     [rator-cont (rands saved-env saved-cont)
                 (value-of-exps rands saved-env (rands-cont val saved-cont))]
 
@@ -249,6 +268,12 @@
                 (apply-handler val saved-cont)]
 
     [diff2-cont (val1 saved-cont)
+                (apply-handler val saved-cont)]
+
+    [div1-cont (exp2 saved-env saved-cont)
+                (apply-handler val saved-cont)]
+
+    [div2-cont (val1 saved-cont)
                 (apply-handler val saved-cont)]
 
     [rator-cont (rands saved-env saved-cont)
