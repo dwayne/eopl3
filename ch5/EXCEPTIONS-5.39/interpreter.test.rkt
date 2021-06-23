@@ -224,7 +224,97 @@ let index =
 in ((index 5) list(2, 3))
 CODE
   )
- (num-val -1))
+ (num-val 1))
+
+(check-equal?
+ (run
+  #<<CODE
+let index =
+  proc (n)
+    letrec inner (lst)
+      = if null?(lst)
+        then raise 99
+        else if zero?(-(car(lst), n))
+             then 0
+             else -((inner cdr(lst)), -(0, 1))
+    in proc (lst)
+         try (inner lst)
+         catch (x) -(0, 1)
+in ((index 5) list(2, 3, 4))
+CODE
+  )
+ (num-val 2))
+
+;; Why do the above results make sense?
+;;
+;; (inner list(2, 3))
+;; = -((inner list(3)), -1)
+;; = -(-((inner list()), -1), -1)
+;; = -(-(raise 99, -1), -1)
+;;
+;; Now, the "raise 99" is handled by "catch (x) -(0, 1)" but rather than return -1 and continue with
+;; the computation after the try we now return the -1 into the continuation from the point at which
+;; the raise was invoked. Giving,
+;;
+;; = -(-(-1, -1), -1)
+;; = -(0, -1)
+;; = 1
+;;
+;; Similarly, for (inner list(2, 3, 4)).
+;;
+;; = ...
+;; = -(-(-(-1, -1), -1), -1)
+;; = -(-(0, -1), -1)
+;; = 2
+;;
+;; So, if instead we had "catch (x) x" we'd get,
+;;
+;; = x + 2 for (inner list(2, 3))
+;;
+;; and
+;;
+;; = x + 3 for (inner list(2, 3, 4))
+
+(check-equal?
+ (run
+  #<<CODE
+let index =
+  proc (n)
+    letrec inner (lst)
+      = if null?(lst)
+        then raise 99
+        else if zero?(-(car(lst), n))
+             then 0
+             else -((inner cdr(lst)), -(0, 1))
+    in proc (lst)
+         try (inner lst)
+         catch (x) x
+in ((index 5) list(2, 3))
+CODE
+  )
+ (num-val 101))
+
+(check-equal?
+ (run
+  #<<CODE
+let index =
+  proc (n)
+    letrec inner (lst)
+      = if null?(lst)
+        then raise 99
+        else if zero?(-(car(lst), n))
+             then 0
+             else -((inner cdr(lst)), -(0, 1))
+    in proc (lst)
+         try (inner lst)
+         catch (x) x
+in ((index 5) list(2, 3, 4))
+CODE
+  )
+ (num-val 102))
+
+;; So, it sort of resumes the computation from where it left off but
+;; with the value of the handler being used as the value of the raise.
 
 (check-exn
  #rx"Uncaught exception: .*1"

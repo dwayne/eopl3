@@ -209,62 +209,65 @@
               (apply-cont saved-cont val)]
 
     [raise-cont (saved-cont)
-                (apply-handler val saved-cont)]))
+                (apply-handler val saved-cont saved-cont)]))
 
 
-;; apply-hanlder : ExpVal -> Cont -> FinalAnswer
-(define (apply-handler val cont)
-  (cases continuation cont
+;; apply-hanlder : ExpVal -> Cont -> Cont -> FinalAnswer
+(define (apply-handler val search-cont raise-saved-cont)
+  ;; search-cont      : The continuation to search through to find the handler.
+  ;; raise-saved-cont : The continuation to use to run the body of the handler.
+  ;;                    This is the continuation from the point at which the raise was invoked.
+  (cases continuation search-cont
     [try-cont (var handler-exp saved-env saved-cont)
-              (value-of-exp handler-exp (extend-env var val saved-env) saved-cont)]
+              (value-of-exp handler-exp (extend-env var val saved-env) raise-saved-cont)]
 
     [end-cont ()
               (report-uncaught-exception val)]
 
     [zero1-cont (saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [cons1-cont (exp2 saved-env saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [cons2-cont (val1 saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [car-cont (saved-cont)
-              (apply-handler val saved-cont)]
+              (apply-handler val saved-cont raise-saved-cont)]
 
     [cdr-cont (saved-cont)
-              (apply-handler val saved-cont)]
+              (apply-handler val saved-cont raise-saved-cont)]
 
     [null-cont (saved-cont)
-               (apply-handler val saved-cont)]
+               (apply-handler val saved-cont raise-saved-cont)]
 
     [let-exps-cont (vars body saved-env saved-cont)
-                   (apply-handler val saved-cont)]
+                   (apply-handler val saved-cont raise-saved-cont)]
 
     [if-test-cont (exp2 exp3 saved-env saved-cont)
-                  (apply-handler val saved-cont)]
+                  (apply-handler val saved-cont raise-saved-cont)]
 
     [diff1-cont (exp2 saved-env saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [diff2-cont (val1 saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [rator-cont (rands saved-env saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [rands-cont (proc-val saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [head-cont (tail saved-env saved-cont)
-               (apply-handler val saved-cont)]
+               (apply-handler val saved-cont raise-saved-cont)]
 
     [tail-cont (head saved-cont)
-               (apply-handler val saved-cont)]
+               (apply-handler val saved-cont raise-saved-cont)]
 
     [raise-cont (saved-cont)
-                (apply-handler val saved-cont)]))
+                (apply-handler val saved-cont raise-saved-cont)]))
 
 (define (report-uncaught-exception exception)
   (eopl:error 'report-uncaught-exception "Uncaught exception: ~s" exception))
