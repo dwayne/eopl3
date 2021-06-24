@@ -207,6 +207,8 @@ LET
 
 ;; Test exception-handling
 
+;; Test return
+
 (check-equal?
  (run
   #<<CODE
@@ -220,12 +222,111 @@ let index =
              else -((inner cdr(lst)), -(0, 1))
     in proc (lst)
          try (inner lst)
-         catch (x) -(0, 1)
+         catch (x, c) -(0, 1)
 in ((index 5) list(2, 3))
 CODE
   )
  (num-val -1))
 
+
+;; Test resume
+
+(check-equal?
+ (run
+  #<<CODE
+let index =
+  proc (n)
+    letrec inner (lst)
+      = if null?(lst)
+        then raise 99
+        else if zero?(-(car(lst), n))
+             then 0
+             else -((inner cdr(lst)), -(0, 1))
+    in proc (lst)
+         try (inner lst)
+         catch (x, c) resume(c, -(0, 1))
+in ((index 5) list(2, 3))
+CODE
+  )
+ (num-val 1))
+
+(check-equal?
+ (run
+  #<<CODE
+let index =
+  proc (n)
+    letrec inner (lst)
+      = if null?(lst)
+        then raise 99
+        else if zero?(-(car(lst), n))
+             then 0
+             else -((inner cdr(lst)), -(0, 1))
+    in proc (lst)
+         try (inner lst)
+         catch (x, c) resume(c, -(0, 1))
+in ((index 5) list(2, 3, 4))
+CODE
+  )
+ (num-val 2))
+
+(check-equal?
+ (run
+  #<<CODE
+let index =
+  proc (n)
+    letrec inner (lst)
+      = if null?(lst)
+        then raise 99
+        else if zero?(-(car(lst), n))
+             then 0
+             else -((inner cdr(lst)), -(0, 1))
+    in proc (lst)
+         try (inner lst)
+         catch (x, c) resume(c, x)
+in ((index 5) list(2, 3))
+CODE
+  )
+ (num-val 101))
+
+(check-equal?
+ (run
+  #<<CODE
+let index =
+  proc (n)
+    letrec inner (lst)
+      = if null?(lst)
+        then raise 99
+        else if zero?(-(car(lst), n))
+             then 0
+             else -((inner cdr(lst)), -(0, 1))
+    in proc (lst)
+         try (inner lst)
+         catch (x, c) resume(c, x)
+in ((index 5) list(2, 3, 4))
+CODE
+  )
+ (num-val 102))
+
+;; Test uncaught exception
+
 (check-exn
  #rx"Uncaught exception: .*1"
  (lambda () (run "raise 1")))
+
+(check-exn
+ #rx"Uncaught exception: .*99"
+ (lambda ()
+   (run
+    #<<CODE
+let index =
+  proc (n)
+    letrec inner (lst)
+      = if null?(lst)
+        then raise 99
+        else if zero?(-(car(lst), n))
+             then 0
+             else -((inner cdr(lst)), -(0, 1))
+    in proc (lst) (inner lst)
+in ((index 5) list(2, 3))
+CODE
+    )))

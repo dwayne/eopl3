@@ -32,9 +32,11 @@
 ;;
 ;;            ::= (Expression {Expression}*)
 ;;
-;;            ::= try Expression catch (Identifier) Expression
+;;            ::= try Expression catch (Identifier, Identifier) Expression
 ;;
 ;;            ::= raise Expression
+;;
+;;            ::= resume(Expression, Expression)
 
 (provide
 
@@ -60,6 +62,7 @@
  call-exp
  try-exp
  raise-exp
+ resume-exp
 
  ;; Parser
  parse)
@@ -118,11 +121,14 @@
     (expression ("(" expression (arbno expression) ")")
                 call-exp)
 
-    (expression ("try" expression "catch" "(" identifier ")" expression)
+    (expression ("try" expression "catch" "(" identifier "," identifier ")" expression)
                 try-exp)
 
     (expression ("raise" expression)
-                raise-exp)))
+                raise-exp)
+
+    (expression ("resume" "(" expression "," expression ")")
+                resume-exp)))
 
 (sllgen:make-define-datatypes scanner-spec grammar)
 

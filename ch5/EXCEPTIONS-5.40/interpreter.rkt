@@ -79,11 +79,14 @@
     [call-exp (rator rands)
               (value-of-exp rator env (rator-cont rands env cont))]
 
-    [try-exp (exp1 var handler-exp)
-             (value-of-exp exp1 env (try-cont var handler-exp env cont))]
+    [try-exp (exp1 var raise-cont-var handler-exp)
+             (value-of-exp exp1 env (try-cont var raise-cont-var handler-exp env cont))]
 
     [raise-exp (exp1)
-               (value-of-exp exp1 env (raise-cont cont))]))
+               (value-of-exp exp1 env (raise-cont cont))]
+
+    [resume-exp (exp1 exp2)
+                (value-of-exp exp1 env (resume-cont exp2 env cont))]))
 
 (define (construct-proc-val vars body saved-env)
   (proc-val (procedure vars body saved-env)))
@@ -145,10 +148,15 @@
    (saved-cont continuation?)]
   [try-cont
    (var identifier?)
+   (raise-cont-var identifier?)
    (handler-exp expression?)
    (saved-env env?)
    (saved-cont continuation?)]
   [raise-cont
+   (saved-cont continuation?)]
+  [resume-cont
+   (exp2 expression?)
+   (saved-env env?)
    (saved-cont continuation?)])
 
 ;; Cont x ExpVal -> FinalAnswer
@@ -205,66 +213,78 @@
     [tail-cont (head saved-cont)
                (apply-cont saved-cont (list-val (cons head (expval->list val))))]
 
-    [try-cont (var handler-exp saved-env saved-cont)
+    [try-cont (var raise-cont-var handler-exp saved-env saved-cont)
               (apply-cont saved-cont val)]
 
     [raise-cont (saved-cont)
-                (apply-handler val saved-cont)]))
+                (apply-handler val saved-cont saved-cont)]
+
+    [resume-cont (exp2 saved-env saved-cont)
+                 (value-of-exp exp2 saved-env (expval->cont val))]))
 
 
-;; apply-hanlder : ExpVal -> Cont -> FinalAnswer
-(define (apply-handler val cont)
-  (cases continuation cont
-    [try-cont (var handler-exp saved-env saved-cont)
-              (value-of-exp handler-exp (extend-env var val saved-env) saved-cont)]
+;; apply-hanlder : ExpVal -> Cont -> Cont -> FinalAnswer
+(define (apply-handler val search-cont raise-saved-cont)
+  (cases continuation search-cont
+    [try-cont (var raise-cont-var handler-exp saved-env saved-cont)
+              (value-of-exp
+               handler-exp
+               (extend-env-parallel
+                (list var raise-cont-var)
+                (list val (cont-val raise-saved-cont))
+                saved-env)
+               saved-cont)]
 
     [end-cont ()
               (report-uncaught-exception val)]
 
     [zero1-cont (saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [cons1-cont (exp2 saved-env saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [cons2-cont (val1 saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [car-cont (saved-cont)
-              (apply-handler val saved-cont)]
+              (apply-handler val saved-cont raise-saved-cont)]
 
     [cdr-cont (saved-cont)
-              (apply-handler val saved-cont)]
+              (apply-handler val saved-cont raise-saved-cont)]
 
     [null-cont (saved-cont)
-               (apply-handler val saved-cont)]
+               (apply-handler val saved-cont raise-saved-cont)]
 
     [let-exps-cont (vars body saved-env saved-cont)
-                   (apply-handler val saved-cont)]
+                   (apply-handler val saved-cont raise-saved-cont)]
 
     [if-test-cont (exp2 exp3 saved-env saved-cont)
-                  (apply-handler val saved-cont)]
+                  (apply-handler val saved-cont raise-saved-cont)]
 
     [diff1-cont (exp2 saved-env saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [diff2-cont (val1 saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [rator-cont (rands saved-env saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [rands-cont (proc-val saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont raise-saved-cont)]
 
     [head-cont (tail saved-env saved-cont)
-               (apply-handler val saved-cont)]
+               (apply-handler val saved-cont raise-saved-cont)]
 
     [tail-cont (head saved-cont)
-               (apply-handler val saved-cont)]
+               (apply-handler val saved-cont raise-saved-cont)]
 
     [raise-cont (saved-cont)
-                (apply-handler val saved-cont)]))
+                (apply-handler val saved-cont raise-saved-cont)]
+
+    [resume-cont (exp2 saved-env saved-cont)
+                 (apply-handler val saved-cont raise-saved-cont)]))
 
 (define (report-uncaught-exception exception)
   (eopl:error 'report-uncaught-exception "Uncaught exception: ~s" exception))
@@ -284,14 +304,15 @@
 
 ;; Values
 ;;
-;; ExpVal = Int + Bool + Proc + List[EvalVal]
+;; ExpVal = Int + Bool + Proc + List[EvalVal] + Cont
 ;; DenVal = ExpVal
 
 (define-datatype expval expval?
   [num-val (n number?)]
   [bool-val (b boolean?)]
   [proc-val (p proc?)]
-  [list-val (l list?)])
+  [list-val (l list?)]
+  [cont-val (c continuation?)])
 
 (define (expval->num val)
   (cases expval val
@@ -312,3 +333,8 @@
   (cases expval val
     [list-val (l) l]
     [else (eopl:error 'expval->list "Not a list: ~s" val)]))
+
+(define (expval->cont val)
+  (cases expval val
+    [cont-val (c) c]
+    [else (eopl:error 'expval->cont "Not a continuation: ~s" val)]))

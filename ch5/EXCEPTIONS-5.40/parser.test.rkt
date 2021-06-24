@@ -127,12 +127,16 @@ LET
                                          (const-exp 2)
                                          (const-exp 3)))))
 
-;; Test try and raise
+;; Test try, raise, and resume
 
 (check-equal?
- (parse "try 1 catch (x) 2")
- (a-program (try-exp (const-exp 1) 'x (const-exp 2))))
+ (parse "try 1 catch (x, c) 2")
+ (a-program (try-exp (const-exp 1) 'x 'c (const-exp 2))))
 
 (check-equal?
  (parse "raise 1")
  (a-program (raise-exp (const-exp 1))))
+
+(check-equal?
+ (parse "resume(c, x)")
+ (a-program (resume-exp (var-exp 'c) (var-exp 'x))))
