@@ -136,3 +136,13 @@ LET
 (check-equal?
  (parse "raise 1")
  (a-program (raise-exp (const-exp 1))))
+
+;; Test letcc and throw
+
+(check-equal?
+ (parse "letcc x in y")
+ (a-program (letcc-exp 'x (var-exp 'y))))
+
+(check-equal?
+ (parse "throw v to c")
+ (a-program (throw-exp (var-exp 'v) (var-exp 'c))))

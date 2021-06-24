@@ -83,7 +83,13 @@
              (value-of-exp exp1 env (try-cont var handler-exp env cont))]
 
     [raise-exp (exp1)
-               (value-of-exp exp1 env (raise-cont cont))]))
+               (value-of-exp exp1 env (raise-cont cont))]
+
+    [letcc-exp (var body)
+               (value-of-exp body (extend-env var (cont-val cont) env) cont)]
+
+    [throw-exp (exp1 exp2)
+               (value-of-exp exp1 env (throw1-cont exp2 env cont))]))
 
 (define (construct-proc-val vars body saved-env)
   (proc-val (procedure vars body saved-env)))
@@ -149,6 +155,13 @@
    (saved-env env?)
    (saved-cont continuation?)]
   [raise-cont
+   (saved-cont continuation?)]
+  [throw1-cont
+   (exp2 expression?)
+   (saved-env env?)
+   (saved-cont continuation?)]
+  [throw2-cont
+   (val1 expval?)
    (saved-cont continuation?)])
 
 ;; Cont x ExpVal -> FinalAnswer
@@ -209,7 +222,13 @@
               (apply-cont saved-cont val)]
 
     [raise-cont (saved-cont)
-                (apply-handler val saved-cont)]))
+                (apply-handler val saved-cont)]
+
+    [throw1-cont (exp2 saved-env saved-cont)
+                 (value-of-exp exp2 saved-env (throw2-cont val saved-cont))]
+
+    [throw2-cont (val1 saved-cont)
+                 (apply-cont (expval->cont val) val1)]))
 
 
 ;; apply-hanlder : ExpVal -> Cont -> FinalAnswer
@@ -264,7 +283,13 @@
                (apply-handler val saved-cont)]
 
     [raise-cont (saved-cont)
-                (apply-handler val saved-cont)]))
+                (apply-handler val saved-cont)]
+
+    [throw1-cont (exp2 saved-env saved-cont)
+                 (apply-handler val saved-cont)]
+
+    [throw2-cont (val1 saved-cont)
+                 (apply-handler val saved-cont)]))
 
 (define (report-uncaught-exception exception)
   (eopl:error 'report-uncaught-exception "Uncaught exception: ~s" exception))
@@ -291,7 +316,8 @@
   [num-val (n number?)]
   [bool-val (b boolean?)]
   [proc-val (p proc?)]
-  [list-val (l list?)])
+  [list-val (l list?)]
+  [cont-val (c continuation?)])
 
 (define (expval->num val)
   (cases expval val
@@ -312,3 +338,8 @@
   (cases expval val
     [list-val (l) l]
     [else (eopl:error 'expval->list "Not a list: ~s" val)]))
+
+(define (expval->cont val)
+  (cases expval val
+    [cont-val (c) c]
+    [else (eopl:error 'expval->cont "Not a continuation: ~s" val)]))

@@ -229,3 +229,13 @@ CODE
 (check-exn
  #rx"Uncaught exception: .*1"
  (lambda () (run "raise 1")))
+
+;; Test letcc and throw
+
+(check-equal?
+ (run
+  #<<CODE
+-(100, letcc c in -(1, -(2, -(3, throw 1 to c))))
+CODE
+  )
+ (num-val 99))
