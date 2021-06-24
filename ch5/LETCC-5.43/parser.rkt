@@ -37,8 +37,6 @@
 ;;            ::= raise Expression
 ;;
 ;;            ::= letcc Identifier in Expression
-;;
-;;            ::= throw Expression to Expression
 
 (provide
 
@@ -65,7 +63,6 @@
  try-exp
  raise-exp
  letcc-exp
- throw-exp
 
  ;; Parser
  parse)
@@ -131,10 +128,7 @@
                 raise-exp)
 
     (expression ("letcc" identifier "in" expression)
-                letcc-exp)
-
-    (expression ("throw" expression "to" expression)
-                throw-exp)))
+                letcc-exp)))
 
 (sllgen:make-define-datatypes scanner-spec grammar)
 

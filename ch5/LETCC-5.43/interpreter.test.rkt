@@ -230,12 +230,12 @@ CODE
  #rx"Uncaught exception: .*1"
  (lambda () (run "raise 1")))
 
-;; Test letcc and throw
+;; Test letcc
 
 (check-equal?
  (run
   #<<CODE
--(100, letcc c in -(1, -(2, -(3, throw 1 to c))))
+-(100, letcc c in -(1, -(2, -(3, (c 1)))))
 CODE
   )
  (num-val 99))

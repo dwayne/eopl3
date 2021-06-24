@@ -86,10 +86,7 @@
                (value-of-exp exp1 env (raise-cont cont))]
 
     [letcc-exp (var body)
-               (value-of-exp body (extend-env var (cont-val cont) env) cont)]
-
-    [throw-exp (exp1 exp2)
-               (value-of-exp exp1 env (throw1-cont exp2 env cont))]))
+               (value-of-exp body (extend-env var (cont-val cont) env) cont)]))
 
 (define (construct-proc-val vars body saved-env)
   (proc-val (procedure vars body saved-env)))
@@ -140,7 +137,7 @@
    (saved-env env?)
    (saved-cont continuation?)]
   [rands-cont
-   (proc-val expval?)
+   (callable expval?)
    (saved-cont continuation?)]
   [head-cont
    (tail list?)
@@ -155,13 +152,6 @@
    (saved-env env?)
    (saved-cont continuation?)]
   [raise-cont
-   (saved-cont continuation?)]
-  [throw1-cont
-   (exp2 expression?)
-   (saved-env env?)
-   (saved-cont continuation?)]
-  [throw2-cont
-   (val1 expval?)
    (saved-cont continuation?)])
 
 ;; Cont x ExpVal -> FinalAnswer
@@ -209,8 +199,8 @@
     [rator-cont (rands saved-env saved-cont)
                 (value-of-exps rands saved-env (rands-cont val saved-cont))]
 
-    [rands-cont (proc-val saved-cont)
-                (apply-procedure (expval->proc proc-val) (expval->list val) saved-cont)]
+    [rands-cont (callable saved-cont)
+                (apply-callable callable (expval->list val) saved-cont)]
 
     [head-cont (tail saved-env saved-cont)
                (value-of-exps tail saved-env (tail-cont val saved-cont))]
@@ -222,13 +212,19 @@
               (apply-cont saved-cont val)]
 
     [raise-cont (saved-cont)
-                (apply-handler val saved-cont)]
+                (apply-handler val saved-cont)]))
 
-    [throw1-cont (exp2 saved-env saved-cont)
-                 (value-of-exp exp2 saved-env (throw2-cont val saved-cont))]
+;; apply-callable : ExpVal -> List[ExpVal] -> Cont -> FinalAnswer
+(define (apply-callable callable vals cont)
+  (cases expval callable
+    [proc-val (p)
+              (apply-procedure p vals cont)]
 
-    [throw2-cont (val1 saved-cont)
-                 (apply-cont (expval->cont val) val1)]))
+    [cont-val (c)
+              (apply-cont cont (car vals))]
+
+    [else
+     (eopl:error 'apply-callable "Not a callable: ~s" callable)]))
 
 
 ;; apply-hanlder : ExpVal -> Cont -> FinalAnswer
@@ -283,13 +279,7 @@
                (apply-handler val saved-cont)]
 
     [raise-cont (saved-cont)
-                (apply-handler val saved-cont)]
-
-    [throw1-cont (exp2 saved-env saved-cont)
-                 (apply-handler val saved-cont)]
-
-    [throw2-cont (val1 saved-cont)
-                 (apply-handler val saved-cont)]))
+                (apply-handler val saved-cont)]))
 
 (define (report-uncaught-exception exception)
   (eopl:error 'report-uncaught-exception "Uncaught exception: ~s" exception))
@@ -309,7 +299,7 @@
 
 ;; Values
 ;;
-;; ExpVal = Int + Bool + Proc + List[EvalVal]
+;; ExpVal = Int + Bool + Proc + List[ExpVal]
 ;; DenVal = ExpVal
 
 (define-datatype expval expval?
