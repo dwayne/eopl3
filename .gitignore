@@ -1,2 +1,4 @@
 .stack-work/
+compiled/
 elm-stuff/
+node_modules/

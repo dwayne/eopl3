@@ -249,7 +249,7 @@ down list =
 -- > (down '(a (more (complicated)) object))
 -- '((a) ((more (complicated))) (object))
 --
--- See ex 1.17.rkt.
+-- See ex1.17.rkt.
 
 
 -- Exercise 1.18
