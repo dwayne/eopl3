@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "dependencies": {
+    "elm": "^0.19.1-5",
+    "elm-test": "^0.19.1-revision9"
+  }
+}

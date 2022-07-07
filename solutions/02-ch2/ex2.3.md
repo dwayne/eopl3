@@ -12,4 +12,4 @@ Q.E.D.
 
 ## 2, 3
 
-See [src/Integer/DiffTree](src/Integer/DiffTree.elm).
+See [elm/src/Integer/DiffTree](elm/src/Integer/DiffTree.elm).
