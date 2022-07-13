@@ -15,17 +15,18 @@ import qualified Data.Char as Char
 import qualified Text.Parsec as P
 import qualified Text.Parsec.Token as T
 
+import AST (Id, Number)
 import Control.Monad (mzero, void)
 import Text.Parsec.Language (LanguageDef, emptyDef)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Token (TokenParser, makeTokenParser)
 
 
-number :: Parser Integer
+number :: Parser Number
 number = lexeme (read <$> P.many1 P.digit)
 
 
-identifier :: Parser String
+identifier :: Parser Id
 identifier = T.identifier lexer
 
 

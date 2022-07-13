@@ -16,7 +16,9 @@ library
     parsec
 
   exposed-modules:
-    Lexer
+    AST,
+    Lexer,
+    Parser
 
 
 test-suite tests
