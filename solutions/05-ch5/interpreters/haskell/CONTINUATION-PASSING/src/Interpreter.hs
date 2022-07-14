@@ -1,0 +1,157 @@
+module Interpreter
+  ( Value
+  , Type
+  , Error(..), ParseError, RuntimeError(..)
+  , run
+  ) where
+
+
+import qualified Env
+
+import Data.Bifunctor (first)
+import Parser
+
+
+data Value
+  = VNumber Number
+  | VBool Bool
+  | VProc Procedure
+
+data Procedure
+  = Procedure Id Expr Env
+
+data Type
+  = TNumber
+  | TBool
+  | TProc
+  deriving Show
+
+type Env = Env.Env Id Value
+
+data Error
+  = SyntaxError ParseError
+  | RuntimeError RuntimeError
+  deriving Show
+
+data RuntimeError
+  = IdentifierNotFound Id
+  | TypeError Type Type
+  deriving Show
+
+
+instance Show Value where
+  show (VNumber n) = show n
+  show (VBool b) = show b
+  show (VProc _) = "<proc>"
+
+
+run :: String -> Either Error Value
+run input =
+  case parse input of
+    Left err ->
+      Left $ SyntaxError err
+
+    Right program ->
+      first RuntimeError $ valueOfProgram program
+
+
+valueOfProgram :: Program -> Either RuntimeError Value
+valueOfProgram (Program expr) =
+  valueOfExpr expr initEnv
+  where
+    initEnv =
+      Env.extend "i" (VNumber 1)
+        (Env.extend "v" (VNumber 5)
+          (Env.extend "x" (VNumber 10)
+            Env.empty))
+
+
+valueOfExpr :: Expr -> Env -> Either RuntimeError Value
+valueOfExpr expr env =
+  case expr of
+    Const n ->
+      Right $ VNumber n
+
+    Var x ->
+      case Env.find x env of
+        Just value ->
+          Right value
+
+        Nothing ->
+          Left $ IdentifierNotFound x
+
+    Diff aExpr bExpr -> do
+      aValue <- valueOfExpr aExpr env
+      bValue <- valueOfExpr bExpr env
+      diff aValue bValue
+
+    Zero aExpr -> do
+      aValue <- valueOfExpr aExpr env
+      zero aValue
+
+    If condition consequent alternative -> do
+      conditionValue <- valueOfExpr condition env
+      computeIf conditionValue consequent alternative env
+
+    Let x aExpr body -> do
+      aValue <- valueOfExpr aExpr env
+      valueOfExpr body $ Env.extend x aValue env
+
+    Proc param body ->
+      return $ VProc $ Procedure param body env
+
+    Letrec _ _ _ _ ->
+      -- TODO: Implement letrec.
+      undefined
+
+    Call rator rand -> do
+      ratorValue <- valueOfExpr rator env
+      randValue <- valueOfExpr rand env
+      apply ratorValue randValue
+
+
+diff :: Value -> Value -> Either RuntimeError Value
+diff aValue bValue = do
+  a <- toNumber aValue
+  b <- toNumber bValue
+  return $ VNumber $ a - b
+
+
+zero :: Value -> Either RuntimeError Value
+zero aValue = do
+  a <- toNumber aValue
+  return $ VBool $ a == 0
+
+
+computeIf :: Value -> Expr -> Expr -> Env -> Either RuntimeError Value
+computeIf conditionValue consequent alternative env = do
+  a <- toBool conditionValue
+  let expr = if a then consequent else alternative
+  valueOfExpr expr env
+
+
+apply :: Value -> Value -> Either RuntimeError Value
+apply ratorValue arg = do
+  Procedure param body savedEnv <- toProcedure ratorValue
+  valueOfExpr body $ Env.extend param arg savedEnv
+
+
+toNumber :: Value -> Either RuntimeError Number
+toNumber (VNumber n) = Right n
+toNumber value = Left $ TypeError TNumber (typeOf value)
+
+
+toBool :: Value -> Either RuntimeError Bool
+toBool (VBool b) = Right b
+toBool value = Left $ TypeError TBool (typeOf value)
+
+
+toProcedure :: Value -> Either RuntimeError Procedure
+toProcedure (VProc p) = Right p
+toProcedure value = Left $ TypeError TProc (typeOf value)
+
+
+typeOf :: Value -> Type
+typeOf (VNumber _) = TNumber
+typeOf (VBool _) = TBool
+typeOf (VProc _) = TProc

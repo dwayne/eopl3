@@ -17,6 +17,8 @@ library
 
   exposed-modules:
     AST
+    Env
+    Interpreter
     Lexer
     Parser
 
