@@ -16,8 +16,8 @@ library
     parsec
 
   exposed-modules:
-    AST,
-    Lexer,
+    AST
+    Lexer
     Parser
 
 
@@ -39,3 +39,4 @@ test-suite tests
 
   other-modules:
     Test.LexerSpec
+    Test.ParserSpec

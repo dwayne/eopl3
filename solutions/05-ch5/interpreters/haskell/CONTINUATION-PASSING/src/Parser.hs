@@ -33,8 +33,8 @@ expr
   <|> ifExpr
   <|> letExpr
   <|> procExpr
-  <|> callExpr
   <|> letrecExpr
+  <|> callExpr
 
 
 constExpr :: Parser Expr
@@ -72,11 +72,6 @@ procExpr =
   Proc <$ rProc <*> parens identifier <*> expr
 
 
-callExpr :: Parser Expr
-callExpr =
-  parens (Call <$> expr <*> expr)
-
-
 letrecExpr :: Parser Expr
 letrecExpr =
   Letrec
@@ -85,3 +80,8 @@ letrecExpr =
     <*> (parens identifier <* equal)
     <*> (expr <* rIn)
     <*> expr
+
+
+callExpr :: Parser Expr
+callExpr =
+  parens (Call <$> expr <*> expr)
