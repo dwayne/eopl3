@@ -1,6 +1,6 @@
 module Interpreter
-  ( Value
-  , Type
+  ( Value(..)
+  , Type(..)
   , Error(..), ParseError, RuntimeError(..)
   , run
   ) where
@@ -24,19 +24,25 @@ data Type
   = TNumber
   | TBool
   | TProc
-  deriving Show
+  deriving (Eq, Show)
 
 type Env = Env.Env Id Value
 
 data Error
   = SyntaxError ParseError
   | RuntimeError RuntimeError
-  deriving Show
+  deriving (Eq, Show)
 
 data RuntimeError
   = IdentifierNotFound Id
   | TypeError Type Type
-  deriving Show
+  deriving (Eq, Show)
+
+
+instance Eq Value where
+  (VNumber n1) == (VNumber n2) = n1 == n2
+  (VBool b1) == (VBool b2) = b1 == b2
+  _ == _ = False
 
 
 instance Show Value where

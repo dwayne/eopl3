@@ -40,5 +40,6 @@ test-suite tests
     parsec
 
   other-modules:
+    Test.InterpreterSpec
     Test.LexerSpec
     Test.ParserSpec
