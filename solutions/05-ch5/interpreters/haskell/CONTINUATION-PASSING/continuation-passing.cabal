@@ -17,6 +17,7 @@ library
 
   exposed-modules:
     AST
+    CPSInterpreter
     Env
     Interpreter
     Lexer
@@ -40,6 +41,7 @@ test-suite tests
     parsec
 
   other-modules:
+    Test.CPSInterpreterSpec
     Test.InterpreterSpec
     Test.LexerSpec
     Test.ParserSpec
