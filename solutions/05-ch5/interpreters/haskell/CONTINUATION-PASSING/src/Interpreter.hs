@@ -26,7 +26,7 @@ data Type
   | TProc
   deriving (Eq, Show)
 
-type Env = Env.Env Id Value
+type Env = Env.Env Id Value Id Expr
 
 data Error
   = SyntaxError ParseError
@@ -80,8 +80,11 @@ valueOfExpr expr env =
 
     Var x ->
       case Env.find x env of
-        Just value ->
+        Just (Env.Value value) ->
           Right value
+
+        Just (Env.Procedure param body savedEnv) ->
+          Right $ VProc $ Procedure param body savedEnv
 
         Nothing ->
           Left $ IdentifierNotFound x
@@ -106,9 +109,8 @@ valueOfExpr expr env =
     Proc param body ->
       return $ VProc $ Procedure param body env
 
-    Letrec _ _ _ _ ->
-      -- TODO: Implement letrec.
-      undefined
+    Letrec name param body letrecBody ->
+      valueOfExpr letrecBody $ Env.extendRec name param body env
 
     Call rator rand -> do
       ratorValue <- valueOfExpr rator env
