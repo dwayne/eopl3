@@ -124,8 +124,8 @@ data Cont
 
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
-applyCont _ (Left err) = Left err
-applyCont cont (Right value) =
+applyCont cont input = do
+  value <- input
   case cont of
     EndCont ->
       trace "End of computation" $
