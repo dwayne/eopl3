@@ -90,16 +90,16 @@ valueOfExpr expr env cont =
         Nothing ->
           applyCont cont $ Left $ IdentifierNotFound x
 
-    Diff aExpr bExpr -> do
+    Diff aExpr bExpr ->
       valueOfExpr aExpr env (Diff1Cont bExpr env cont)
 
-    Zero aExpr -> do
+    Zero aExpr ->
       valueOfExpr aExpr env (ZeroCont cont)
 
-    If condition consequent alternative -> do
+    If condition consequent alternative ->
       valueOfExpr condition env (IfCont consequent alternative env cont)
 
-    Let x aExpr body -> do
+    Let x aExpr body ->
       valueOfExpr aExpr env (LetCont x body env cont)
 
     Proc param body ->
@@ -108,7 +108,7 @@ valueOfExpr expr env cont =
     Letrec name param body letrecBody ->
       valueOfExpr letrecBody (Env.extendRec name param body env) cont
 
-    Call rator rand -> do
+    Call rator rand ->
       valueOfExpr rator env (RatorCont rand env cont)
 
 
@@ -137,7 +137,7 @@ applyCont cont (Right value) =
     LetCont x body env nextCont ->
       valueOfExpr body (Env.extend x value env) nextCont
 
-    IfCont consequent alternative env nextCont -> do
+    IfCont consequent alternative env nextCont ->
       computeIf value consequent alternative env nextCont
 
     Diff1Cont bExpr env nextCont ->
