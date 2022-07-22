@@ -66,6 +66,18 @@ spec =
         \in (double 6)                                        "
       , VNumber 12
       )
+
+    -- Exercise 5.3
+    , ( "let2                    \
+        \  x = 33                \
+        \  y = 22                \
+        \in                      \
+        \if zero?(-(x, 11)) then \
+        \  -(y, 2)               \
+        \else                    \
+        \  -(y, 4)               "
+      , VNumber 18
+      )
     ]
 
 

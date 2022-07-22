@@ -15,6 +15,7 @@ spec =
   describe "lexer" $ do
     numberSpec
     identifierSpec
+    reservedSpec
 
 
 numberSpec :: Spec
@@ -44,6 +45,16 @@ identifierSpec =
 
     it "example 4" $ do
       parse Lexer.identifier "zero?" `shouldSatisfy` isLeft
+
+    it "example 5" $ do
+      parse Lexer.identifier "let2" `shouldSatisfy` isLeft
+
+
+reservedSpec :: Spec
+reservedSpec =
+  describe "reserved" $ do
+    it "example 1" $ do
+      parse Lexer.rLet2 "let2" `shouldBe` Right ()
 
 
 parse :: Parser a -> String -> Either ParseError a

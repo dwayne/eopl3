@@ -106,6 +106,27 @@ valueOfExpr expr env =
       aValue <- valueOfExpr aExpr env
       valueOfExpr body $ Env.extend x aValue env
 
+    Let2 x xExpr y yExpr body -> do
+      xValue <- valueOfExpr xExpr env
+      yValue <- valueOfExpr yExpr env
+      valueOfExpr body $
+        Env.extend y yValue $
+          Env.extend x xValue env
+      -- N.B. This formulation of Let2 doesn't allow for the following:
+      --
+      -- let2 x = 5 y = -(x, 1) in -(x, y)
+      -- => 1
+      --
+      -- For that we need to do the following instead:
+      --
+      -- xValue <- valueOfExpr xExpr env
+      -- let env1 = Env.extend x xValue env
+      -- yValue <- valueOfExpr yExpr env1
+      -- let env2 = Env.extend y yValue env1
+      -- valueOfExpr body env2
+      --
+      -- TODO: As an exercise try converting this one to CPS.
+
     Proc param body ->
       return $ VProc $ Procedure param body env
 

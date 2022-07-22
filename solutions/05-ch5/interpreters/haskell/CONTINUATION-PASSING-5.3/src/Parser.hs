@@ -31,6 +31,7 @@ expr
   <|> diffExpr
   <|> zeroExpr
   <|> ifExpr
+  <|> let2Expr
   <|> letExpr
   <|> procExpr
   <|> letrecExpr
@@ -60,6 +61,14 @@ zeroExpr =
 ifExpr :: Parser Expr
 ifExpr =
   If <$ rIf <*> (expr <* rThen) <*> (expr <* rElse) <*> expr
+
+
+let2Expr :: Parser Expr
+let2Expr =
+  Let2 <$ rLet2
+    <*> identifier <*> (equal *> expr)
+    <*> identifier <*> (equal *> expr)
+    <*> (rIn *> expr)
 
 
 letExpr :: Parser Expr

@@ -6,6 +6,7 @@ Diff    ::= '-' '(' Expr ',' Expr ')'
 Zero    ::= 'zero?' '(' Expr ')'
 If      ::= 'if' Expr 'then' Expr 'else' Expr
 Let     ::= 'let' Id '=' Expr 'in' Expr
+Let2    ::= 'let2' Id '=' Expr Id '=' Expr 'in' Expr
 Proc    ::= 'proc' '(' Id ')' Expr
 Call    ::= '(' Expr Expr ')'
 Letrec  ::= 'letrec' Id '(' Id ')' '=' Expr 'in' Expr

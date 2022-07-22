@@ -102,6 +102,9 @@ valueOfExpr expr env cont =
     Let x aExpr body ->
       valueOfExpr aExpr env (LetCont x body env cont)
 
+    Let2 x xExpr y yExpr body ->
+      valueOfExpr xExpr env (Let2XCont x y yExpr body env cont)
+
     Proc param body ->
       applyCont cont $ Right $ VProc $ Procedure param body env
 
@@ -116,6 +119,8 @@ data Cont
   = EndCont
   | ZeroCont Cont
   | LetCont Id Expr Env Cont
+  | Let2XCont Id Id Expr Expr Env Cont
+  | Let2YCont Id Value Id Expr Env Cont
   | IfCont Expr Expr Env Cont
   | Diff1Cont Expr Env Cont
   | Diff2Cont Value Cont
@@ -136,6 +141,17 @@ applyCont cont input = do
 
     LetCont x body env nextCont ->
       valueOfExpr body (Env.extend x value env) nextCont
+
+    Let2XCont x y yExpr body env nextCont ->
+      valueOfExpr yExpr env (Let2YCont x value y body env nextCont)
+
+    Let2YCont x xValue y body env1 nextCont ->
+      let
+        env2 =
+          Env.extend y value $
+            Env.extend x xValue env1
+      in
+      valueOfExpr body env2 nextCont
 
     IfCont consequent alternative env nextCont ->
       computeIf value consequent alternative env nextCont
