@@ -64,7 +64,7 @@ run input =
 
 valueOfProgram :: Program -> Either RuntimeError Value
 valueOfProgram (Program expr) =
-  valueOfExpr expr initEnv EndCont
+  valueOfExpr expr initEnv endCont
   where
     initEnv =
       Env.extend "i" (VNumber 1)
@@ -91,16 +91,16 @@ valueOfExpr expr env cont =
           applyCont cont $ Left $ IdentifierNotFound x
 
     Diff aExpr bExpr -> do
-      valueOfExpr aExpr env (Diff1Cont bExpr env cont)
+      valueOfExpr aExpr env (diff1Cont bExpr env cont)
 
     Zero aExpr -> do
-      valueOfExpr aExpr env (ZeroCont cont)
+      valueOfExpr aExpr env (zeroCont cont)
 
     If condition consequent alternative -> do
-      valueOfExpr condition env (IfCont consequent alternative env cont)
+      valueOfExpr condition env (ifCont consequent alternative env cont)
 
     Let x aExpr body -> do
-      valueOfExpr aExpr env (LetCont x body env cont)
+      valueOfExpr aExpr env (letCont x body env cont)
 
     Proc param body ->
       applyCont cont $ Right $ VProc $ Procedure param body env
@@ -109,48 +109,55 @@ valueOfExpr expr env cont =
       valueOfExpr letrecBody (Env.extendRec name param body env) cont
 
     Call rator rand -> do
-      valueOfExpr rator env (RatorCont rand env cont)
+      valueOfExpr rator env (ratorCont rand env cont)
 
 
-data Cont
-  = EndCont
-  | ZeroCont Cont
-  | LetCont Id Expr Env Cont
-  | IfCont Expr Expr Env Cont
-  | Diff1Cont Expr Env Cont
-  | Diff2Cont Value Cont
-  | RatorCont Expr Env Cont
-  | RandCont Value Cont
+type Cont =
+  Either RuntimeError Value -> Either RuntimeError Value
 
 
-applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
-applyCont _ (Left err) = Left err
-applyCont cont (Right value) =
-  case cont of
-    EndCont ->
-      trace "End of computation" $
-        Right value
+endCont :: Cont
+endCont input =
+  trace "End of computation" input
 
-    ZeroCont nextCont ->
-      applyCont nextCont $ zero value
 
-    LetCont x body env nextCont ->
-      valueOfExpr body (Env.extend x value env) nextCont
+zeroCont :: Cont -> Cont
+zeroCont nextCont input = do
+  value <- input
+  applyCont nextCont $ zero value
 
-    IfCont consequent alternative env nextCont -> do
-      computeIf value consequent alternative env nextCont
 
-    Diff1Cont bExpr env nextCont ->
-      valueOfExpr bExpr env (Diff2Cont value nextCont)
+letCont :: Id -> Expr -> Env -> Cont -> Cont
+letCont x body env nextCont input = do
+  value <- input
+  valueOfExpr body (Env.extend x value env) nextCont
 
-    Diff2Cont aValue nextCont ->
-      applyCont nextCont $ diff aValue value
 
-    RatorCont rand env nextCont ->
-      valueOfExpr rand env (RandCont value nextCont)
+ifCont :: Expr -> Expr -> Env -> Cont -> Cont
+ifCont consequent alternative env nextCont input = do
+  value <- input
+  computeIf value consequent alternative env nextCont
 
-    RandCont ratorValue nextCont ->
-      apply ratorValue value nextCont
+diff1Cont :: Expr -> Env -> Cont -> Cont
+diff1Cont bExpr env nextCont input = do
+  value <- input
+  valueOfExpr bExpr env (diff2Cont value nextCont)
+
+
+diff2Cont :: Value -> Cont -> Cont
+diff2Cont aValue nextCont input = do
+  value <- input
+  applyCont nextCont $ diff aValue value
+
+ratorCont :: Expr -> Env -> Cont -> Cont
+ratorCont rand env nextCont input = do
+  value <- input
+  valueOfExpr rand env (randCont value nextCont)
+
+randCont :: Value -> Cont -> Cont
+randCont ratorValue nextCont input = do
+  value <- input
+  apply ratorValue value nextCont
 
 
 diff :: Value -> Value -> Either RuntimeError Value
@@ -164,6 +171,10 @@ zero :: Value -> Either RuntimeError Value
 zero aValue = do
   a <- toNumber aValue
   return $ VBool $ a == 0
+
+
+applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
+applyCont cont = cont
 
 
 computeIf :: Value -> Expr -> Expr -> Env -> Cont -> Either RuntimeError Value
