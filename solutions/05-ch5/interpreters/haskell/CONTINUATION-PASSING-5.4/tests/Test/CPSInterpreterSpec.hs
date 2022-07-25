@@ -78,6 +78,16 @@ spec =
         \  -(y, 4)               "
       , VNumber 18
       )
+
+    -- Exercise 5.4
+    , ( "let3         \
+        \  a = 10     \
+        \  b = 5      \
+        \  c = 1      \
+        \in           \
+        \-(a, -(b, c))"
+      , VNumber 6
+      )
     ]
 
 

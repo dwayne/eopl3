@@ -56,6 +56,9 @@ reservedSpec =
     it "example 1" $ do
       parse Lexer.rLet2 "let2" `shouldBe` Right ()
 
+    it "example 2" $ do
+      parse Lexer.rLet3 "let3" `shouldBe` Right ()
+
 
 parse :: Parser a -> String -> Either ParseError a
 parse p = P.parse p ""

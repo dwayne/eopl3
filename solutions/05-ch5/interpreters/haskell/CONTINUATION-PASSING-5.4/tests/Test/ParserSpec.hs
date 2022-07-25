@@ -21,6 +21,14 @@ spec =
     , ( "let2 a = 1 b = 2 in -(b, a)"
       , Let2 "a" (Const 1) "b" (Const 2) (Diff (Var "b") (Var "a"))
       )
+
+    , ( "let3 a = 1 b = 2 c = 3 in -(c, -(b, a))"
+      , Let3
+          "a" (Const 1)
+          "b" (Const 2)
+          "c" (Const 3)
+          (Diff (Var "c") (Diff (Var "b") (Var "a")))
+      )
     ]
 
 

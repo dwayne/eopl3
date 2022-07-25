@@ -127,6 +127,15 @@ valueOfExpr expr env =
       --
       -- TODO: As an exercise try converting this one to CPS.
 
+    Let3 x xExpr y yExpr z zExpr body -> do
+      xValue <- valueOfExpr xExpr env
+      yValue <- valueOfExpr yExpr env
+      zValue <- valueOfExpr zExpr env
+      valueOfExpr body $
+        Env.extend z zValue $
+          Env.extend y yValue $
+            Env.extend x xValue env
+
     Proc param body ->
       return $ VProc $ Procedure param body env
 
