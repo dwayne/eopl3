@@ -97,6 +97,12 @@ spec =
     , ( "cdr(cons(1, cons(2, emptylist)))", VList [ VNumber 2 ] )
     , ( "null?(emptylist)", VBool True )
     , ( "null?(cons(1, emptylist))", VBool False )
+
+    -- Exercise 5.6
+    , ( "list()", VList [] )
+    , ( "list(1)", VList [ VNumber 1] )
+    , ( "list(1, 2)", VList [ VNumber 1, VNumber 2 ] )
+    , ( "list(-(2, 1), -(4, 2))", VList [ VNumber 1, VNumber 2 ] )
     ]
 
 

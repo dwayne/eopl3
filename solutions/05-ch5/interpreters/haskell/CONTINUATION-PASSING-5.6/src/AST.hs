@@ -12,6 +12,7 @@ data Expr
   | Cdr Expr
   | Null Expr
   | EmptyList
+  | List [Expr]
   | Zero Expr
   | If Expr Expr Expr
   | Let Id Expr Expr

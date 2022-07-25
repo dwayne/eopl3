@@ -2,11 +2,12 @@ module Lexer
   ( number, identifier
 
   , rCar, rCdr, rCons, rElse, rEmptyList, rIf, rIn
-  , rLet, rLet2, rLet3, rLetrec, rNull, rProc, rThen, rZero
+  , rLet, rLet2, rLet3, rLetrec, rList, rNull, rProc, rThen, rZero
 
   , comma, equal, hyphen
 
   , parens
+  , commaSep
   , whiteSpace
   )
   where
@@ -78,6 +79,10 @@ rLetrec :: Parser ()
 rLetrec = reserved "letrec"
 
 
+rList :: Parser ()
+rList = reserved "list"
+
+
 rNull :: Parser ()
 rNull = reserved "null?"
 
@@ -114,6 +119,10 @@ hyphen = symbol "-"
 
 parens :: Parser a -> Parser a
 parens = T.parens lexer
+
+
+commaSep :: Parser a -> Parser [a]
+commaSep = T.commaSep lexer
 
 
 whiteSpace :: Parser ()
@@ -156,6 +165,7 @@ languageDef =
         , "let2"
         , "let3"
         , "letrec"
+        , "list"
         , "null?"
         , "proc"
         , "then"

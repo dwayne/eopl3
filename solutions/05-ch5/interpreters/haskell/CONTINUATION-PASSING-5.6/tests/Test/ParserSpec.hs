@@ -36,6 +36,11 @@ spec =
     , ( "cdr(l)", Cdr (Var "l") )
     , ( "null?(emptylist)", Null EmptyList )
     , ( "emptylist", EmptyList )
+
+    -- Exercise 5.6
+    , ( "list()", List [] )
+    , ( "list(1)", List [Const 1] )
+    , ( "list(1, 2)", List [Const 1, Const 2] )
     ]
 
 

@@ -119,6 +119,9 @@ valueOfExpr expr env =
     EmptyList -> do
       Right $ VList []
 
+    List exprs ->
+      list exprs env
+
     Zero aExpr -> do
       aValue <- valueOfExpr aExpr env
       zero aValue
@@ -212,6 +215,22 @@ isNull :: Value -> Either RuntimeError Value
 isNull value = do
   l <- toList value
   return $ VBool $ l == []
+
+
+list :: [Expr] -> Env -> Either RuntimeError Value
+list exprs env =
+  listHelper exprs env []
+
+
+listHelper :: [Expr] -> Env -> [Value] -> Either RuntimeError Value
+listHelper exprs env values =
+  case exprs of
+    [] ->
+      Right $ VList $ reverse values
+
+    expr : rest -> do
+      value <- valueOfExpr expr env
+      listHelper rest env (value : values)
 
 
 zero :: Value -> Either RuntimeError Value

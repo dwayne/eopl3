@@ -34,6 +34,7 @@ expr
   <|> cdrExpr
   <|> nullExpr
   <|> emptyListExpr
+  <|> listExpr
   <|> zeroExpr
   <|> ifExpr
   <|> let3Expr
@@ -82,6 +83,11 @@ nullExpr =
 emptyListExpr :: Parser Expr
 emptyListExpr =
   EmptyList <$ rEmptyList
+
+
+listExpr :: Parser Expr
+listExpr =
+  List <$ rList <*> parens (commaSep expr)
 
 
 zeroExpr :: Parser Expr

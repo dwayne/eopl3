@@ -113,6 +113,9 @@ valueOfExpr expr env cont =
     EmptyList ->
       applyCont cont $ Right $ VList []
 
+    List exprs ->
+      applyCont (HeadCont exprs env cont) $ Right $ VList []
+
     Zero aExpr ->
       valueOfExpr aExpr env (ZeroCont cont)
 
@@ -157,6 +160,8 @@ data Cont
   | CarCont Cont
   | CdrCont Cont
   | NullCont Cont
+  | HeadCont [Expr] Env Cont
+  | TailCont [Expr] [Value] Env Cont
 
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
@@ -228,6 +233,22 @@ applyCont cont input = do
 
     NullCont nextCont ->
       applyCont nextCont $ isNull value
+
+    HeadCont exprs env nextCont ->
+      case exprs of
+        [] ->
+          input
+
+        headExpr : tailExpr ->
+          valueOfExpr headExpr env (TailCont tailExpr [] env nextCont)
+
+    TailCont exprs values env nextCont ->
+      case exprs of
+        [] ->
+          applyCont nextCont $ Right $ VList $ reverse $ value : values
+
+        expr : rest ->
+          valueOfExpr expr env (TailCont rest (value : values) env nextCont)
 
 
 diff :: Value -> Value -> Either RuntimeError Value
