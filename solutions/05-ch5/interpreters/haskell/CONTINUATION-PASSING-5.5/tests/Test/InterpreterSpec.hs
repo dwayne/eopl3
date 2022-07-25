@@ -88,6 +88,15 @@ spec =
         \-(a, -(b, c))"
       , VNumber 6
       )
+
+    -- Exercise 5.5
+    , ( "emptylist", VList [] )
+    , ( "cons(1, emptylist)", VList [ VNumber 1 ] )
+    , ( "cons(1, cons(2, emptylist))", VList [ VNumber 1, VNumber 2] )
+    , ( "car(cons (1, emptylist))", VNumber 1 )
+    , ( "cdr(cons(1, cons(2, emptylist)))", VList [ VNumber 2 ] )
+    , ( "null?(emptylist)", VBool True )
+    , ( "null?(cons(1, emptylist))", VBool False )
     ]
 
 

@@ -29,6 +29,11 @@ expr
   = constExpr
   <|> varExpr
   <|> diffExpr
+  <|> consExpr
+  <|> carExpr
+  <|> cdrExpr
+  <|> nullExpr
+  <|> emptyListExpr
   <|> zeroExpr
   <|> ifExpr
   <|> let3Expr
@@ -52,6 +57,31 @@ varExpr =
 diffExpr :: Parser Expr
 diffExpr =
   hyphen *> parens (Diff <$> (expr <* comma) <*> expr)
+
+
+consExpr :: Parser Expr
+consExpr =
+  rCons *> parens (Cons <$> (expr <* comma) <*> expr)
+
+
+carExpr :: Parser Expr
+carExpr =
+  Car <$ rCar <*> parens expr
+
+
+cdrExpr :: Parser Expr
+cdrExpr =
+  Cdr <$ rCdr <*> parens expr
+
+
+nullExpr :: Parser Expr
+nullExpr =
+  Null <$ rNull <*> parens expr
+
+
+emptyListExpr :: Parser Expr
+emptyListExpr =
+  EmptyList <$ rEmptyList
 
 
 zeroExpr :: Parser Expr

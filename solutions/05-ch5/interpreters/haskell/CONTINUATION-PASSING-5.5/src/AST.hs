@@ -7,6 +7,11 @@ data Expr
   = Const Number
   | Var Id
   | Diff Expr Expr
+  | Cons Expr Expr
+  | Car Expr
+  | Cdr Expr
+  | Null Expr
+  | EmptyList
   | Zero Expr
   | If Expr Expr Expr
   | Let Id Expr Expr

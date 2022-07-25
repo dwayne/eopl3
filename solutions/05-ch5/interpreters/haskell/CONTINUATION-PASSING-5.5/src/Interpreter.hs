@@ -15,6 +15,7 @@ import Parser
 data Value
   = VNumber Number
   | VBool Bool
+  | VList [Value]
   | VProc Procedure
 
 data Procedure
@@ -23,6 +24,7 @@ data Procedure
 data Type
   = TNumber
   | TBool
+  | TList
   | TProc
   deriving (Eq, Show)
 
@@ -36,18 +38,21 @@ data Error
 data RuntimeError
   = IdentifierNotFound Id
   | TypeError Type Type
+  | EmptyListError
   deriving (Eq, Show)
 
 
 instance Eq Value where
   (VNumber n1) == (VNumber n2) = n1 == n2
   (VBool b1) == (VBool b2) = b1 == b2
+  (VList l1) == (VList l2) = l1 == l2
   _ == _ = False
 
 
 instance Show Value where
   show (VNumber n) = show n
   show (VBool b) = show b
+  show (VList l) = show l
   show (VProc _) = "<proc>"
 
 
@@ -93,6 +98,26 @@ valueOfExpr expr env =
       aValue <- valueOfExpr aExpr env
       bValue <- valueOfExpr bExpr env
       diff aValue bValue
+
+    Cons aExpr bExpr -> do
+      aValue <- valueOfExpr aExpr env
+      bValue <- valueOfExpr bExpr env
+      cons aValue bValue
+
+    Car aExpr -> do
+      aValue <- valueOfExpr aExpr env
+      car aValue
+
+    Cdr aExpr -> do
+      aValue <- valueOfExpr aExpr env
+      cdr aValue
+
+    Null aExpr -> do
+      aValue <- valueOfExpr aExpr env
+      isNull aValue
+
+    EmptyList -> do
+      Right $ VList []
 
     Zero aExpr -> do
       aValue <- valueOfExpr aExpr env
@@ -155,6 +180,40 @@ diff aValue bValue = do
   return $ VNumber $ a - b
 
 
+cons :: Value -> Value -> Either RuntimeError Value
+cons x value = do
+  l <- toList value
+  return $ VList $ x : l
+
+
+car :: Value -> Either RuntimeError Value
+car value = do
+  l <- toList value
+  case l of
+    x : _ ->
+      Right x
+
+    [] ->
+      Left EmptyListError
+
+
+cdr :: Value -> Either RuntimeError Value
+cdr value = do
+  l <- toList value
+  case l of
+    _ : rest ->
+      Right $ VList rest
+
+    [] ->
+      Left EmptyListError
+
+
+isNull :: Value -> Either RuntimeError Value
+isNull value = do
+  l <- toList value
+  return $ VBool $ l == []
+
+
 zero :: Value -> Either RuntimeError Value
 zero aValue = do
   a <- toNumber aValue
@@ -184,6 +243,11 @@ toBool (VBool b) = Right b
 toBool value = Left $ TypeError TBool (typeOf value)
 
 
+toList :: Value -> Either RuntimeError [Value]
+toList (VList l) = Right l
+toList value = Left $ TypeError TList (typeOf value)
+
+
 toProcedure :: Value -> Either RuntimeError Procedure
 toProcedure (VProc p) = Right p
 toProcedure value = Left $ TypeError TProc (typeOf value)
@@ -192,4 +256,5 @@ toProcedure value = Left $ TypeError TProc (typeOf value)
 typeOf :: Value -> Type
 typeOf (VNumber _) = TNumber
 typeOf (VBool _) = TBool
+typeOf (VList _) = TList
 typeOf (VProc _) = TProc

@@ -16,6 +16,7 @@ import Parser
 data Value
   = VNumber Number
   | VBool Bool
+  | VList [Value]
   | VProc Procedure
 
 data Procedure
@@ -24,6 +25,7 @@ data Procedure
 data Type
   = TNumber
   | TBool
+  | TList
   | TProc
   deriving (Eq, Show)
 
@@ -37,18 +39,21 @@ data Error
 data RuntimeError
   = IdentifierNotFound Id
   | TypeError Type Type
+  | EmptyListError
   deriving (Eq, Show)
 
 
 instance Eq Value where
   (VNumber n1) == (VNumber n2) = n1 == n2
   (VBool b1) == (VBool b2) = b1 == b2
+  (VList l1) == (VList l2) = l1 == l2
   _ == _ = False
 
 
 instance Show Value where
   show (VNumber n) = show n
   show (VBool b) = show b
+  show (VList l) = show l
   show (VProc _) = "<proc>"
 
 
@@ -93,6 +98,21 @@ valueOfExpr expr env cont =
     Diff aExpr bExpr ->
       valueOfExpr aExpr env (Diff1Cont bExpr env cont)
 
+    Cons aExpr bExpr ->
+      valueOfExpr aExpr env (Cons1Cont bExpr env cont)
+
+    Car aExpr ->
+      valueOfExpr aExpr env (CarCont cont)
+
+    Cdr aExpr ->
+      valueOfExpr aExpr env (CdrCont cont)
+
+    Null aExpr ->
+      valueOfExpr aExpr env (NullCont cont)
+
+    EmptyList ->
+      applyCont cont $ Right $ VList []
+
     Zero aExpr ->
       valueOfExpr aExpr env (ZeroCont cont)
 
@@ -132,6 +152,11 @@ data Cont
   | Diff2Cont Value Cont
   | RatorCont Expr Env Cont
   | RandCont Value Cont
+  | Cons1Cont Expr Env Cont
+  | Cons2Cont Value Cont
+  | CarCont Cont
+  | CdrCont Cont
+  | NullCont Cont
 
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
@@ -189,12 +214,61 @@ applyCont cont input = do
     RandCont ratorValue nextCont ->
       apply ratorValue value nextCont
 
+    Cons1Cont bExpr env nextCont ->
+      valueOfExpr bExpr env (Cons2Cont value nextCont)
+
+    Cons2Cont aValue nextCont ->
+      applyCont nextCont $ cons aValue value
+
+    CarCont nextCont ->
+      applyCont nextCont $ car value
+
+    CdrCont nextCont ->
+      applyCont nextCont $ cdr value
+
+    NullCont nextCont ->
+      applyCont nextCont $ isNull value
+
 
 diff :: Value -> Value -> Either RuntimeError Value
 diff aValue bValue = do
   a <- toNumber aValue
   b <- toNumber bValue
   return $ VNumber $ a - b
+
+
+cons :: Value -> Value -> Either RuntimeError Value
+cons x value = do
+  l <- toList value
+  return $ VList $ x : l
+
+
+car :: Value -> Either RuntimeError Value
+car value = do
+  l <- toList value
+  case l of
+    x : _ ->
+      Right x
+
+    [] ->
+      Left EmptyListError
+
+
+cdr :: Value -> Either RuntimeError Value
+cdr value = do
+  l <- toList value
+  case l of
+    _ : rest ->
+      Right $ VList rest
+
+    [] ->
+      Left EmptyListError
+
+
+isNull :: Value -> Either RuntimeError Value
+isNull value = do
+  l <- toList value
+  return $ VBool $ l == []
 
 
 zero :: Value -> Either RuntimeError Value
@@ -226,6 +300,11 @@ toBool (VBool b) = Right b
 toBool value = Left $ TypeError TBool (typeOf value)
 
 
+toList :: Value -> Either RuntimeError [Value]
+toList (VList l) = Right l
+toList value = Left $ TypeError TList (typeOf value)
+
+
 toProcedure :: Value -> Either RuntimeError Procedure
 toProcedure (VProc p) = Right p
 toProcedure value = Left $ TypeError TProc (typeOf value)
@@ -234,4 +313,5 @@ toProcedure value = Left $ TypeError TProc (typeOf value)
 typeOf :: Value -> Type
 typeOf (VNumber _) = TNumber
 typeOf (VBool _) = TBool
+typeOf (VList _) = TList
 typeOf (VProc _) = TProc

@@ -29,6 +29,13 @@ spec =
           "c" (Const 3)
           (Diff (Var "c") (Diff (Var "b") (Var "a")))
       )
+
+    -- Exercise 5.5
+    , ( "cons(1, emptylist)", Cons (Const 1) EmptyList )
+    , ( "car(l)", Car (Var "l") )
+    , ( "cdr(l)", Cdr (Var "l") )
+    , ( "null?(emptylist)", Null EmptyList )
+    , ( "emptylist", EmptyList )
     ]
 
 

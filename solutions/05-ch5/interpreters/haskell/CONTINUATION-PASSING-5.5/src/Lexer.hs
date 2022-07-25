@@ -1,7 +1,8 @@
 module Lexer
   ( number, identifier
 
-  , rElse, rIf, rIn, rLet, rLet2, rLet3, rLetrec, rProc, rThen, rZero
+  , rCar, rCdr, rCons, rElse, rEmptyList, rIf, rIn
+  , rLet, rLet2, rLet3, rLetrec, rNull, rProc, rThen, rZero
 
   , comma, equal, hyphen
 
@@ -33,8 +34,24 @@ identifier = T.identifier lexer
 -- RESERVED NAMES
 
 
+rCar :: Parser ()
+rCar = reserved "car"
+
+
+rCdr :: Parser ()
+rCdr = reserved "cdr"
+
+
+rCons :: Parser ()
+rCons = reserved "cons"
+
+
 rElse :: Parser ()
 rElse = reserved "else"
+
+
+rEmptyList :: Parser ()
+rEmptyList = reserved "emptylist"
 
 
 rIf :: Parser ()
@@ -59,6 +76,10 @@ rLet3 = reserved "let3"
 
 rLetrec :: Parser ()
 rLetrec = reserved "letrec"
+
+
+rNull :: Parser ()
+rNull = reserved "null?"
 
 
 rProc :: Parser ()
@@ -124,13 +145,18 @@ languageDef =
     { T.identStart = identStart
     , T.identLetter = identLetter
     , T.reservedNames =
-        [ "else"
+        [ "car"
+        , "cdr"
+        , "cons"
+        , "else"
+        , "emptylist"
         , "if"
         , "in"
         , "let"
         , "let2"
         , "let3"
         , "letrec"
+        , "null?"
         , "proc"
         , "then"
         , "zero?"
