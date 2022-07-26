@@ -130,9 +130,8 @@ valueOfExpr expr env =
       conditionValue <- valueOfExpr condition env
       computeIf conditionValue consequent alternative env
 
-    Let bindingExprs body -> do
-      bindingValues <- mapM (\(x, xExpr) -> ((,) x) <$> valueOfExpr xExpr env) bindingExprs
-      valueOfExpr body $ foldl (\accEnv (x, xValue) -> Env.extend x xValue accEnv) env bindingValues
+    Let bindingExprs body ->
+      valueOfLetExpr bindingExprs body env env
 
     Let2 x xExpr y yExpr body -> do
       xValue <- valueOfExpr xExpr env
@@ -174,6 +173,17 @@ valueOfExpr expr env =
       ratorValue <- valueOfExpr rator env
       randValue <- valueOfExpr rand env
       apply ratorValue randValue
+
+
+valueOfLetExpr :: [(Id, Expr)] -> Expr -> Env -> Env -> Either RuntimeError Value
+valueOfLetExpr bindings body env accEnv =
+  case bindings of
+    [] ->
+      valueOfExpr body accEnv
+
+    (x, xExpr) : tailExpr -> do
+      xValue <- valueOfExpr xExpr env
+      valueOfLetExpr tailExpr body env (Env.extend x xValue accEnv)
 
 
 diff :: Value -> Value -> Either RuntimeError Value
