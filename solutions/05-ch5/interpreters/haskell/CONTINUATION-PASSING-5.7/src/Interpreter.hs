@@ -130,9 +130,9 @@ valueOfExpr expr env =
       conditionValue <- valueOfExpr condition env
       computeIf conditionValue consequent alternative env
 
-    Let x aExpr body -> do
-      aValue <- valueOfExpr aExpr env
-      valueOfExpr body $ Env.extend x aValue env
+    Let bindingExprs body -> do
+      bindingValues <- mapM (\(x, xExpr) -> ((,) x) <$> valueOfExpr xExpr env) bindingExprs
+      valueOfExpr body $ foldl (\accEnv (x, xValue) -> Env.extend x xValue accEnv) env bindingValues
 
     Let2 x xExpr y yExpr body -> do
       xValue <- valueOfExpr xExpr env

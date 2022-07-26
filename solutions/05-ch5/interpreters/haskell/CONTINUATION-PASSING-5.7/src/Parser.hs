@@ -119,7 +119,11 @@ let2Expr =
 
 letExpr :: Parser Expr
 letExpr =
-  Let <$ rLet <*> (identifier <* equal) <*> (expr <* rIn) <*> expr
+  let
+    bindings =
+      P.many $ (,) <$> identifier <*> (equal *> expr)
+  in
+  Let <$ rLet <*> bindings <*> (rIn *> expr)
 
 
 procExpr :: Parser Expr

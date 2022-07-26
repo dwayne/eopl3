@@ -122,8 +122,13 @@ valueOfExpr expr env cont =
     If condition consequent alternative ->
       valueOfExpr condition env (IfCont consequent alternative env cont)
 
-    Let x aExpr body ->
-      valueOfExpr aExpr env (LetCont x body env cont)
+    Let bindings body ->
+      case bindings of
+        [] ->
+          valueOfExpr body env cont
+
+        (x, xExpr) : tailExpr ->
+          valueOfExpr xExpr env (LetCont x tailExpr body env env cont)
 
     Let2 x xExpr y yExpr body ->
       valueOfExpr xExpr env (Let2XCont x y yExpr body env cont)
@@ -144,7 +149,7 @@ valueOfExpr expr env cont =
 data Cont
   = EndCont
   | ZeroCont Cont
-  | LetCont Id Expr Env Cont
+  | LetCont Id [(Id, Expr)] Expr Env Env Cont
   | Let2XCont Id Id Expr Expr Env Cont
   | Let2YCont Id Value Id Expr Env Cont
   | Let3XCont Id Id Expr Id Expr Expr Env Cont
@@ -175,8 +180,18 @@ applyCont cont input = do
     ZeroCont nextCont ->
       applyCont nextCont $ zero value
 
-    LetCont x body env nextCont ->
-      valueOfExpr body (Env.extend x value env) nextCont
+    LetCont x xTailExpr body env accEnv nextCont ->
+      let
+        newAccEnv =
+          Env.extend x value accEnv
+      in
+      case xTailExpr of
+        [] ->
+          valueOfExpr body newAccEnv nextCont
+
+        (y, yExpr) : yTailExpr ->
+          valueOfExpr yExpr env $
+            LetCont y yTailExpr body env newAccEnv nextCont
 
     Let2XCont x y yExpr body env nextCont ->
       valueOfExpr yExpr env (Let2YCont x value y body env nextCont)

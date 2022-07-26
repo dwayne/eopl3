@@ -103,6 +103,28 @@ spec =
     , ( "list(1)", VList [ VNumber 1] )
     , ( "list(1, 2)", VList [ VNumber 1, VNumber 2 ] )
     , ( "list(-(2, 1), -(4, 2))", VList [ VNumber 1, VNumber 2 ] )
+
+    -- Exercise 5.7
+    , ( "let           \
+        \  x = 30      \
+        \in            \
+        \let2          \
+        \  x = -(x, 1) \
+        \  y = -(x, 2) \
+        \in            \
+        \-(x, y)       "
+      , VNumber 1
+      )
+    , ( "let           \
+        \  x = 30      \
+        \in            \
+        \let           \
+        \  x = -(x, 1) \
+        \  y = -(x, 2) \
+        \in            \
+        \-(x, y)       "
+      , VNumber 1
+      )
     ]
 
 
