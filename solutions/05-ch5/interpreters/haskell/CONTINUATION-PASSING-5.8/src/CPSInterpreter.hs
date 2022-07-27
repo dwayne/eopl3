@@ -20,7 +20,7 @@ data Value
   | VProc Procedure
 
 data Procedure
-  = Procedure Id Expr Env
+  = Procedure [Id] Expr Env
 
 data Type
   = TNumber
@@ -40,6 +40,7 @@ data RuntimeError
   = IdentifierNotFound Id
   | TypeError Type Type
   | EmptyListError
+  | IncorrectNumberOfArguments Int Int
   deriving (Eq, Show)
 
 
@@ -90,7 +91,7 @@ valueOfExpr expr env cont =
           applyCont cont $ Right value
 
         Just (Env.Procedure param body savedEnv) ->
-          applyCont cont $ Right $ VProc $ Procedure param body savedEnv
+          applyCont cont $ Right $ VProc $ Procedure [param] body savedEnv
 
         Nothing ->
           applyCont cont $ Left $ IdentifierNotFound x
@@ -136,14 +137,14 @@ valueOfExpr expr env cont =
     Let3 x xExpr y yExpr z zExpr body ->
       valueOfExpr xExpr env (Let3XCont x y yExpr z zExpr body env cont)
 
-    Proc param body ->
-      applyCont cont $ Right $ VProc $ Procedure param body env
+    Proc params body ->
+      applyCont cont $ Right $ VProc $ Procedure params body env
 
     Letrec name param body letrecBody ->
       valueOfExpr letrecBody (Env.extendRec name param body env) cont
 
-    Call rator rand ->
-      valueOfExpr rator env (RatorCont rand env cont)
+    Call rator rands ->
+      valueOfExpr rator env (RatorCont rands env cont)
 
 
 data Cont
@@ -158,8 +159,8 @@ data Cont
   | IfCont Expr Expr Env Cont
   | Diff1Cont Expr Env Cont
   | Diff2Cont Value Cont
-  | RatorCont Expr Env Cont
-  | RandCont Value Cont
+  | RatorCont [Expr] Env Cont
+  | RandCont Value [Expr] [Value] Env Cont
   | Cons1Cont Expr Env Cont
   | Cons2Cont Value Cont
   | CarCont Cont
@@ -228,11 +229,27 @@ applyCont cont input = do
     Diff2Cont aValue nextCont ->
       applyCont nextCont $ diff aValue value
 
-    RatorCont rand env nextCont ->
-      valueOfExpr rand env (RandCont value nextCont)
+    RatorCont rands env nextCont ->
+      case rands of
+        [] ->
+          apply value [] nextCont
 
-    RandCont ratorValue nextCont ->
-      apply ratorValue value nextCont
+        argExpr : restOfArgs ->
+          valueOfExpr argExpr env $
+            RandCont value restOfArgs [] env nextCont
+
+    RandCont ratorValue rands argValues env nextCont ->
+      let
+        args =
+          value : argValues
+      in
+      case rands of
+        [] ->
+          apply ratorValue (reverse args) nextCont
+
+        argExpr : restOfArgs ->
+          valueOfExpr argExpr env $
+            RandCont ratorValue restOfArgs args env nextCont
 
     Cons1Cont bExpr env nextCont ->
       valueOfExpr bExpr env (Cons2Cont value nextCont)
@@ -320,10 +337,15 @@ computeIf conditionValue consequent alternative env cont = do
   valueOfExpr expr env cont
 
 
-apply :: Value -> Value -> Cont -> Either RuntimeError Value
-apply ratorValue arg cont = do
-  Procedure param body savedEnv <- toProcedure ratorValue
-  valueOfExpr body (Env.extend param arg savedEnv) cont
+apply :: Value -> [Value] -> Cont -> Either RuntimeError Value
+apply ratorValue args cont = do
+  Procedure params body savedEnv <- toProcedure ratorValue
+  let nArgs = length args
+  let nParams = length params
+  if nArgs == nParams then
+    valueOfExpr body (Env.extendMany (zip params args) savedEnv) cont
+  else
+    Left $ IncorrectNumberOfArguments nParams nArgs
 
 
 toNumber :: Value -> Either RuntimeError Number

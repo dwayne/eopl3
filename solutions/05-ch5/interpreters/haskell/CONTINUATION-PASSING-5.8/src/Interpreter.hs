@@ -19,7 +19,7 @@ data Value
   | VProc Procedure
 
 data Procedure
-  = Procedure Id Expr Env
+  = Procedure [Id] Expr Env
 
 data Type
   = TNumber
@@ -39,6 +39,7 @@ data RuntimeError
   = IdentifierNotFound Id
   | TypeError Type Type
   | EmptyListError
+  | IncorrectNumberOfArguments Int Int
   deriving (Eq, Show)
 
 
@@ -89,7 +90,7 @@ valueOfExpr expr env =
           Right value
 
         Just (Env.Procedure param body savedEnv) ->
-          Right $ VProc $ Procedure param body savedEnv
+          Right $ VProc $ Procedure [param] body savedEnv
 
         Nothing ->
           Left $ IdentifierNotFound x
@@ -163,16 +164,16 @@ valueOfExpr expr env =
           Env.extend y yValue $
             Env.extend x xValue env
 
-    Proc param body ->
-      return $ VProc $ Procedure param body env
+    Proc params body ->
+      return $ VProc $ Procedure params body env
 
     Letrec name param body letrecBody ->
       valueOfExpr letrecBody $ Env.extendRec name param body env
 
-    Call rator rand -> do
+    Call rator rands -> do
       ratorValue <- valueOfExpr rator env
-      randValue <- valueOfExpr rand env
-      apply ratorValue randValue
+      randValues <- mapM (flip valueOfExpr env) rands
+      apply ratorValue randValues
 
 
 valueOfLetExpr :: [(Id, Expr)] -> Expr -> Env -> Env -> Either RuntimeError Value
@@ -256,10 +257,15 @@ computeIf conditionValue consequent alternative env = do
   valueOfExpr expr env
 
 
-apply :: Value -> Value -> Either RuntimeError Value
-apply ratorValue arg = do
-  Procedure param body savedEnv <- toProcedure ratorValue
-  valueOfExpr body $ Env.extend param arg savedEnv
+apply :: Value -> [Value] -> Either RuntimeError Value
+apply ratorValue args = do
+  Procedure params body savedEnv <- toProcedure ratorValue
+  let nArgs = length args
+  let nParams = length params
+  if nArgs == nParams then
+    valueOfExpr body $ Env.extendMany (zip params args) savedEnv
+  else
+    Left $ IncorrectNumberOfArguments nParams nArgs
 
 
 toNumber :: Value -> Either RuntimeError Number

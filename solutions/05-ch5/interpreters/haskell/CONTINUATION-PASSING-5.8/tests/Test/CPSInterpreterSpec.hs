@@ -125,6 +125,26 @@ spec =
         \-(x, y)       "
       , VNumber 1
       )
+
+    -- Exercise 5.8
+    , ( "(proc () 1)"
+      , VNumber 1
+      )
+    , ( "(proc (x, y) -(x, -(0, y)) 1 2)"
+      , VNumber 3
+      )
+    , ( "let                    \
+        \  f = proc (x, y, z) z \
+        \in                     \
+        \(f 3 4 5)              "
+      , VNumber 5
+      )
+    , ( "let                    \
+        \  f = proc (x, y, z) z \
+        \in                     \
+        \(f 3 4 5)              "
+      , VNumber 5
+      )
     ]
 
 

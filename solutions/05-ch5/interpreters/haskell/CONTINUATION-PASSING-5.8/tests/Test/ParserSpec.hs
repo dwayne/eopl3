@@ -16,9 +16,9 @@ spec =
     , ( "let n = 10 in -(n, 1)"
       , Let [("n", (Const 10))] (Diff (Var "n") (Const 1))
       )
-    , ( "proc (x) -(x, 1)", Proc "x" (Diff (Var "x") (Const 1)) )
+    , ( "proc (x) -(x, 1)", Proc ["x"] (Diff (Var "x") (Const 1)) )
     , ( "letrec f(x) = a in b", Letrec "f" "x" (Var "a") (Var "b") )
-    , ( "(f x)", Call (Var "f") (Var "x") )
+    , ( "(f x)", Call (Var "f") [(Var "x")] )
 
     , ( "let2 a = 1 b = 2 in -(b, a)"
       , Let2 "a" (Const 1) "b" (Const 2) (Diff (Var "b") (Var "a"))

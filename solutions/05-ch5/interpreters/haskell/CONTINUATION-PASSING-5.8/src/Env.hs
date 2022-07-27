@@ -1,11 +1,14 @@
 module Env
   ( Env
   , empty
-  , extend, extendRec
+  , extend, extendMany, extendRec
 
   , Found(..)
   , find
   ) where
+
+
+import Data.Bifunctor (second)
 
 
 data Env k v p e
@@ -23,6 +26,11 @@ empty = Env []
 extend :: k -> v -> Env k v p e -> Env k v p e
 extend k v (Env bindings) =
   Env $ (k, IValue v) : bindings
+
+
+extendMany :: [(k, v)] -> Env k v p e -> Env k v p e
+extendMany kvs (Env bindings) =
+  Env $ map (second IValue) kvs ++ bindings
 
 
 extendRec :: k -> p -> e -> Env k v p e -> Env k v p e

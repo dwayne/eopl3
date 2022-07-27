@@ -14,8 +14,8 @@ If        ::= 'if' Expr 'then' Expr 'else' Expr
 Let       ::= 'let' ( Id '=' Expr )* 'in' Expr
 Let2      ::= 'let2' Id '=' Expr Id '=' Expr 'in' Expr
 Let3      ::= 'let3' Id '=' Expr Id '=' Expr Id '=' Expr 'in' Expr
-Proc      ::= 'proc' '(' Id ')' Expr
-Call      ::= '(' Expr Expr ')'
+Proc      ::= 'proc' '(' ( Id ( ',' Id )* )? ')' Expr
+Call      ::= '(' Expr Expr* ')'
 Letrec    ::= 'letrec' Id '(' Id ')' '=' Expr 'in' Expr
 Number    ::= [0-9]+
 Id        ::= [a-z]+
