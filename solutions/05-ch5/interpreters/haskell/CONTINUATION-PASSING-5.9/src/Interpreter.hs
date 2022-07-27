@@ -109,8 +109,8 @@ valueOfExpr expr env =
     Proc param body ->
       return $ VProc $ Procedure param body env
 
-    Letrec name param body letrecBody ->
-      valueOfExpr letrecBody $ Env.extendRec name param body env
+    Letrec declarations letrecBody ->
+      valueOfExpr letrecBody $ Env.extendRec declarations env
 
     Call rator rand -> do
       ratorValue <- valueOfExpr rator env

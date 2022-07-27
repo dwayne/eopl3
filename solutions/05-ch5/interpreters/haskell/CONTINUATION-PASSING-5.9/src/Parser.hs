@@ -74,12 +74,11 @@ procExpr =
 
 letrecExpr :: Parser Expr
 letrecExpr =
-  Letrec
-    <$ rLetrec
-    <*> identifier
-    <*> (parens identifier <* equal)
-    <*> (expr <* rIn)
-    <*> expr
+  let
+    declaration =
+      (,,) <$> identifier <*> parens identifier <*> (equal *> expr)
+  in
+  Letrec <$ rLetrec <*> P.many declaration <*> (rIn *> expr)
 
 
 callExpr :: Parser Expr

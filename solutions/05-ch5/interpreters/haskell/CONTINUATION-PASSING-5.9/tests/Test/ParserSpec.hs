@@ -15,7 +15,9 @@ spec =
     , ( "if zero?(2) then 0 else 1", If (Zero (Const 2)) (Const 0) (Const 1) )
     , ( "let n = 10 in -(n, 1)", Let "n" (Const 10) (Diff (Var "n") (Const 1)) )
     , ( "proc (x) -(x, 1)", Proc "x" (Diff (Var "x") (Const 1)) )
-    , ( "letrec f(x) = a in b", Letrec "f" "x" (Var "a") (Var "b") )
+    , ( "letrec f(x) = a in b"
+      , Letrec [("f", "x", (Var "a"))] (Var "b")
+      )
     , ( "(f x)", Call (Var "f") (Var "x") )
     ]
 

@@ -9,25 +9,21 @@ module Env
 
 
 data Env k v p e
-  = Env [(k, Item v p e)]
-
-data Item v p e
-  = IValue v
-  | IProcedure p e
+  = Empty
+  | Single k v (Env k v p e)
+  | Rec [(k, p, e)] (Env k v p e)
 
 
 empty :: Env k v p e
-empty = Env []
+empty = Empty
 
 
 extend :: k -> v -> Env k v p e -> Env k v p e
-extend k v (Env bindings) =
-  Env $ (k, IValue v) : bindings
+extend = Single
 
 
-extendRec :: k -> p -> e -> Env k v p e -> Env k v p e
-extendRec k param body (Env bindings) =
-  Env $ (k, IProcedure param body) : bindings
+extendRec :: [(k, p, e)] -> Env k v p e -> Env k v p e
+extendRec = Rec
 
 
 data Found k v p e
@@ -35,24 +31,33 @@ data Found k v p e
   | Procedure p e (Env k v p e)
 
 find :: Eq k => k -> Env k v p e -> Maybe (Found k v p e)
-find k (Env bindings) =
-  findHelper k bindings
+find searchK env =
+  case env of
+    Empty ->
+      Nothing
 
-findHelper :: Eq k => k -> [(k, Item v p e)] -> Maybe (Found k v p e)
-findHelper searchK bindings =
-  case bindings of
+    Single k v nextEnv ->
+      if searchK == k then
+        Just $ Value v
+      else
+        find searchK nextEnv
+
+    Rec declarations nextEnv ->
+      case findDeclaration searchK declarations of
+        Just (p, e) ->
+          Just $ Procedure p e env
+
+        Nothing ->
+          find searchK nextEnv
+
+findDeclaration :: Eq k => k -> [(k, p, e)] -> Maybe (p, e)
+findDeclaration searchK declarations =
+  case declarations of
     [] ->
       Nothing
 
-    (k, item) : rest ->
+    (k, p, e) : restOfDeclarations ->
       if searchK == k then
-        Just $
-          case item of
-            IValue v ->
-              Value v
-
-            IProcedure param body ->
-              Procedure param body (Env bindings)
-
+        Just (p, e)
       else
-        findHelper searchK rest
+        findDeclaration searchK restOfDeclarations
