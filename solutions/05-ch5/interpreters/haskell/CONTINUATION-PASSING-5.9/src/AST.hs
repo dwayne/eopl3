@@ -13,6 +13,9 @@ data Expr
   | Proc Id Expr
   | Letrec [(Id, Id, Expr)] Expr
   | Call Expr Expr
+  | Newref Expr
+  | Deref Expr
+  | Setref Expr Expr
   deriving (Eq, Show)
 
 type Number = Integer

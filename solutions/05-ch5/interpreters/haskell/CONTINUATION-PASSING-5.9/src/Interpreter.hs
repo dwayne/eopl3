@@ -9,7 +9,7 @@ module Interpreter
 import qualified Env
 import qualified Store
 
-import Data.Bifunctor (bimap)
+import Data.Bifunctor (bimap, first)
 import Parser
 
 
@@ -40,6 +40,7 @@ data Error
 
 data RuntimeError
   = IdentifierNotFound Id
+  | LocationNotFound Store.Ref
   | TypeError Type Type
   deriving (Eq, Show)
 
@@ -127,6 +128,23 @@ valueOfExpr expr env store =
       (randValue, store2) <- valueOfExpr rand env store1
       apply ratorValue randValue store2
 
+    Newref aExpr -> do
+      (aValue, store1) <- valueOfExpr aExpr env store
+      newref aValue store1
+
+    Deref aExpr -> do
+      (aValue, store1) <- valueOfExpr aExpr env store
+      deref aValue store1
+
+    Setref lExpr rExpr -> do
+      -- N.B. This can be improved.
+      -- Current we find the value of both lExpr and rExpr before checking
+      -- if lExpr is a VRef. If we do the check first then we can save an
+      -- unnecessary evaluation when lExpr is not a VRef.
+      (lValue, store1) <- valueOfExpr lExpr env store
+      (rValue, store2) <- valueOfExpr rExpr env store1
+      setref lValue rValue store2
+
 
 diff :: Value -> Value -> Store -> Either RuntimeError (Value, Store)
 diff aValue bValue store = do
@@ -154,6 +172,33 @@ apply ratorValue arg store = do
   valueOfExpr body (Env.extend param arg savedEnv) store
 
 
+newref :: Value -> Store -> Either RuntimeError (Value, Store)
+newref value store =
+  Right $ first VRef $ Store.newref value store
+
+
+deref :: Value -> Store -> Either RuntimeError (Value, Store)
+deref location store = do
+  ref <- toRef location
+  case Store.deref ref store of
+    Just value ->
+      Right (value, store)
+
+    Nothing ->
+      Left $ LocationNotFound ref
+
+
+setref :: Value -> Value -> Store -> Either RuntimeError (Value, Store)
+setref location value store = do
+  ref <- toRef location
+  case Store.setref ref value store of
+    Just store1 ->
+      Right (value, store1)
+
+    Nothing ->
+      Left $ LocationNotFound ref
+
+
 toNumber :: Value -> Either RuntimeError Number
 toNumber (VNumber n) = Right n
 toNumber value = Left $ TypeError TNumber (typeOf value)
@@ -162,6 +207,11 @@ toNumber value = Left $ TypeError TNumber (typeOf value)
 toBool :: Value -> Either RuntimeError Bool
 toBool (VBool b) = Right b
 toBool value = Left $ TypeError TBool (typeOf value)
+
+
+toRef :: Value -> Either RuntimeError Store.Ref
+toRef (VRef r) = Right r
+toRef value = Left $ TypeError TRef (typeOf value)
 
 
 toProcedure :: Value -> Either RuntimeError Procedure

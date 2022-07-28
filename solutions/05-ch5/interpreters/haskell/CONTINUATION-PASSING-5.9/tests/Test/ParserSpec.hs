@@ -19,6 +19,9 @@ spec =
       , Letrec [("f", "x", (Var "a"))] (Var "b")
       )
     , ( "(f x)", Call (Var "f") (Var "x") )
+    , ( "newref(0)", Newref (Const 0) )
+    , ( "deref(x)", Deref (Var "x") )
+    , ( "setref(x, 1)", Setref (Var "x") (Const 1) )
     ]
 
 

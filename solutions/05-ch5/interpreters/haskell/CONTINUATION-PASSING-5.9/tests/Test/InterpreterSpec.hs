@@ -75,6 +75,61 @@ spec =
         \in (odd 13)                                        "
       , VNumber 1
       )
+
+    -- Examples from 4.2
+
+    , ( "let x = newref(0)                              \
+        \in letrec                                      \
+        \     even(dummy) =                             \
+        \       if zero?(deref(x)) then                 \
+        \         1                                     \
+        \       else                                    \
+        \         let dummy = setref(x, -(deref(x), 1)) \
+        \         in (odd 888)                          \
+        \     odd(dummy) =                              \
+        \       if zero?(deref(x)) then                 \
+        \         0                                     \
+        \       else                                    \
+        \         let dummy = setref(x, -(deref(x), 1)) \
+        \         in (even 888)                         \
+        \   in let dummy = setref(x, 13) in (odd 888)   "
+      , VNumber 1
+      )
+
+    , ( "let g = let counter = newref(0)                                      \
+        \        in proc (dummy)                                              \
+        \             let dummy = setref(counter, -(deref(counter), -(0, 1))) \
+        \             in deref(counter)                                       \
+        \in let a = (g 11)                                                    \
+        \   in let b = (g 11)                                                 \
+        \      in -(a, b)                                                     "
+      , VNumber (-1)
+      )
+
+    , ( "let g = proc (dummy)                                                 \
+        \          let counter = newref(0)                                    \
+        \          in let dummy = setref(counter, -(deref(counter), -(0, 1))) \
+        \             in deref(counter)                                       \
+        \in let a = (g 11)                                                    \
+        \   in let b = (g 11)                                                 \
+        \      in -(a, b)                                                     "
+      , VNumber 0
+      )
+
+    , ( "let x = newref(newref(0))           \
+        \in let dummy = setref(deref(x), 11) \
+        \   in deref(deref(x))               "
+      , VNumber 11
+      )
+
+    , ( "let x = newref(22)                     \
+        \in let f =                             \
+        \     proc (z)                          \
+        \       let zz = newref(-(z, deref(x))) \
+        \       in deref(zz)                    \
+        \   in -((f 66), (f 55))                "
+      , VNumber 11
+      )
     ]
 
 

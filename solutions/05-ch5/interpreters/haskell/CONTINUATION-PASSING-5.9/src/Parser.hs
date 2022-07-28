@@ -35,6 +35,9 @@ expr
   <|> procExpr
   <|> letrecExpr
   <|> callExpr
+  <|> newrefExpr
+  <|> derefExpr
+  <|> setrefExpr
 
 
 constExpr :: Parser Expr
@@ -49,7 +52,7 @@ varExpr =
 
 diffExpr :: Parser Expr
 diffExpr =
-  hyphen *> parens (Diff <$> (expr <* comma) <*> expr)
+  hyphen *> parens (Diff <$> expr <*> (comma *> expr))
 
 
 zeroExpr :: Parser Expr
@@ -59,12 +62,12 @@ zeroExpr =
 
 ifExpr :: Parser Expr
 ifExpr =
-  If <$ rIf <*> (expr <* rThen) <*> (expr <* rElse) <*> expr
+  If <$ rIf <*> expr <*> (rThen *> expr) <*> (rElse *> expr)
 
 
 letExpr :: Parser Expr
 letExpr =
-  Let <$ rLet <*> (identifier <* equal) <*> (expr <* rIn) <*> expr
+  Let <$ rLet <*> identifier <*> (equal *> expr) <*> (rIn *> expr)
 
 
 procExpr :: Parser Expr
@@ -84,3 +87,18 @@ letrecExpr =
 callExpr :: Parser Expr
 callExpr =
   parens (Call <$> expr <*> expr)
+
+
+newrefExpr :: Parser Expr
+newrefExpr =
+  Newref <$ rNewref <*> parens expr
+
+
+derefExpr :: Parser Expr
+derefExpr =
+  Deref <$ rDeref <*> parens expr
+
+
+setrefExpr :: Parser Expr
+setrefExpr =
+  rSetref *> parens (Setref <$> expr <*> (comma *> expr))
