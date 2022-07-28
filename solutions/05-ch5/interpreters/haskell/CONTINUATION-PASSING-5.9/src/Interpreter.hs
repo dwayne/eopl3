@@ -128,6 +128,9 @@ valueOfExpr expr env store =
       (randValue, store2) <- valueOfExpr rand env store1
       apply ratorValue randValue store2
 
+    Begin exprs -> do
+      computeBegin exprs env store
+
     Newref aExpr -> do
       (aValue, store1) <- valueOfExpr aExpr env store
       newref aValue store1
@@ -170,6 +173,25 @@ apply :: Value -> Value -> Store -> Either RuntimeError (Value, Store)
 apply ratorValue arg store = do
   Procedure param body savedEnv <- toProcedure ratorValue
   valueOfExpr body (Env.extend param arg savedEnv) store
+
+
+computeBegin :: [Expr] -> Env -> Store -> Either RuntimeError (Value, Store)
+computeBegin exprs env store =
+  case exprs of
+    [expr] ->
+      valueOfExpr expr env store
+
+    expr : restExprs -> do
+      (_, store1) <- valueOfExpr expr env store
+      computeBegin restExprs env store1
+
+    [] ->
+      -- N.B. Based on the grammar this condition will never be reached.
+      -- Maybe we can make that clearer in the AST by using a
+      -- non-empty list of expressions.
+      --
+      -- See Data.List.NonEmpty in base.
+      undefined
 
 
 newref :: Value -> Store -> Either RuntimeError (Value, Store)

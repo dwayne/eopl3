@@ -13,6 +13,7 @@ data Expr
   | Proc Id Expr
   | Letrec [(Id, Id, Expr)] Expr
   | Call Expr Expr
+  | Begin [Expr]
   | Newref Expr
   | Deref Expr
   | Setref Expr Expr

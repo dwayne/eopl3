@@ -19,6 +19,17 @@ spec =
       , Letrec [("f", "x", (Var "a"))] (Var "b")
       )
     , ( "(f x)", Call (Var "f") (Var "x") )
+    , ( "begin    \
+        \  1;     \
+        \  x;     \
+        \ -(5, y) \
+        \end      "
+      , Begin
+          [ Const 1
+          , Var "x"
+          , Diff (Const 5) (Var "y")
+          ]
+      )
     , ( "newref(0)", Newref (Const 0) )
     , ( "deref(x)", Deref (Var "x") )
     , ( "setref(x, 1)", Setref (Var "x") (Const 1) )

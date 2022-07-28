@@ -130,6 +130,64 @@ spec =
         \   in -((f 66), (f 55))                "
       , VNumber 11
       )
+
+    -- Testing begin
+
+    , ( "let x = newref(0)                        \
+        \in letrec                                \
+        \     even(dummy) =                       \
+        \       if zero?(deref(x)) then           \
+        \         1                               \
+        \       else                              \
+        \         begin                           \
+        \           setref(x, -(deref(x), 1));    \
+        \           (odd 888)                     \
+        \         end                             \
+        \     odd(dummy) =                        \
+        \       if zero?(deref(x)) then           \
+        \         0                               \
+        \       else                              \
+        \         begin                           \
+        \           setref(x, -(deref(x), 1));    \
+        \           (even 888)                    \
+        \         end                             \
+        \   in begin setref(x, 13); (odd 888) end "
+      , VNumber 1
+      )
+
+    , ( "let g = let counter = newref(0)                             \
+        \        in proc (dummy)                                     \
+        \             begin                                          \
+        \               setref(counter, -(deref(counter), -(0, 1))); \
+        \               deref(counter)                               \
+        \             end                                            \
+        \in let a = (g 11)                                           \
+        \   in let b = (g 11)                                        \
+        \      in -(a, b)                                            "
+      , VNumber (-1)
+      )
+
+    , ( "let g = proc (dummy)                                       \
+        \          let counter = newref(0)                          \
+        \          in                                               \
+        \            begin                                          \
+        \              setref(counter, -(deref(counter), -(0, 1))); \
+        \              deref(counter)                               \
+        \            end                                            \
+        \in let a = (g 11)                                          \
+        \   in let b = (g 11)                                       \
+        \      in -(a, b)                                           "
+      , VNumber 0
+      )
+
+    , ( "let x = newref(newref(0)) \
+        \in                        \
+        \  begin                   \
+        \    setref(deref(x), 11); \
+        \    deref(deref(x))       \
+        \  end                     "
+      , VNumber 11
+      )
     ]
 
 

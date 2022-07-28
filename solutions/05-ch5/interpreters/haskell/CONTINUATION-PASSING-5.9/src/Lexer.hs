@@ -1,12 +1,13 @@
 module Lexer
   ( number, identifier
 
-  , rDeref, rElse, rIf, rIn, rLet, rLetrec
-  , rNewref, rProc, rSetref, rThen, rZero
+  , rBegin, rDeref, rElse, rEnd, rIf, rIn, rLet
+  , rLetrec, rNewref, rProc, rSetref, rThen, rZero
 
   , comma, equal, hyphen
 
   , parens
+  , semiSep
   , whiteSpace
   )
   where
@@ -34,12 +35,20 @@ identifier = T.identifier lexer
 -- RESERVED NAMES
 
 
+rBegin :: Parser ()
+rBegin = reserved "begin"
+
+
 rDeref :: Parser ()
 rDeref = reserved "deref"
 
 
 rElse :: Parser ()
 rElse = reserved "else"
+
+
+rEnd :: Parser ()
+rEnd = reserved "end"
 
 
 rIf :: Parser ()
@@ -100,6 +109,10 @@ parens :: Parser a -> Parser a
 parens = T.parens lexer
 
 
+semiSep :: Parser a -> Parser [a]
+semiSep = T.semiSep lexer
+
+
 whiteSpace :: Parser ()
 whiteSpace = T.whiteSpace lexer
 
@@ -129,8 +142,10 @@ languageDef =
     { T.identStart = identStart
     , T.identLetter = identLetter
     , T.reservedNames =
-        [ "deref"
+        [ "begin"
+        , "deref"
         , "else"
+        , "end"
         , "if"
         , "in"
         , "let"
