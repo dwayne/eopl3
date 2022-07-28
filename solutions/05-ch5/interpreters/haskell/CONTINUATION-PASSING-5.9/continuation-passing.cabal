@@ -21,6 +21,7 @@ library
     Interpreter
     Lexer
     Parser
+    Store
 
 
 test-suite tests
@@ -43,3 +44,4 @@ test-suite tests
     Test.InterpreterSpec
     Test.LexerSpec
     Test.ParserSpec
+    Test.StoreSpec
