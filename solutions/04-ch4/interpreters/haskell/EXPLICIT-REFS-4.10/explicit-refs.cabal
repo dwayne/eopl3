@@ -1,38 +1,47 @@
+cabal-version: 2.4
+
 name: explicit-refs
-version: 0.1.0.0
-build-type: Simple
-cabal-version: >=1.10
+version: 0.1
+
 
 library
+  default-language: Haskell2010
   hs-source-dirs: src
 
-  exposed-modules:
-    ExplicitRefs.Interpreter
-
-  other-modules:
-    ExplicitRefs.AST
-    ExplicitRefs.Env
-    ExplicitRefs.Parser
-    ExplicitRefs.Store
+  ghc-options:
+    -Wall
 
   build-depends:
-    base >= 4.7 && < 5,
+    base,
     parsec
 
-  default-language: Haskell2010
+  exposed-modules:
+    AST
+    Env
+    Interpreter
+    Lexer
+    Parser
+    Store
 
-test-suite explicit-refs-tests
+
+test-suite tests
+  default-language: Haskell2010
   hs-source-dirs: tests
 
   type: exitcode-stdio-1.0
-  main-is: Main.hs
+  main-is: Spec.hs
 
-  other-modules:
-    Test.Interpreter
+  ghc-options:
+    -Wall
 
   build-depends:
-    base >= 4.7 && < 5,
+    base,
+    explicit-refs,
     hspec,
-    explicit-refs
+    parsec
 
-  default-language: Haskell2010
+  other-modules:
+    Test.InterpreterSpec
+    Test.LexerSpec
+    Test.ParserSpec
+    Test.StoreSpec
