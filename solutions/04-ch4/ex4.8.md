@@ -1,7 +1,7 @@
 In `newref`:
 
 1. It takes linear time to calculate `next-ref`.
-2. It takes linear time to append `(list val)` to the store.
+2. It takes linear time to append `(list val)` to `the-store`.
 
 In `deref`:
 
@@ -9,4 +9,5 @@ In `deref`:
 
 In `setref`:
 
-`setref-inner` takes linear time to find the `ref` to change.
+`setref-inner` takes linear time to find the `ref` whose location needs to
+change.

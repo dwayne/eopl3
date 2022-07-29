@@ -1,13 +1,18 @@
 The specification for a `begin` expression:
 
 ```
-     (value-of exp_1 ρ σ_0) = (val_1, σ_1)
-     (value-of exp_2 ρ σ_1) = (val_2, σ_2)
-                            .
-                            .
-                            .
-   (value-of exp_n ρ σ_n-1) = (val_n, σ_n)
--------------------------------------------------
-(value-of (begin-exp exp_1 exp_2 ... exp_n) ρ σ_0)
-= (val_n, σ_n)
+[SINGLETON RULE]
+
+(value-of (begin-exp [exp]) ρ σ)
+= (value-of exp ρ σ)
+
+[LIST RULE]
+
+  (value-of exp ρ σ_0) = (val, σ_1); exps /= []
+------------------------------------------------
+(value-of (begin-exp (cons exp exps)) ρ σ_0)
+= (value-of (begin-exp exps) ρ σ_1)
 ```
+
+**N.B.** In the `[LIST RULE]`, since `exps /= []` (i.e. `exps` is not the empty
+list), it means that `(cons exp exps)` has at least 2 elements.
