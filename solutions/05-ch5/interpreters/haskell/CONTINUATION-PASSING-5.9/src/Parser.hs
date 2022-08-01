@@ -36,6 +36,7 @@ expr
   <|> letrecExpr
   <|> callExpr
   <|> beginExpr
+  <|> assignExpr
 
 
 constExpr :: Parser Expr
@@ -90,3 +91,8 @@ callExpr =
 beginExpr :: Parser Expr
 beginExpr =
   Begin <$ rBegin <*> semiSep expr <* rEnd
+
+
+assignExpr :: Parser Expr
+assignExpr =
+  Assign <$ rSet <*> identifier <*> (equal *> expr)

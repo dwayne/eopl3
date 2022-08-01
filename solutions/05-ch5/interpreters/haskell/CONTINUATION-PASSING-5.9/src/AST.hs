@@ -14,6 +14,7 @@ data Expr
   | Letrec [(Id, Id, Expr)] Expr
   | Call Expr Expr
   | Begin [Expr]
+  | Assign Id Expr
   deriving (Eq, Show)
 
 type Number = Integer

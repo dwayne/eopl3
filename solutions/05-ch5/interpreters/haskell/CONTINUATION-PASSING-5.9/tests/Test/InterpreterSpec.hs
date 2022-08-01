@@ -75,6 +75,122 @@ spec =
         \in (odd 13)                                        "
       , VNumber 1
       )
+
+    , ( "let x = 0                                \
+        \in letrec                                \
+        \     even(dummy) =                       \
+        \       if zero?(x) then                  \
+        \         1                               \
+        \       else                              \
+        \         let dummy = set x = -(x, 1)     \
+        \         in (odd 888)                    \
+        \     odd(dummy) =                        \
+        \       if zero?(x) then                  \
+        \         0                               \
+        \       else                              \
+        \         let dummy = set x = -(x, 1)     \
+        \         in (even 888)                   \
+        \   in let dummy = set x = 13 in (odd 888)"
+      , VNumber 1
+      )
+
+    , ( "let g = let counter = 0                                    \
+        \        in proc (dummy)                                    \
+        \             let dummy = set counter = -(counter, -(0, 1)) \
+        \             in counter                                    \
+        \in let a = (g 11)                                          \
+        \   in let b = (g 11)                                       \
+        \      in -(a, b)                                           "
+      , VNumber (-1)
+      )
+
+    , ( "let g = proc (dummy)                                       \
+        \          let counter = 0                                  \
+        \          in let dummy = set counter = -(counter, -(0, 1)) \
+        \             in counter                                    \
+        \in let a = (g 11)                                          \
+        \   in let b = (g 11)                                       \
+        \      in -(a, b)                                           "
+      , VNumber 0
+      )
+
+    , ( "let y = 0                    \
+        \in let x = y                 \
+        \   in let dummy = set y = 11 \
+        \      in x                   "
+        -- Aliasing does not work since x stores a reference to a location that
+        -- stores 0, i.e. x does not store a reference to y.
+      , VNumber 0
+      )
+
+    , ( "let x = 0                            \
+        \in letrec                            \
+        \     even(dummy) =                   \
+        \       if zero?(x) then              \
+        \         1                           \
+        \       else                          \
+        \         begin                       \
+        \           set x = -(x, 1);          \
+        \           (odd 888)                 \
+        \         end                         \
+        \     odd(dummy) =                    \
+        \       if zero?(x) then              \
+        \         0                           \
+        \       else                          \
+        \         begin                       \
+        \           set x = -(x, 1);          \
+        \           (even 888)                \
+        \         end                         \
+        \   in begin set x = 13; (odd 888) end"
+      , VNumber 1
+      )
+
+    , ( "let g = let counter = 0                           \
+        \        in proc (dummy)                           \
+        \             begin                                \
+        \               set counter = -(counter, -(0, 1)); \
+        \               counter                            \
+        \             end                                  \
+        \in let a = (g 11)                                 \
+        \   in let b = (g 11)                              \
+        \      in -(a, b)                                  "
+      , VNumber (-1)
+      )
+
+    , ( "let g = proc (dummy)                             \
+        \          let counter = 0                        \
+        \          in                                     \
+        \            begin                                \
+        \              set counter = -(counter, -(0, 1)); \
+        \              counter                            \
+        \            end                                  \
+        \in let a = (g 11)                                \
+        \   in let b = (g 11)                             \
+        \      in -(a, b)                                 "
+      , VNumber 0
+      )
+
+    , ( "let y = 0          \
+        \in let x = y       \
+        \   in              \
+        \     begin         \
+        \       set y = 11; \
+        \       x           \
+        \     end           "
+        -- Aliasing does not work since x stores a reference to a location that
+        -- stores 0, i.e. x does not store a reference to y.
+      , VNumber 0
+      )
+
+    , ( "let f =                      \
+        \  proc (x) proc (y)          \
+        \    begin                    \
+        \      set x = -(x, -(0, 1)); \
+        \      -(x, y)                \
+        \    end                      \
+        \in ((f 44) 33)               "
+      , VNumber 12
+      )
     ]
 
 

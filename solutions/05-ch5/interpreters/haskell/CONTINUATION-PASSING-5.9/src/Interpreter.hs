@@ -27,7 +27,7 @@ data Type
   | TProc
   deriving (Eq, Show)
 
-type Env = Env.Env Id Value Id Expr
+type Env = Env.Env Id Store.Ref Id Expr
 
 type Store = Store.Store Value
 
@@ -69,14 +69,16 @@ valueOfProgram :: Program -> Either RuntimeError (Value, Store)
 valueOfProgram (Program expr) =
   valueOfExpr expr initEnv initStore
   where
-    initEnv =
-      Env.extend "i" (VNumber 1)
-        (Env.extend "v" (VNumber 5)
-          (Env.extend "x" (VNumber 10)
-            Env.empty))
+    store0 = Store.empty
+    (iRef, store1) = Store.newref (VNumber 1) store0
+    (vRef, store2) = Store.newref (VNumber 5) store1
+    (xRef, initStore) = Store.newref (VNumber 10) store2
 
-    initStore =
-      Store.empty
+    initEnv =
+      Env.extend "i" iRef
+        (Env.extend "v" vRef
+          (Env.extend "x" xRef
+            Env.empty))
 
 
 valueOfExpr :: Expr -> Env -> Store -> Either RuntimeError (Value, Store)
@@ -86,12 +88,14 @@ valueOfExpr expr env store =
       Right (VNumber n, store)
 
     Var x ->
-      case Env.find x env of
-        Just (Env.Value value) ->
-          Right (value, store)
+      case find x env store of
+        Just (ref, store1) ->
+          case Store.deref ref store1 of
+            Just value ->
+              Right (value, store1)
 
-        Just (Env.Procedure param body savedEnv) ->
-          Right (VProc $ Procedure param body savedEnv, store)
+            Nothing ->
+              Left $ LocationNotFound ref
 
         Nothing ->
           Left $ IdentifierNotFound x
@@ -111,7 +115,8 @@ valueOfExpr expr env store =
 
     Let x aExpr body -> do
       (aValue, store1) <- valueOfExpr aExpr env store
-      valueOfExpr body (Env.extend x aValue env) store1
+      let (aRef, store2) = Store.newref aValue store1
+      valueOfExpr body (Env.extend x aRef env) store2
 
     Proc param body ->
       Right (VProc $ Procedure param body env, store)
@@ -124,8 +129,42 @@ valueOfExpr expr env store =
       (randValue, store2) <- valueOfExpr rand env store1
       apply ratorValue randValue store2
 
-    Begin exprs -> do
+    Begin exprs ->
       computeBegin exprs env store
+
+    Assign x aExpr ->
+      case find x env store of
+        Just (ref, store1) -> do
+          (value, store2) <- valueOfExpr aExpr env store1
+          case Store.setref ref value store2 of
+            Just store3 ->
+              Right (value, store3)
+
+            Nothing ->
+              Left $ LocationNotFound ref
+
+        Nothing ->
+          Left $ IdentifierNotFound x
+
+
+find :: Id -> Env -> Store -> Maybe (Store.Ref, Store)
+find x env store =
+  case Env.find x env of
+    Just (Env.Value ref) ->
+      Just (ref, store)
+
+    Just (Env.Procedure param body savedEnv) ->
+      let
+        value =
+          VProc $ Procedure param body savedEnv
+
+        (ref, store1) =
+          Store.newref value store
+      in
+      Just (ref, store1)
+
+    Nothing ->
+      Nothing
 
 
 diff :: Value -> Value -> Store -> Either RuntimeError (Value, Store)
@@ -151,7 +190,8 @@ computeIf conditionValue consequent alternative env store = do
 apply :: Value -> Value -> Store -> Either RuntimeError (Value, Store)
 apply ratorValue arg store = do
   Procedure param body savedEnv <- toProcedure ratorValue
-  valueOfExpr body (Env.extend param arg savedEnv) store
+  let (argRef, store1) = Store.newref arg store
+  valueOfExpr body (Env.extend param argRef savedEnv) store1
 
 
 computeBegin :: [Expr] -> Env -> Store -> Either RuntimeError (Value, Store)

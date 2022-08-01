@@ -30,6 +30,7 @@ spec =
           , Diff (Const 5) (Var "y")
           ]
       )
+    , ( "set x = 1", Assign "x" (Const 1) )
     ]
 
 
