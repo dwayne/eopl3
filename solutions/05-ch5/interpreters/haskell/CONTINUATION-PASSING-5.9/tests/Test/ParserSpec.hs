@@ -30,9 +30,6 @@ spec =
           , Diff (Const 5) (Var "y")
           ]
       )
-    , ( "newref(0)", Newref (Const 0) )
-    , ( "deref(x)", Deref (Var "x") )
-    , ( "setref(x, 1)", Setref (Var "x") (Const 1) )
     ]
 
 

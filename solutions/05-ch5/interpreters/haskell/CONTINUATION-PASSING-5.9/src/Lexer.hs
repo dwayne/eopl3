@@ -1,8 +1,7 @@
 module Lexer
   ( number, identifier
 
-  , rBegin, rDeref, rElse, rEnd, rIf, rIn, rLet
-  , rLetrec, rNewref, rProc, rSetref, rThen, rZero
+  , rBegin, rElse, rEnd, rIf, rIn, rLet, rLetrec, rProc, rThen, rZero
 
   , comma, equal, hyphen
 
@@ -39,10 +38,6 @@ rBegin :: Parser ()
 rBegin = reserved "begin"
 
 
-rDeref :: Parser ()
-rDeref = reserved "deref"
-
-
 rElse :: Parser ()
 rElse = reserved "else"
 
@@ -67,16 +62,8 @@ rLetrec :: Parser ()
 rLetrec = reserved "letrec"
 
 
-rNewref :: Parser ()
-rNewref = reserved "newref"
-
-
 rProc :: Parser ()
 rProc = reserved "proc"
-
-
-rSetref :: Parser ()
-rSetref = reserved "setref"
 
 
 rThen :: Parser ()
@@ -143,16 +130,13 @@ languageDef =
     , T.identLetter = identLetter
     , T.reservedNames =
         [ "begin"
-        , "deref"
         , "else"
         , "end"
         , "if"
         , "in"
         , "let"
         , "letrec"
-        , "newref"
         , "proc"
-        , "setref"
         , "then"
         , "zero?"
         ]

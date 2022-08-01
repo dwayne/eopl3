@@ -9,14 +9,13 @@ module Interpreter
 import qualified Env
 import qualified Store
 
-import Data.Bifunctor (bimap, first)
+import Data.Bifunctor (bimap)
 import Parser
 
 
 data Value
   = VNumber Number
   | VBool Bool
-  | VRef Store.Ref
   | VProc Procedure
 
 data Procedure
@@ -25,7 +24,6 @@ data Procedure
 data Type
   = TNumber
   | TBool
-  | TRef
   | TProc
   deriving (Eq, Show)
 
@@ -48,14 +46,12 @@ data RuntimeError
 instance Eq Value where
   (VNumber n1) == (VNumber n2) = n1 == n2
   (VBool b1) == (VBool b2) = b1 == b2
-  (VRef r1) == (VRef r2) = r1 == r2
   _ == _ = False
 
 
 instance Show Value where
   show (VNumber n) = show n
   show (VBool b) = show b
-  show (VRef r) = show r
   show (VProc _) = "<proc>"
 
 
@@ -131,23 +127,6 @@ valueOfExpr expr env store =
     Begin exprs -> do
       computeBegin exprs env store
 
-    Newref aExpr -> do
-      (aValue, store1) <- valueOfExpr aExpr env store
-      newref aValue store1
-
-    Deref aExpr -> do
-      (aValue, store1) <- valueOfExpr aExpr env store
-      deref aValue store1
-
-    Setref lExpr rExpr -> do
-      -- N.B. This can be improved.
-      -- Current we find the value of both lExpr and rExpr before checking
-      -- if lExpr is a VRef. If we do the check first then we can save an
-      -- unnecessary evaluation when lExpr is not a VRef.
-      (lValue, store1) <- valueOfExpr lExpr env store
-      (rValue, store2) <- valueOfExpr rExpr env store1
-      setref lValue rValue store2
-
 
 diff :: Value -> Value -> Store -> Either RuntimeError (Value, Store)
 diff aValue bValue store = do
@@ -194,33 +173,6 @@ computeBegin exprs env store =
       undefined
 
 
-newref :: Value -> Store -> Either RuntimeError (Value, Store)
-newref value store =
-  Right $ first VRef $ Store.newref value store
-
-
-deref :: Value -> Store -> Either RuntimeError (Value, Store)
-deref location store = do
-  ref <- toRef location
-  case Store.deref ref store of
-    Just value ->
-      Right (value, store)
-
-    Nothing ->
-      Left $ LocationNotFound ref
-
-
-setref :: Value -> Value -> Store -> Either RuntimeError (Value, Store)
-setref location value store = do
-  ref <- toRef location
-  case Store.setref ref value store of
-    Just store1 ->
-      Right (value, store1)
-
-    Nothing ->
-      Left $ LocationNotFound ref
-
-
 toNumber :: Value -> Either RuntimeError Number
 toNumber (VNumber n) = Right n
 toNumber value = Left $ TypeError TNumber (typeOf value)
@@ -231,11 +183,6 @@ toBool (VBool b) = Right b
 toBool value = Left $ TypeError TBool (typeOf value)
 
 
-toRef :: Value -> Either RuntimeError Store.Ref
-toRef (VRef r) = Right r
-toRef value = Left $ TypeError TRef (typeOf value)
-
-
 toProcedure :: Value -> Either RuntimeError Procedure
 toProcedure (VProc p) = Right p
 toProcedure value = Left $ TypeError TProc (typeOf value)
@@ -244,5 +191,4 @@ toProcedure value = Left $ TypeError TProc (typeOf value)
 typeOf :: Value -> Type
 typeOf (VNumber _) = TNumber
 typeOf (VBool _) = TBool
-typeOf (VRef _) = TRef
 typeOf (VProc _) = TProc

@@ -10,9 +10,6 @@ Proc    ::= 'proc' '(' Id ')' Expr
 Letrec  ::= 'letrec' ( Id '(' Id ')' '=' Expr )* 'in' Expr
 Call    ::= '(' Expr Expr ')'
 Begin   ::= 'begin' Expr (';' Expr)* 'end'
-Newref  ::= 'newref' '(' Expr ')'
-Deref   ::= 'deref' '(' Expr ')'
-Setref  ::= 'setref' '(' Expr ',' Expr ')'
 Number  ::= [0-9]+
 Id      ::= [a-z]+
 

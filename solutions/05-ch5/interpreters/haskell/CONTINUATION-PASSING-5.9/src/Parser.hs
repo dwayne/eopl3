@@ -36,9 +36,6 @@ expr
   <|> letrecExpr
   <|> callExpr
   <|> beginExpr
-  <|> newrefExpr
-  <|> derefExpr
-  <|> setrefExpr
 
 
 constExpr :: Parser Expr
@@ -93,18 +90,3 @@ callExpr =
 beginExpr :: Parser Expr
 beginExpr =
   Begin <$ rBegin <*> semiSep expr <* rEnd
-
-
-newrefExpr :: Parser Expr
-newrefExpr =
-  Newref <$ rNewref <*> parens expr
-
-
-derefExpr :: Parser Expr
-derefExpr =
-  Deref <$ rDeref <*> parens expr
-
-
-setrefExpr :: Parser Expr
-setrefExpr =
-  rSetref *> parens (Setref <$> expr <*> (comma *> expr))
