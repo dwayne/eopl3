@@ -16,6 +16,15 @@ data Item v p e
   | IProcedure p e
 
 
+instance (Show k, Show v, Show p, Show e) => Show (Env k v p e) where
+  show (Env bindings) = show bindings
+
+
+instance (Show v, Show p, Show e) => Show (Item v p e) where
+  show (IValue v) = show v
+  show (IProcedure _ _) = "<<rec proc>>"
+
+
 empty :: Env k v p e
 empty = Env []
 
