@@ -64,7 +64,7 @@ run input =
 
 valueOfProgram :: Program -> Either RuntimeError Value
 valueOfProgram (Program expr) =
-  valueOfExpr expr initEnv EndCont
+  valueOfExpr expr initEnv endCont
   where
     initEnv =
       Env.extend "i" (VNumber 1)
@@ -91,16 +91,16 @@ valueOfExpr expr env cont =
           applyCont cont $ Left $ IdentifierNotFound x
 
     Diff aExpr bExpr ->
-      valueOfExpr aExpr env (Diff1Cont bExpr env cont)
+      valueOfExpr aExpr env (FDiff1 bExpr env : cont)
 
     Zero aExpr ->
-      valueOfExpr aExpr env (ZeroCont cont)
+      valueOfExpr aExpr env (FZero : cont)
 
     If condition consequent alternative ->
-      valueOfExpr condition env (IfCont consequent alternative env cont)
+      valueOfExpr condition env (FIf consequent alternative env : cont)
 
     Let x aExpr body ->
-      valueOfExpr aExpr env (LetCont x body env cont)
+      valueOfExpr aExpr env (FLet x body env : cont)
 
     Proc param body ->
       applyCont cont $ Right $ VProc $ Procedure param body env
@@ -109,48 +109,55 @@ valueOfExpr expr env cont =
       valueOfExpr letrecBody (Env.extendRec name param body env) cont
 
     Call rator rand ->
-      valueOfExpr rator env (RatorCont rand env cont)
+      valueOfExpr rator env (FRator rand env : cont)
 
 
-data Cont
-  = EndCont
-  | ZeroCont Cont
-  | LetCont Id Expr Env Cont
-  | IfCont Expr Expr Env Cont
-  | Diff1Cont Expr Env Cont
-  | Diff2Cont Value Cont
-  | RatorCont Expr Env Cont
-  | RandCont Value Cont
+type Cont = [Frame]
+
+data Frame -- or Activation Record
+  = FZero
+  | FLet Id Expr Env
+  | FIf Expr Expr Env
+  | FDiff1 Expr Env
+  | FDiff2 Value
+  | FRator Expr Env
+  | FRand Value
+
+
+endCont :: Cont
+endCont = []
 
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
 applyCont cont input = do
   value <- input
   case cont of
-    EndCont ->
+    [] ->
       trace "End of computation" $
         Right value
 
-    ZeroCont nextCont ->
-      applyCont nextCont $ zero value
+    frame : nextCont ->
+      case frame of
+        FZero ->
+          applyCont nextCont $ zero value
 
-    LetCont x body env nextCont ->
-      valueOfExpr body (Env.extend x value env) nextCont
+        FLet x body env ->
+          valueOfExpr body (Env.extend x value env) nextCont
 
-    IfCont consequent alternative env nextCont ->
-      computeIf value consequent alternative env nextCont
+        FIf consequent alternative env ->
+          computeIf value consequent alternative env nextCont
 
-    Diff1Cont bExpr env nextCont ->
-      valueOfExpr bExpr env (Diff2Cont value nextCont)
+        FDiff1 bExpr env ->
+          valueOfExpr bExpr env (FDiff2 value : nextCont)
 
-    Diff2Cont aValue nextCont ->
-      applyCont nextCont $ diff aValue value
+        FDiff2 aValue ->
+          applyCont nextCont $ diff aValue value
 
-    RatorCont rand env nextCont ->
-      valueOfExpr rand env (RandCont value nextCont)
+        FRator rand env ->
+          valueOfExpr rand env (FRand value : nextCont)
 
-    RandCont ratorValue nextCont ->
-      apply ratorValue value nextCont
+        FRand ratorValue ->
+          apply ratorValue value nextCont
 
 
 diff :: Value -> Value -> Either RuntimeError Value
