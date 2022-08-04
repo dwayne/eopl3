@@ -6,6 +6,7 @@ module CPSInterpreter
   ) where
 
 
+--
 -- Exercise 5.13
 --
 -- A trace of (fact 4)
@@ -31,6 +32,16 @@ module CPSInterpreter
 --   EndCont
 --   Right 24)
 -- = end of computation
+--
+--
+-- At
+--
+-- (* 4 (* 3 (* 2 (fact 1))))
+--
+-- the continuation is
+--
+-- Mult2Cont 2 (Mult2Cont 3 (Mult2Cont 4 EndCont))
+--
 
 
 import qualified Env
@@ -47,7 +58,7 @@ data Value
   | VProc Procedure
 
 data Procedure
-  = Procedure Id Expr Env
+  = Procedure [Id] Expr Env
 
 data Type
   = TNumber
@@ -64,6 +75,7 @@ data Error
 
 data RuntimeError
   = IdentifierNotFound Id
+  | IncorrectNumberOfArguments Int Int
   | TypeError Type Type
   deriving (Eq, Show)
 
@@ -115,8 +127,8 @@ valueOfExpr expr env cont =
         Just (Env.Value value) ->
           applyCont cont $ Right value
 
-        Just (Env.Procedure param body savedEnv) ->
-          applyCont cont $ Right $ VProc $ Procedure param body savedEnv
+        Just (Env.Procedure params body savedEnv) ->
+          applyCont cont $ Right $ VProc $ Procedure params body savedEnv
 
         Nothing ->
           applyCont cont $ Left $ IdentifierNotFound x
@@ -141,17 +153,17 @@ valueOfExpr expr env cont =
       trace "= start working on let's variable expression" $
       valueOfExpr aExpr env (LetCont x body env cont)
 
-    Proc param body ->
+    Proc params body ->
       trace "= send proc value to continuation" $
-      applyCont cont $ Right $ VProc $ Procedure param body env
+      applyCont cont $ Right $ VProc $ Procedure params body env
 
-    Letrec name param body letrecBody ->
+    Letrec name params body letrecBody ->
       trace "= start working on letrec's body" $
-      valueOfExpr letrecBody (Env.extendRec name param body env) cont
+      valueOfExpr letrecBody (Env.extendRec name params body env) cont
 
-    Call rator rand ->
+    Call rator rands ->
       trace "= start working on call's operator" $
-      valueOfExpr rator env (RatorCont rand env cont)
+      valueOfExpr rator env (RatorCont rands env cont)
 
 
 data Cont
@@ -163,8 +175,8 @@ data Cont
   | Diff2Cont Value Cont
   | Mult1Cont Expr Env Cont
   | Mult2Cont Value Cont
-  | RatorCont Expr Env Cont
-  | RandCont Value Cont
+  | RatorCont [Expr] Env Cont
+  | RandsCont Value [Expr] [Value] Env Cont
   deriving (Show)
 
 
@@ -204,12 +216,13 @@ applyCont cont input =
       trace "= send mult value to continuation" $
       applyCont nextCont $ mult aValue value
 
-    RatorCont rand env nextCont ->
-      trace "= start working on call's operand" $
-      valueOfExpr rand env (RandCont value nextCont)
+    RatorCont rands env nextCont ->
+      trace "= start working on call's operands" $
+      computeRands value rands [] env nextCont
 
-    RandCont ratorValue nextCont ->
-      apply ratorValue value nextCont
+    RandsCont ratorValue rands revArgs env nextCont ->
+      trace "= start working on call's next operand"
+      computeRands ratorValue rands (value : revArgs) env nextCont
 
 
 data Debug
@@ -260,11 +273,26 @@ computeIf conditionValue consequent alternative env cont = do
   valueOfExpr expr env cont
 
 
-apply :: Value -> Value -> Cont -> Either RuntimeError Value
-apply ratorValue arg cont = do
-  Procedure param body savedEnv <- toProcedure ratorValue
-  trace "= start working on call's operator body in the arg extended environment" $
-   valueOfExpr body (Env.extend param arg savedEnv) cont
+computeRands :: Value -> [Expr] -> [Value] -> Env -> Cont -> Either RuntimeError Value
+computeRands ratorValue rands revArgs env cont =
+  case rands of
+    [] ->
+      apply ratorValue (reverse revArgs) cont
+
+    rand : restRands ->
+      valueOfExpr rand env (RandsCont ratorValue restRands revArgs env cont)
+
+
+apply :: Value -> [Value] -> Cont -> Either RuntimeError Value
+apply ratorValue args cont = do
+  Procedure params body savedEnv <- toProcedure ratorValue
+  let nParams = length params
+  let nArgs = length args
+  if nArgs == nParams then
+    trace "= start working on call's operator body in the args extended environment" $
+      valueOfExpr body (Env.extendMany (zip params args) savedEnv) cont
+  else
+    Left $ IncorrectNumberOfArguments nParams nArgs
 
 
 toNumber :: Value -> Either RuntimeError Number

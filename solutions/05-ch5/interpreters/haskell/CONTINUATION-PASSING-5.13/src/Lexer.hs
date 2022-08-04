@@ -6,6 +6,7 @@ module Lexer
   , comma, equal, hyphen
 
   , parens
+  , commaSep
   , whiteSpace
   )
   where
@@ -89,6 +90,10 @@ hyphen = symbol "-"
 
 parens :: Parser a -> Parser a
 parens = T.parens lexer
+
+
+commaSep :: Parser a -> Parser [a]
+commaSep = T.commaSep lexer
 
 
 whiteSpace :: Parser ()

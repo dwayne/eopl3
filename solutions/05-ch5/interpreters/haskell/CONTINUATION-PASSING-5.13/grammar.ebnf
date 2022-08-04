@@ -7,9 +7,9 @@ Mult    ::= 'mult' '(' Expr ',' Expr ')'
 Zero    ::= 'zero?' '(' Expr ')'
 If      ::= 'if' Expr 'then' Expr 'else' Expr
 Let     ::= 'let' Id '=' Expr 'in' Expr
-Proc    ::= 'proc' '(' Id ')' Expr
-Call    ::= '(' Expr Expr ')'
-Letrec  ::= 'letrec' Id '(' Id ')' '=' Expr 'in' Expr
+Proc    ::= 'proc' '(' ( Id ( ',' Id )* )? ')' Expr
+Call    ::= '(' Expr* ')'
+Letrec  ::= 'letrec' Id '(' ( Id ( ',' Id )* )? ')' '=' Expr 'in' Expr
 Number  ::= [0-9]+
 Id      ::= [a-z]+
 

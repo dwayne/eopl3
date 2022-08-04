@@ -50,7 +50,7 @@ varExpr =
 
 diffExpr :: Parser Expr
 diffExpr =
-  hyphen *> parens (Diff <$> (expr <* comma) <*> expr)
+  hyphen *> parens (Diff <$> expr <*> (comma *> expr))
 
 
 multExpr :: Parser Expr
@@ -65,17 +65,17 @@ zeroExpr =
 
 ifExpr :: Parser Expr
 ifExpr =
-  If <$ rIf <*> (expr <* rThen) <*> (expr <* rElse) <*> expr
+  If <$ rIf <*> expr <*> (rThen *> expr) <*> (rElse *> expr)
 
 
 letExpr :: Parser Expr
 letExpr =
-  Let <$ rLet <*> (identifier <* equal) <*> (expr <* rIn) <*> expr
+  Let <$ rLet <*> identifier <*> (equal *> expr) <*> (rIn *> expr)
 
 
 procExpr :: Parser Expr
 procExpr =
-  Proc <$ rProc <*> parens identifier <*> expr
+  Proc <$ rProc <*> parens (commaSep identifier) <*> expr
 
 
 letrecExpr :: Parser Expr
@@ -83,11 +83,11 @@ letrecExpr =
   Letrec
     <$ rLetrec
     <*> identifier
-    <*> (parens identifier <* equal)
-    <*> (expr <* rIn)
-    <*> expr
+    <*> parens (commaSep identifier)
+    <*> (equal *> expr)
+    <*> (rIn *> expr)
 
 
 callExpr :: Parser Expr
 callExpr =
-  parens (Call <$> expr <*> expr)
+  parens $ Call <$> expr <*> P.many expr

@@ -1,11 +1,14 @@
 module Env
   ( Env
   , empty
-  , extend, extendRec
+  , extend, extendMany, extendRec
 
   , Found(..)
   , find
   ) where
+
+
+import Data.Bifunctor (second)
 
 
 data Env k v p e
@@ -13,7 +16,7 @@ data Env k v p e
 
 data Item v p e
   = IValue v
-  | IProcedure p e
+  | IProcedure [p] e
 
 
 instance (Show k, Show v, Show p, Show e) => Show (Env k v p e) where
@@ -34,14 +37,19 @@ extend k v (Env bindings) =
   Env $ (k, IValue v) : bindings
 
 
-extendRec :: k -> p -> e -> Env k v p e -> Env k v p e
-extendRec k param body (Env bindings) =
-  Env $ (k, IProcedure param body) : bindings
+extendMany :: [(k, v)] -> Env k v p e -> Env k v p e
+extendMany kvs (Env bindings) =
+  Env $ map (second IValue) kvs ++ bindings
+
+
+extendRec :: k -> [p] -> e -> Env k v p e -> Env k v p e
+extendRec k params body (Env bindings) =
+  Env $ (k, IProcedure params body) : bindings
 
 
 data Found k v p e
   = Value v
-  | Procedure p e (Env k v p e)
+  | Procedure [p] e (Env k v p e)
 
 find :: Eq k => k -> Env k v p e -> Maybe (Found k v p e)
 find k (Env bindings) =
@@ -60,8 +68,8 @@ findHelper searchK bindings =
             IValue v ->
               Value v
 
-            IProcedure param body ->
-              Procedure param body (Env bindings)
+            IProcedure params body ->
+              Procedure params body (Env bindings)
 
       else
         findHelper searchK rest

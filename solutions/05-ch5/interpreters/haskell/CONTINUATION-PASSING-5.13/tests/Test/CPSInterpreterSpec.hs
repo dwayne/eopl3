@@ -77,6 +77,21 @@ spec =
         \(fact 4)                      "
       , VNumber 24
       )
+
+    , ( "letrec                                 \
+        \  factiteracc(n, a) =                  \
+        \    if zero?(n) then                   \
+        \      a                                \
+        \    else                               \
+        \      (factiteracc -(n, 1) mult(n, a)) \
+        \in                                     \
+        \letrec                                 \
+        \  factiter(n) =                        \
+        \    (factiteracc n 1)                  \
+        \in                                     \
+        \(factiter 4)                           "
+      , VNumber 24
+      )
     ]
 
 
