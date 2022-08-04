@@ -2,14 +2,125 @@ module CPSInterpreter
   ( Value(..)
   , Type(..)
   , Error(..), ParseError, RuntimeError(..)
+  , fact, factIter
   , run
   ) where
 
 
+--
+-- Exercise 5.14
+--
+-- Verify that the size of the largest continuation in the calculation on
+-- page 150 is 3.
+--
+-- ghci> CPSInterpreter.run "-(-(44,11),3)"
+-- The size of the largest continuation = 3
+-- Right 30
+--
+-- fact:
+--
+-- ghci> CPSInterpreter.run (CPSInterpreter.fact 1)
+-- The size of the largest continuation = 4
+-- Right 1
+-- ghci> CPSInterpreter.run (CPSInterpreter.fact 2)
+-- The size of the largest continuation = 5
+-- Right 2
+-- ghci> CPSInterpreter.run (CPSInterpreter.fact 3)
+-- The size of the largest continuation = 6
+-- Right 6
+-- ghci> CPSInterpreter.run (CPSInterpreter.fact 4)
+-- The size of the largest continuation = 7
+-- Right 24
+-- ghci> CPSInterpreter.run (CPSInterpreter.fact 5)
+-- The size of the largest continuation = 8
+-- Right 120
+-- ghci> CPSInterpreter.run (CPSInterpreter.fact 6)
+-- The size of the largest continuation = 9
+-- Right 720
+-- ghci> CPSInterpreter.run (CPSInterpreter.fact 7)
+-- The size of the largest continuation = 10
+-- Right 5040
+-- ghci> CPSInterpreter.run (CPSInterpreter.fact 8)
+-- The size of the largest continuation = 11
+-- Right 40320
+-- ghci> CPSInterpreter.run (CPSInterpreter.fact 9)
+-- The size of the largest continuation = 12
+-- Right 362880
+-- ghci> CPSInterpreter.run (CPSInterpreter.fact 10)
+-- The size of the largest continuation = 13
+-- Right 3628800
+--
+--    n  | size of largest continuation
+-- --------------------------------------
+--    1  |         4
+--    2  |         5
+--    3  |         6
+--    4  |         7
+--    5  |         8
+--    6  |         9
+--    7  |        10
+--    8  |        11
+--    9  |        12
+--   10  |        13
+--
+-- So it seems as though the size the largest continuation used by fact grows
+-- linearly with n.
+--
+-- factIter:
+--
+-- ghci> CPSInterpreter.run (CPSInterpreter.factIter 1)
+-- The size of the largest continuation = 3
+-- Right 1
+-- ghci> CPSInterpreter.run (CPSInterpreter.factIter 2)
+-- The size of the largest continuation = 3
+-- Right 2
+-- ghci> CPSInterpreter.run (CPSInterpreter.factIter 3)
+-- The size of the largest continuation = 3
+-- Right 6
+-- ghci> CPSInterpreter.run (CPSInterpreter.factIter 4)
+-- The size of the largest continuation = 3
+-- Right 24
+-- ghci> CPSInterpreter.run (CPSInterpreter.factIter 5)
+-- The size of the largest continuation = 3
+-- Right 120
+-- ghci> CPSInterpreter.run (CPSInterpreter.factIter 6)
+-- The size of the largest continuation = 3
+-- Right 720
+-- ghci> CPSInterpreter.run (CPSInterpreter.factIter 7)
+-- The size of the largest continuation = 3
+-- Right 5040
+-- ghci> CPSInterpreter.run (CPSInterpreter.factIter 8)
+-- The size of the largest continuation = 3
+-- Right 40320
+-- ghci> CPSInterpreter.run (CPSInterpreter.factIter 9)
+-- The size of the largest continuation = 3
+-- Right 362880
+-- ghci> CPSInterpreter.run (CPSInterpreter.factIter 10)
+-- The size of the largest continuation = 3
+-- Right 3628800
+--
+--    n  | size of largest continuation
+-- --------------------------------------
+--    1  |         3
+--    2  |         3
+--    3  |         3
+--    4  |         3
+--    5  |         3
+--    6  |         3
+--    7  |         3
+--    8  |         3
+--    9  |         3
+--   10  |         3
+--
+-- So it seems as though the size the largest continuation used by factIter
+-- is a constant.
+--
+
+
 import qualified Env
 
-import Data.Bifunctor (first)
 import Data.List (intercalate)
+import Debug.Trace (trace)
 import Parser
 
 
@@ -53,6 +164,34 @@ instance Show Value where
   show (VProc _) = "<proc>"
 
 
+fact :: Int -> String
+fact n =
+  "letrec                        \
+  \  fact(n) =                   \
+  \    if zero?(n) then          \
+  \      1                       \
+  \    else                      \
+  \      mult(n, (fact -(n, 1))) \
+  \in                            \
+  \(fact " ++ show n ++ ")"
+
+
+factIter :: Int -> String
+factIter n =
+  "letrec                                 \
+  \  factiteracc(n, a) =                  \
+  \    if zero?(n) then                   \
+  \      a                                \
+  \    else                               \
+  \      (factiteracc -(n, 1) mult(n, a)) \
+  \in                                     \
+  \letrec                                 \
+  \  factiter(n) =                        \
+  \    (factiteracc n 1)                  \
+  \in                                     \
+  \(factiter " ++ show n ++ ")"
+
+
 run :: String -> Either Error Value
 run input =
   case parse input of
@@ -60,12 +199,18 @@ run input =
       Left $ SyntaxError err
 
     Right program ->
-      first RuntimeError $ valueOfProgram program
+      case valueOfProgram program of
+        Right (value, largest) ->
+          trace ("The size of the largest continuation = " ++ show largest) $
+            Right value
+
+        Left err ->
+          Left $ RuntimeError err
 
 
-valueOfProgram :: Program -> Either RuntimeError Value
+valueOfProgram :: Program -> Either RuntimeError (Value, Int)
 valueOfProgram (Program expr) =
-  valueOfExpr expr initEnv EndCont
+  valueOfExpr expr initEnv EndCont 1
   where
     initEnv =
       Env.extend "i" (VNumber 1)
@@ -74,46 +219,51 @@ valueOfProgram (Program expr) =
             Env.empty))
 
 
-valueOfExpr :: Expr -> Env -> Cont -> Either RuntimeError Value
-valueOfExpr expr env cont =
+valueOfExpr :: Expr -> Env -> Cont -> Int -> Either RuntimeError (Value, Int)
+valueOfExpr expr env cont largest =
+  let
+    newLargest =
+      max (sizeOf cont) largest
+  in
   case expr of
     Const n ->
-      applyCont cont $ Right $ VNumber n
+      applyCont cont newLargest $ Right $ VNumber n
 
     Var x ->
+      applyCont cont newLargest $
       case Env.find x env of
         Just (Env.Value value) ->
-          applyCont cont $ Right value
+          Right value
 
         Just (Env.Procedure params body savedEnv) ->
-          applyCont cont $ Right $ VProc $ Procedure params body savedEnv
+          Right $ VProc $ Procedure params body savedEnv
 
         Nothing ->
-          applyCont cont $ Left $ IdentifierNotFound x
+          Left $ IdentifierNotFound x
 
     Diff aExpr bExpr ->
-      valueOfExpr aExpr env (Diff1Cont bExpr env cont)
+      valueOfExpr aExpr env (Diff1Cont bExpr env cont) newLargest
 
     Mult aExpr bExpr ->
-      valueOfExpr aExpr env (Mult1Cont bExpr env cont)
+      valueOfExpr aExpr env (Mult1Cont bExpr env cont) newLargest
 
     Zero aExpr ->
-      valueOfExpr aExpr env (ZeroCont cont)
+      valueOfExpr aExpr env (ZeroCont cont) newLargest
 
     If condition consequent alternative ->
-      valueOfExpr condition env (IfCont consequent alternative env cont)
+      valueOfExpr condition env (IfCont consequent alternative env cont) newLargest
 
     Let x aExpr body ->
-      valueOfExpr aExpr env (LetCont x body env cont)
+      valueOfExpr aExpr env (LetCont x body env cont) newLargest
 
     Proc params body ->
-      applyCont cont $ Right $ VProc $ Procedure params body env
+      applyCont cont newLargest $ Right $ VProc $ Procedure params body env
 
     Letrec name params body letrecBody ->
-      valueOfExpr letrecBody (Env.extendRec name params body env) cont
+      valueOfExpr letrecBody (Env.extendRec name params body env) cont newLargest
 
     Call rator rands ->
-      valueOfExpr rator env (RatorCont rands env cont)
+      valueOfExpr rator env (RatorCont rands env cont) newLargest
 
 
 data Cont
@@ -130,39 +280,52 @@ data Cont
   deriving (Show)
 
 
-applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
-applyCont cont input = do
+sizeOf :: Cont -> Int
+sizeOf EndCont = 1
+sizeOf (ZeroCont cont) = 1 + sizeOf cont
+sizeOf (LetCont _ _ _ cont) = 1 + sizeOf cont
+sizeOf (IfCont _ _ _ cont) = 1 + sizeOf cont
+sizeOf (Diff1Cont _ _ cont) = 1 + sizeOf cont
+sizeOf (Diff2Cont _ cont) = 1 + sizeOf cont
+sizeOf (Mult1Cont _ _ cont) = 1 + sizeOf cont
+sizeOf (Mult2Cont _ cont) = 1 + sizeOf cont
+sizeOf (RatorCont _ _ cont) = 1 + sizeOf cont
+sizeOf (RandsCont _ _ _ _ cont) = 1 + sizeOf cont
+
+
+applyCont :: Cont -> Int -> Either RuntimeError Value -> Either RuntimeError (Value, Int)
+applyCont cont largest input = do
   value <- input
   case cont of
     EndCont ->
-      Right value
+      Right (value, largest)
 
     ZeroCont nextCont ->
-      applyCont nextCont $ zero value
+      applyCont nextCont largest $ zero value
 
     LetCont x body env nextCont ->
-      valueOfExpr body (Env.extend x value env) nextCont
+      valueOfExpr body (Env.extend x value env) nextCont largest
 
     IfCont consequent alternative env nextCont ->
-      computeIf value consequent alternative env nextCont
+      computeIf value consequent alternative env nextCont largest
 
     Diff1Cont bExpr env nextCont ->
-      valueOfExpr bExpr env (Diff2Cont value nextCont)
+      valueOfExpr bExpr env (Diff2Cont value nextCont) largest
 
     Diff2Cont aValue nextCont ->
-      applyCont nextCont $ diff aValue value
+      applyCont nextCont largest $ diff aValue value
 
     Mult1Cont bExpr env nextCont ->
-      valueOfExpr bExpr env (Mult2Cont value nextCont)
+      valueOfExpr bExpr env (Mult2Cont value nextCont) largest
 
     Mult2Cont aValue nextCont ->
-      applyCont nextCont $ mult aValue value
+      applyCont nextCont largest $ mult aValue value
 
     RatorCont rands env nextCont ->
-      computeRands value rands [] env nextCont
+      computeRands value rands [] env nextCont largest
 
     RandsCont ratorValue rands revArgs env nextCont ->
-      computeRands ratorValue rands (value : revArgs) env nextCont
+      computeRands ratorValue rands (value : revArgs) env nextCont largest
 
 
 data Debug
@@ -206,30 +369,30 @@ zero aValue = do
   return $ VBool $ a == 0
 
 
-computeIf :: Value -> Expr -> Expr -> Env -> Cont -> Either RuntimeError Value
-computeIf conditionValue consequent alternative env cont = do
+computeIf :: Value -> Expr -> Expr -> Env -> Cont -> Int -> Either RuntimeError (Value, Int)
+computeIf conditionValue consequent alternative env cont largest = do
   b <- toBool conditionValue
   let expr = if b then consequent else alternative
-  valueOfExpr expr env cont
+  valueOfExpr expr env cont largest
 
 
-computeRands :: Value -> [Expr] -> [Value] -> Env -> Cont -> Either RuntimeError Value
-computeRands ratorValue rands revArgs env cont =
+computeRands :: Value -> [Expr] -> [Value] -> Env -> Cont -> Int -> Either RuntimeError (Value, Int)
+computeRands ratorValue rands revArgs env cont largest =
   case rands of
     [] ->
-      apply ratorValue (reverse revArgs) cont
+      apply ratorValue (reverse revArgs) cont largest
 
     rand : restRands ->
-      valueOfExpr rand env (RandsCont ratorValue restRands revArgs env cont)
+      valueOfExpr rand env (RandsCont ratorValue restRands revArgs env cont) largest
 
 
-apply :: Value -> [Value] -> Cont -> Either RuntimeError Value
-apply ratorValue args cont = do
+apply :: Value -> [Value] -> Cont -> Int -> Either RuntimeError (Value, Int)
+apply ratorValue args cont largest = do
   Procedure params body savedEnv <- toProcedure ratorValue
   let nParams = length params
   let nArgs = length args
   if nArgs == nParams then
-    valueOfExpr body (Env.extendMany (zip params args) savedEnv) cont
+    valueOfExpr body (Env.extendMany (zip params args) savedEnv) cont largest
   else
     Left $ IncorrectNumberOfArguments nParams nArgs
 
