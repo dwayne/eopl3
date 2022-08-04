@@ -66,6 +66,17 @@ spec =
         \in (double 6)                                        "
       , VNumber 12
       )
+
+    , ( "letrec                        \
+        \  fact(n) =                   \
+        \    if zero?(n) then          \
+        \      1                       \
+        \    else                      \
+        \      mult(n, (fact -(n, 1))) \
+        \in                            \
+        \(fact 4)                      "
+      , VNumber 24
+      )
     ]
 
 

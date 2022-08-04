@@ -6,60 +6,31 @@ module CPSInterpreter
   ) where
 
 
+-- Exercise 5.13
 --
--- Exercise 5.12
+-- A trace of (fact 4)
 --
--- I added tracing statements. The best way to see the trace is as follows:
---
--- $ stack ghci
--- ghci> CPSInterpreter.run "-(-(44, 11), 3)"
--- (valueOfExpr
---   Diff (Diff (Const 44) (Const 11)) (Const 3)
---   [("i",1),("v",5),("x",10)]
---   EndCont)
--- = start working on diff's first operand
--- (valueOfExpr
---   Diff (Const 44) (Const 11)
---   [("i",1),("v",5),("x",10)]
---   Diff1Cont (Const 3) [("i",1),("v",5),("x",10)] EndCont)
--- = start working on diff's first operand
--- (valueOfExpr
---   Const 44
---   [("i",1),("v",5),("x",10)]
---   Diff1Cont (Const 11) [("i",1),("v",5),("x",10)] (Diff1Cont (Const 3) [("i",1),("v",5),("x",10)] EndCont))
--- = send const value to continuation
+-- ...
 -- (applyCont
---   Diff1Cont (Const 11) [("i",1),("v",5),("x",10)] (Diff1Cont (Const 3) [("i",1),("v",5),("x",10)] EndCont)
---   Right 44)
--- = start working on diff's second operand
--- (valueOfExpr
---   Const 11
---   [("i",1),("v",5),("x",10)]
---   Diff2Cont 44 (Diff1Cont (Const 3) [("i",1),("v",5),("x",10)] EndCont))
--- = send const value to continuation
+--   Mult2Cont 1 (Mult2Cont 2 (Mult2Cont 3 (Mult2Cont 4 EndCont)))
+--   Right 1)
+-- = send mult value to continuation
 -- (applyCont
---   Diff2Cont 44 (Diff1Cont (Const 3) [("i",1),("v",5),("x",10)] EndCont)
---   Right 11)
--- = send diff value to continuation
+--   Mult2Cont 2 (Mult2Cont 3 (Mult2Cont 4 EndCont))
+--   Right 1)
+-- = send mult value to continuation
 -- (applyCont
---   Diff1Cont (Const 3) [("i",1),("v",5),("x",10)] EndCont
---   Right 33)
--- = start working on diff's second operand
--- (valueOfExpr
---   Const 3
---   [("i",1),("v",5),("x",10)]
---   Diff2Cont 33 EndCont)
--- = send const value to continuation
+--   Mult2Cont 3 (Mult2Cont 4 EndCont)
+--   Right 2)
+-- = send mult value to continuation
 -- (applyCont
---   Diff2Cont 33 EndCont
---   Right 3)
--- = send diff value to continuation
+--   Mult2Cont 4 EndCont
+--   Right 6)
+-- = send mult value to continuation
 -- (applyCont
 --   EndCont
---   Right 30)
+--   Right 24)
 -- = end of computation
--- Right 30
---
 
 
 import qualified Env
@@ -154,6 +125,10 @@ valueOfExpr expr env cont =
       trace "= start working on diff's first operand" $
       valueOfExpr aExpr env (Diff1Cont bExpr env cont)
 
+    Mult aExpr bExpr ->
+      trace "= start working on mult's first operand" $
+      valueOfExpr aExpr env (Mult1Cont bExpr env cont)
+
     Zero aExpr ->
       trace "= start working on zero's operand" $
       valueOfExpr aExpr env (ZeroCont cont)
@@ -186,6 +161,8 @@ data Cont
   | IfCont Expr Expr Env Cont
   | Diff1Cont Expr Env Cont
   | Diff2Cont Value Cont
+  | Mult1Cont Expr Env Cont
+  | Mult2Cont Value Cont
   | RatorCont Expr Env Cont
   | RandCont Value Cont
   deriving (Show)
@@ -218,6 +195,14 @@ applyCont cont input =
     Diff2Cont aValue nextCont ->
       trace "= send diff value to continuation" $
       applyCont nextCont $ diff aValue value
+
+    Mult1Cont bExpr env nextCont ->
+      trace "= start working on mult's second operand" $
+      valueOfExpr bExpr env (Mult2Cont value nextCont)
+
+    Mult2Cont aValue nextCont ->
+      trace "= send mult value to continuation" $
+      applyCont nextCont $ mult aValue value
 
     RatorCont rand env nextCont ->
       trace "= start working on call's operand" $
@@ -253,6 +238,13 @@ diff aValue bValue = do
   a <- toNumber aValue
   b <- toNumber bValue
   return $ VNumber $ a - b
+
+
+mult :: Value -> Value -> Either RuntimeError Value
+mult aValue bValue = do
+  a <- toNumber aValue
+  b <- toNumber bValue
+  return $ VNumber $ a * b
 
 
 zero :: Value -> Either RuntimeError Value

@@ -29,6 +29,7 @@ expr
   = constExpr
   <|> varExpr
   <|> diffExpr
+  <|> multExpr
   <|> zeroExpr
   <|> ifExpr
   <|> letExpr
@@ -50,6 +51,11 @@ varExpr =
 diffExpr :: Parser Expr
 diffExpr =
   hyphen *> parens (Diff <$> (expr <* comma) <*> expr)
+
+
+multExpr :: Parser Expr
+multExpr =
+  rMult *> parens (Mult <$> expr <*> (comma *> expr))
 
 
 zeroExpr :: Parser Expr

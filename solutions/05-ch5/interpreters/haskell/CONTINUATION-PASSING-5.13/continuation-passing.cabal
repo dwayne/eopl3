@@ -19,7 +19,6 @@ library
     AST
     CPSInterpreter
     Env
-    Interpreter
     Lexer
     Parser
 
@@ -42,6 +41,5 @@ test-suite tests
 
   other-modules:
     Test.CPSInterpreterSpec
-    Test.InterpreterSpec
     Test.LexerSpec
     Test.ParserSpec

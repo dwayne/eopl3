@@ -11,6 +11,7 @@ spec =
     [ ( "1", Const 1 )
     , ( "x", Var "x" )
     , ( "-(5, y)", Diff (Const 5) (Var "y") )
+    , ( "mult(5, y)", Mult (Const 5) (Var "y") )
     , ( "zero?(z)", Zero (Var "z") )
     , ( "if zero?(2) then 0 else 1", If (Zero (Const 2)) (Const 0) (Const 1) )
     , ( "let n = 10 in -(n, 1)", Let "n" (Const 10) (Diff (Var "n") (Const 1)) )
