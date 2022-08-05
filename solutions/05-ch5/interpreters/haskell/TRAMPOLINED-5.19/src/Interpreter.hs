@@ -139,33 +139,35 @@ data Cont
 
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Bounce
-applyCont cont input = do
-  value <- input
-  case cont of
-    EndCont ->
-      trace "End of computation" $
-        Right $ Return value
+applyCont cont input =
+  return $ Suspend $
+    \() -> do
+      value <- input
+      case cont of
+        EndCont ->
+          trace "End of computation" $
+            Right $ Return value
 
-    ZeroCont nextCont ->
-      applyCont nextCont $ zero value
+        ZeroCont nextCont ->
+          applyCont nextCont $ zero value
 
-    LetCont x body env nextCont ->
-      valueOfExpr body (Env.extend x value env) nextCont
+        LetCont x body env nextCont ->
+          valueOfExpr body (Env.extend x value env) nextCont
 
-    IfCont consequent alternative env nextCont ->
-      computeIf value consequent alternative env nextCont
+        IfCont consequent alternative env nextCont ->
+          computeIf value consequent alternative env nextCont
 
-    Diff1Cont bExpr env nextCont ->
-      valueOfExpr bExpr env (Diff2Cont value nextCont)
+        Diff1Cont bExpr env nextCont ->
+          valueOfExpr bExpr env (Diff2Cont value nextCont)
 
-    Diff2Cont aValue nextCont ->
-      applyCont nextCont $ diff aValue value
+        Diff2Cont aValue nextCont ->
+          applyCont nextCont $ diff aValue value
 
-    RatorCont rand env nextCont ->
-      valueOfExpr rand env (RandCont value nextCont)
+        RatorCont rand env nextCont ->
+          valueOfExpr rand env (RandCont value nextCont)
 
-    RandCont ratorValue nextCont ->
-      apply ratorValue value nextCont
+        RandCont ratorValue nextCont ->
+          apply ratorValue value nextCont
 
 
 diff :: Value -> Value -> Either RuntimeError Value
@@ -189,11 +191,9 @@ computeIf conditionValue consequent alternative env cont = do
 
 
 apply :: Value -> Value -> Cont -> Either RuntimeError Bounce
-apply ratorValue arg cont =
-  return $ Suspend $
-    \() -> do
-      Procedure param body savedEnv <- toProcedure ratorValue
-      valueOfExpr body (Env.extend param arg savedEnv) cont
+apply ratorValue arg cont = do
+  Procedure param body savedEnv <- toProcedure ratorValue
+  valueOfExpr body (Env.extend param arg savedEnv) cont
 
 
 toNumber :: Value -> Either RuntimeError Number
