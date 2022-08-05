@@ -15,7 +15,7 @@ import Parser
 
 data Bounce
   = Return Value
-  | Suspend (() -> Either RuntimeError Bounce)
+  | Suspend Value Value Cont
 
 data Value
   = VNumber Number
@@ -73,8 +73,9 @@ trampoline eitherBounce = do
     Return value ->
       Right value
 
-    Suspend snapshot ->
-      trampoline $ snapshot ()
+    Suspend ratorValue arg cont -> do
+      Procedure param body savedEnv <- toProcedure ratorValue
+      trampoline $ valueOfExpr body (Env.extend param arg savedEnv) cont
 
 
 valueOfProgram :: Program -> Either RuntimeError Value
@@ -190,10 +191,7 @@ computeIf conditionValue consequent alternative env cont = do
 
 apply :: Value -> Value -> Cont -> Either RuntimeError Bounce
 apply ratorValue arg cont =
-  return $ Suspend $
-    \() -> do
-      Procedure param body savedEnv <- toProcedure ratorValue
-      valueOfExpr body (Env.extend param arg savedEnv) cont
+  return $ Suspend ratorValue arg cont
 
 
 toNumber :: Value -> Either RuntimeError Number
