@@ -9,8 +9,13 @@ module Interpreter
 import qualified Env
 
 import Data.Bifunctor (first)
+import Debug.Trace (trace)
 import Parser
 
+
+data Bounce
+  = Return Value
+  | Suspend (() -> Either RuntimeError Bounce)
 
 data Value
   = VNumber Number
@@ -61,9 +66,20 @@ run input =
       first RuntimeError $ valueOfProgram program
 
 
+trampoline :: Either RuntimeError Bounce -> Either RuntimeError Value
+trampoline eitherBounce = do
+  bounce <- eitherBounce
+  case bounce of
+    Return value ->
+      Right value
+
+    Suspend snapshot ->
+      trampoline $ snapshot ()
+
+
 valueOfProgram :: Program -> Either RuntimeError Value
 valueOfProgram (Program expr) =
-  valueOfExpr expr initEnv
+  trampoline $ valueOfExpr expr initEnv EndCont
   where
     initEnv =
       Env.extend "i" (VNumber 1)
@@ -72,50 +88,84 @@ valueOfProgram (Program expr) =
             Env.empty))
 
 
-valueOfExpr :: Expr -> Env -> Either RuntimeError Value
-valueOfExpr expr env =
+valueOfExpr :: Expr -> Env -> Cont -> Either RuntimeError Bounce
+valueOfExpr expr env cont =
   case expr of
     Const n ->
-      Right $ VNumber n
+      applyCont cont $ Right $ VNumber n
 
     Var x ->
       case Env.find x env of
         Just (Env.Value value) ->
-          Right value
+          applyCont cont $ Right value
 
         Just (Env.Procedure param body savedEnv) ->
-          Right $ VProc $ Procedure param body savedEnv
+          applyCont cont $ Right $ VProc $ Procedure param body savedEnv
 
         Nothing ->
-          Left $ IdentifierNotFound x
+          applyCont cont $ Left $ IdentifierNotFound x
 
-    Diff aExpr bExpr -> do
-      aValue <- valueOfExpr aExpr env
-      bValue <- valueOfExpr bExpr env
-      diff aValue bValue
+    Diff aExpr bExpr ->
+      valueOfExpr aExpr env (Diff1Cont bExpr env cont)
 
-    Zero aExpr -> do
-      aValue <- valueOfExpr aExpr env
-      zero aValue
+    Zero aExpr ->
+      valueOfExpr aExpr env (ZeroCont cont)
 
-    If condition consequent alternative -> do
-      conditionValue <- valueOfExpr condition env
-      computeIf conditionValue consequent alternative env
+    If condition consequent alternative ->
+      valueOfExpr condition env (IfCont consequent alternative env cont)
 
-    Let x aExpr body -> do
-      aValue <- valueOfExpr aExpr env
-      valueOfExpr body $ Env.extend x aValue env
+    Let x aExpr body ->
+      valueOfExpr aExpr env (LetCont x body env cont)
 
     Proc param body ->
-      return $ VProc $ Procedure param body env
+      applyCont cont $ Right $ VProc $ Procedure param body env
 
     Letrec name param body letrecBody ->
-      valueOfExpr letrecBody $ Env.extendRec name param body env
+      valueOfExpr letrecBody (Env.extendRec name param body env) cont
 
-    Call rator rand -> do
-      ratorValue <- valueOfExpr rator env
-      randValue <- valueOfExpr rand env
-      apply ratorValue randValue
+    Call rator rand ->
+      valueOfExpr rator env (RatorCont rand env cont)
+
+
+data Cont
+  = EndCont
+  | ZeroCont Cont
+  | LetCont Id Expr Env Cont
+  | IfCont Expr Expr Env Cont
+  | Diff1Cont Expr Env Cont
+  | Diff2Cont Value Cont
+  | RatorCont Expr Env Cont
+  | RandCont Value Cont
+
+
+applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Bounce
+applyCont cont input = do
+  value <- input
+  case cont of
+    EndCont ->
+      trace "End of computation" $
+        Right $ Return value
+
+    ZeroCont nextCont ->
+      applyCont nextCont $ zero value
+
+    LetCont x body env nextCont ->
+      valueOfExpr body (Env.extend x value env) nextCont
+
+    IfCont consequent alternative env nextCont ->
+      computeIf value consequent alternative env nextCont
+
+    Diff1Cont bExpr env nextCont ->
+      valueOfExpr bExpr env (Diff2Cont value nextCont)
+
+    Diff2Cont aValue nextCont ->
+      applyCont nextCont $ diff aValue value
+
+    RatorCont rand env nextCont ->
+      valueOfExpr rand env (RandCont value nextCont)
+
+    RandCont ratorValue nextCont ->
+      apply ratorValue value nextCont
 
 
 diff :: Value -> Value -> Either RuntimeError Value
@@ -131,17 +181,19 @@ zero aValue = do
   return $ VBool $ a == 0
 
 
-computeIf :: Value -> Expr -> Expr -> Env -> Either RuntimeError Value
-computeIf conditionValue consequent alternative env = do
+computeIf :: Value -> Expr -> Expr -> Env -> Cont -> Either RuntimeError Bounce
+computeIf conditionValue consequent alternative env cont = do
   b <- toBool conditionValue
   let expr = if b then consequent else alternative
-  valueOfExpr expr env
+  valueOfExpr expr env cont
 
 
-apply :: Value -> Value -> Either RuntimeError Value
-apply ratorValue arg = do
+apply :: Value -> Value -> Cont -> Either RuntimeError Bounce
+apply ratorValue arg cont = do
   Procedure param body savedEnv <- toProcedure ratorValue
-  valueOfExpr body $ Env.extend param arg savedEnv
+  return $ Suspend $
+    \() ->
+      valueOfExpr body (Env.extend param arg savedEnv) cont
 
 
 toNumber :: Value -> Either RuntimeError Number
