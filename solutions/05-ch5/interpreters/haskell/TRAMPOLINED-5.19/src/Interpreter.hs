@@ -14,8 +14,8 @@ import Parser
 
 
 data Bounce
-  = Return Value
-  | Suspend (() -> Either RuntimeError Bounce)
+  = EndBounce Value
+  | ApplyContBounce Cont (Either RuntimeError Value)
 
 data Value
   = VNumber Number
@@ -70,11 +70,11 @@ trampoline :: Either RuntimeError Bounce -> Either RuntimeError Value
 trampoline eitherBounce = do
   bounce <- eitherBounce
   case bounce of
-    Return value ->
+    EndBounce value ->
       Right value
 
-    Suspend snapshot ->
-      trampoline $ snapshot ()
+    ApplyContBounce cont input ->
+      trampoline $ applyContBounce cont input
 
 
 valueOfProgram :: Program -> Either RuntimeError Value
@@ -140,34 +140,37 @@ data Cont
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Bounce
 applyCont cont input =
-  return $ Suspend $
-    \() -> do
-      value <- input
-      case cont of
-        EndCont ->
-          trace "End of computation" $
-            Right $ Return value
+  return $ ApplyContBounce cont input
 
-        ZeroCont nextCont ->
-          applyCont nextCont $ zero value
 
-        LetCont x body env nextCont ->
-          valueOfExpr body (Env.extend x value env) nextCont
+applyContBounce :: Cont -> Either RuntimeError Value -> Either RuntimeError Bounce
+applyContBounce cont input = do
+  value <- input
+  case cont of
+    EndCont ->
+      trace "End of computation" $
+        Right $ EndBounce value
 
-        IfCont consequent alternative env nextCont ->
-          computeIf value consequent alternative env nextCont
+    ZeroCont nextCont ->
+      applyCont nextCont $ zero value
 
-        Diff1Cont bExpr env nextCont ->
-          valueOfExpr bExpr env (Diff2Cont value nextCont)
+    LetCont x body env nextCont ->
+      valueOfExpr body (Env.extend x value env) nextCont
 
-        Diff2Cont aValue nextCont ->
-          applyCont nextCont $ diff aValue value
+    IfCont consequent alternative env nextCont ->
+      computeIf value consequent alternative env nextCont
 
-        RatorCont rand env nextCont ->
-          valueOfExpr rand env (RandCont value nextCont)
+    Diff1Cont bExpr env nextCont ->
+      valueOfExpr bExpr env (Diff2Cont value nextCont)
 
-        RandCont ratorValue nextCont ->
-          apply ratorValue value nextCont
+    Diff2Cont aValue nextCont ->
+      applyCont nextCont $ diff aValue value
+
+    RatorCont rand env nextCont ->
+      valueOfExpr rand env (RandCont value nextCont)
+
+    RandCont ratorValue nextCont ->
+      apply ratorValue value nextCont
 
 
 diff :: Value -> Value -> Either RuntimeError Value
