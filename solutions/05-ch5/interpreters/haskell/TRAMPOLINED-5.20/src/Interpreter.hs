@@ -140,7 +140,12 @@ data Cont
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Bounce
 applyCont cont input =
-  return $ ApplyContBounce cont input
+  case cont of
+    EndCont ->
+      applyContBounce cont input
+
+    _ ->
+      return $ ApplyContBounce cont input
 
 
 applyContBounce :: Cont -> Either RuntimeError Value -> Either RuntimeError Bounce
