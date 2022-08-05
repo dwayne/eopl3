@@ -189,10 +189,10 @@ computeIf conditionValue consequent alternative env cont = do
 
 
 apply :: Value -> Value -> Cont -> Either RuntimeError Bounce
-apply ratorValue arg cont = do
-  Procedure param body savedEnv <- toProcedure ratorValue
+apply ratorValue arg cont =
   return $ Suspend $
-    \() ->
+    \() -> do
+      Procedure param body savedEnv <- toProcedure ratorValue
       valueOfExpr body (Env.extend param arg savedEnv) cont
 
 
