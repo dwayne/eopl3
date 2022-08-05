@@ -14,8 +14,8 @@ import Parser
 
 
 data Bounce
-  = Return Value
-  | Suspend Value Value Cont
+  = EndBounce Value
+  | ApplyBounce Value Value Cont
 
 data Value
   = VNumber Number
@@ -70,12 +70,11 @@ trampoline :: Either RuntimeError Bounce -> Either RuntimeError Value
 trampoline eitherBounce = do
   bounce <- eitherBounce
   case bounce of
-    Return value ->
+    EndBounce value ->
       Right value
 
-    Suspend ratorValue arg cont -> do
-      Procedure param body savedEnv <- toProcedure ratorValue
-      trampoline $ valueOfExpr body (Env.extend param arg savedEnv) cont
+    ApplyBounce ratorValue arg cont ->
+      trampoline $ apply ratorValue arg cont
 
 
 valueOfProgram :: Program -> Either RuntimeError Value
@@ -145,7 +144,7 @@ applyCont cont input = do
   case cont of
     EndCont ->
       trace "End of computation" $
-        Right $ Return value
+        Right $ EndBounce value
 
     ZeroCont nextCont ->
       applyCont nextCont $ zero value
@@ -166,7 +165,7 @@ applyCont cont input = do
       valueOfExpr rand env (RandCont value nextCont)
 
     RandCont ratorValue nextCont ->
-      apply ratorValue value nextCont
+      Right $ ApplyBounce ratorValue value nextCont
 
 
 diff :: Value -> Value -> Either RuntimeError Value
@@ -190,8 +189,9 @@ computeIf conditionValue consequent alternative env cont = do
 
 
 apply :: Value -> Value -> Cont -> Either RuntimeError Bounce
-apply ratorValue arg cont =
-  return $ Suspend ratorValue arg cont
+apply ratorValue arg cont = do
+  Procedure param body savedEnv <- toProcedure ratorValue
+  valueOfExpr body (Env.extend param arg savedEnv) cont
 
 
 toNumber :: Value -> Either RuntimeError Number
