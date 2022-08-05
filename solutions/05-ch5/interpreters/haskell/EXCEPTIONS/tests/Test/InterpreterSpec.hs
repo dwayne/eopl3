@@ -6,7 +6,7 @@ import Test.Hspec
 
 
 spec :: Spec
-spec =
+spec = do
   describeExamples "interpreter"
     [ ( "5", VNumber 5 )
     , ( "x", VNumber 10 )
@@ -66,7 +66,58 @@ spec =
         \in (double 6)                                        "
       , VNumber 12
       )
+
+    , ( "letrec                          \
+        \  f(i) =                        \
+        \    if zero?(-(i, 5)) then      \
+        \      raise 99                  \
+        \    else                        \
+        \      if zero?(i) then          \
+        \        0                       \
+        \      else                      \
+        \        -((f -(i, 1)), -(0, i)) \
+        \in                              \
+        \try                             \
+        \  (f 8)                         \
+        \catch (x)                       \
+        \  x                             "
+      , VNumber 99
+      )
+
+    , ( "letrec                          \
+        \  f(i) =                        \
+        \    if zero?(-(i, 5)) then      \
+        \      raise 99                  \
+        \    else                        \
+        \      if zero?(i) then          \
+        \        0                       \
+        \      else                      \
+        \        -((f -(i, 1)), -(0, i)) \
+        \in                              \
+        \try                             \
+        \  (f 4)                         \
+        \catch (x)                       \
+        \  x                             "
+      , VNumber 10
+      )
     ]
+
+  describe "uncaught exception" $
+    it "example 1" $ do
+      let input = "                        \
+          \letrec                          \
+          \  f(i) =                        \
+          \    if zero?(-(i, 5)) then      \
+          \      raise 99                  \
+          \    else                        \
+          \      if zero?(i) then          \
+          \        0                       \
+          \      else                      \
+          \        -((f -(i, 1)), -(0, i)) \
+          \in                              \
+          \(f 8)                           "
+
+      run input `shouldBe` Left (RuntimeError $ UncaughtException $ VNumber 99)
 
 
 describeExamples :: String -> [(String, Value)] -> Spec

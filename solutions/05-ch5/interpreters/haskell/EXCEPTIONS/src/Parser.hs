@@ -35,6 +35,8 @@ expr
   <|> procExpr
   <|> letrecExpr
   <|> callExpr
+  <|> tryExpr
+  <|> raiseExpr
 
 
 constExpr :: Parser Expr
@@ -85,3 +87,13 @@ letrecExpr =
 callExpr :: Parser Expr
 callExpr =
   parens (Call <$> expr <*> expr)
+
+
+tryExpr :: Parser Expr
+tryExpr =
+  Try <$ rTry <*> expr <*> (rCatch *> parens identifier) <*> expr
+
+
+raiseExpr :: Parser Expr
+raiseExpr =
+  Raise <$ rRaise <*> expr

@@ -37,6 +37,7 @@ data Error
 data RuntimeError
   = IdentifierNotFound Id
   | TypeError Type Type
+  | UncaughtException Value
   deriving (Eq, Show)
 
 
@@ -111,6 +112,12 @@ valueOfExpr expr env cont =
     Call rator rand ->
       valueOfExpr rator env (RatorCont rand env cont)
 
+    Try aExpr x handlerExpr ->
+      valueOfExpr aExpr env (TryCont x handlerExpr env cont)
+
+    Raise aExpr ->
+      valueOfExpr aExpr env (RaiseCont cont)
+
 
 data Cont
   = EndCont
@@ -121,6 +128,8 @@ data Cont
   | Diff2Cont Value Cont
   | RatorCont Expr Env Cont
   | RandCont Value Cont
+  | TryCont Id Expr Env Cont
+  | RaiseCont Cont
 
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
@@ -151,6 +160,46 @@ applyCont cont input = do
 
     RandCont ratorValue nextCont ->
       apply ratorValue value nextCont
+
+    TryCont _ _ _ nextCont ->
+      applyCont nextCont input
+
+    RaiseCont nextCont ->
+      applyHandler nextCont value
+
+
+applyHandler :: Cont -> Value -> Either RuntimeError Value
+applyHandler cont value =
+  case cont of
+    TryCont x handlerExpr savedEnv nextCont ->
+      valueOfExpr handlerExpr (Env.extend x value savedEnv) nextCont
+
+    EndCont ->
+      Left $ UncaughtException value
+
+    ZeroCont nextCont ->
+      applyHandler nextCont value
+
+    LetCont _ _ _ nextCont ->
+      applyHandler nextCont value
+
+    IfCont _ _ _ nextCont ->
+      applyHandler nextCont value
+
+    Diff1Cont _ _ nextCont ->
+      applyHandler nextCont value
+
+    Diff2Cont _ nextCont ->
+      applyHandler nextCont value
+
+    RatorCont _ _ nextCont ->
+      applyHandler nextCont value
+
+    RandCont _ nextCont ->
+      applyHandler nextCont value
+
+    RaiseCont nextCont ->
+      applyHandler nextCont value
 
 
 diff :: Value -> Value -> Either RuntimeError Value

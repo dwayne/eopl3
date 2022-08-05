@@ -17,6 +17,8 @@ spec =
     , ( "proc (x) -(x, 1)", Proc "x" (Diff (Var "x") (Const 1)) )
     , ( "letrec f(x) = a in b", Letrec "f" "x" (Var "a") (Var "b") )
     , ( "(f x)", Call (Var "f") (Var "x") )
+    , ( "try 1 catch (x) 2", Try (Const 1) "x" (Const 2) )
+    , ( "raise 99", Raise (Const 99) )
     ]
 
 
