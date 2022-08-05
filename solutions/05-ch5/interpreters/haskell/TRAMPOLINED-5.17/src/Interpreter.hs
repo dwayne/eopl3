@@ -165,7 +165,12 @@ applyCont cont input = do
       valueOfExpr rand env (RandCont value nextCont)
 
     RandCont ratorValue nextCont ->
-      apply ratorValue value nextCont
+      -- Exercise 5.17
+      --
+      -- No. You end up with the same contracts.
+      Right $ Suspend $
+        \() ->
+          apply ratorValue value nextCont
 
 
 diff :: Value -> Value -> Either RuntimeError Value
@@ -191,9 +196,7 @@ computeIf conditionValue consequent alternative env cont = do
 apply :: Value -> Value -> Cont -> Either RuntimeError Bounce
 apply ratorValue arg cont = do
   Procedure param body savedEnv <- toProcedure ratorValue
-  return $ Suspend $
-    \() ->
-      valueOfExpr body (Env.extend param arg savedEnv) cont
+  valueOfExpr body (Env.extend param arg savedEnv) cont
 
 
 toNumber :: Value -> Either RuntimeError Number
