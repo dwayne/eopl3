@@ -77,7 +77,7 @@ run input =
 
 valueOfProgram :: Program -> Either RuntimeError Value
 valueOfProgram (Program expr) =
-  valueOfExpr expr initEnv EndCont EndXCont
+  valueOfExpr expr initEnv EndCont NoHandler
   where
     initEnv =
       Env.extend "i" (VNumber 1)
@@ -86,71 +86,72 @@ valueOfProgram (Program expr) =
             Env.empty))
 
 
-valueOfExpr :: Expr -> Env -> Cont -> XCont -> Either RuntimeError Value
-valueOfExpr expr env cont xcont =
+valueOfExpr :: Expr -> Env -> Cont -> ExceptionHandler -> Either RuntimeError Value
+valueOfExpr expr env cont handler =
   case expr of
     Const n ->
-      applyCont cont $ Right $ VNumber n
+      applyCont cont handler $ Right $ VNumber n
 
     Var x ->
-      case Env.find x env of
-        Just (Env.Value value) ->
-          applyCont cont $ Right value
+      applyCont cont handler $
+        case Env.find x env of
+          Just (Env.Value value) ->
+            Right value
 
-        Just (Env.Procedure param body savedEnv) ->
-          applyCont cont $ Right $ VProc $ Procedure param body savedEnv
+          Just (Env.Procedure param body savedEnv) ->
+            Right $ VProc $ Procedure param body savedEnv
 
-        Nothing ->
-          applyCont cont $ Left $ IdentifierNotFound x
+          Nothing ->
+            Left $ IdentifierNotFound x
 
     Diff aExpr bExpr ->
-      valueOfExpr aExpr env (Diff1Cont bExpr env cont xcont) xcont
+      valueOfExpr aExpr env (Diff1Cont bExpr env cont) handler
 
     Zero aExpr ->
-      valueOfExpr aExpr env (ZeroCont cont) xcont
+      valueOfExpr aExpr env (ZeroCont cont) handler
 
     If condition consequent alternative ->
-      valueOfExpr condition env (IfCont consequent alternative env cont xcont) xcont
+      valueOfExpr condition env (IfCont consequent alternative env cont) handler
 
     Let x aExpr body ->
-      valueOfExpr aExpr env (LetCont x body env cont xcont) xcont
+      valueOfExpr aExpr env (LetCont x body env cont) handler
 
     Proc param body ->
-      applyCont cont $ Right $ VProc $ Procedure param body env
+      applyCont cont handler $ Right $ VProc $ Procedure param body env
 
     Letrec name param body letrecBody ->
-      valueOfExpr letrecBody (Env.extendRec name param body env) cont xcont
+      valueOfExpr letrecBody (Env.extendRec name param body env) cont handler
 
     Call rator rand ->
-      valueOfExpr rator env (RatorCont rand env cont xcont) xcont
+      valueOfExpr rator env (RatorCont rand env cont) handler
 
     Try aExpr x handlerExpr ->
-      valueOfExpr aExpr env (TryCont cont) (TryXCont x handlerExpr env cont xcont)
+      valueOfExpr aExpr env (TryCont cont) (Handler x handlerExpr env cont handler)
 
     Raise aExpr ->
-      valueOfExpr aExpr env (RaiseCont xcont) xcont
+      valueOfExpr aExpr env (RaiseCont handler) handler
 
 
 data Cont
   = EndCont
   | ZeroCont Cont
-  | LetCont Id Expr Env Cont XCont
-  | IfCont Expr Expr Env Cont XCont
-  | Diff1Cont Expr Env Cont XCont
+  | LetCont Id Expr Env Cont
+  | IfCont Expr Expr Env Cont
+  | Diff1Cont Expr Env Cont
   | Diff2Cont Value Cont
-  | RatorCont Expr Env Cont XCont
-  | RandCont Value Cont XCont
+  | RatorCont Expr Env Cont
+  | RandCont Value Cont
   | TryCont Cont
-  | RaiseCont XCont
+  | RaiseCont ExceptionHandler
 
 
-data XCont
-  = EndXCont
-  | TryXCont Id Expr Env Cont XCont
+data ExceptionHandler
+  = NoHandler
+  | Handler Id Expr Env Cont ExceptionHandler
 
 
-applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
-applyCont cont input = do
+applyCont :: Cont -> ExceptionHandler -> Either RuntimeError Value -> Either RuntimeError Value
+applyCont cont handler input = do
   value <- input
   case cont of
     EndCont ->
@@ -158,40 +159,40 @@ applyCont cont input = do
         Right value
 
     ZeroCont nextCont ->
-      applyCont nextCont $ zero value
+      applyCont nextCont handler $ zero value
 
-    LetCont x body env nextCont xcont ->
-      valueOfExpr body (Env.extend x value env) nextCont xcont
+    LetCont x body env nextCont ->
+      valueOfExpr body (Env.extend x value env) nextCont handler
 
-    IfCont consequent alternative env nextCont xcont ->
-      computeIf value consequent alternative env nextCont xcont
+    IfCont consequent alternative env nextCont ->
+      computeIf value consequent alternative env nextCont handler
 
-    Diff1Cont bExpr env nextCont xcont ->
-      valueOfExpr bExpr env (Diff2Cont value nextCont) xcont
+    Diff1Cont bExpr env nextCont ->
+      valueOfExpr bExpr env (Diff2Cont value nextCont) handler
 
     Diff2Cont aValue nextCont ->
-      applyCont nextCont $ diff aValue value
+      applyCont nextCont handler $ diff aValue value
 
-    RatorCont rand env nextCont xcont ->
-      valueOfExpr rand env (RandCont value nextCont xcont) xcont
+    RatorCont rand env nextCont ->
+      valueOfExpr rand env (RandCont value nextCont) handler
 
-    RandCont ratorValue nextCont xcont ->
-      apply ratorValue value nextCont xcont
+    RandCont ratorValue nextCont ->
+      apply ratorValue value nextCont handler
 
     TryCont nextCont ->
-      applyCont nextCont input
+      applyCont nextCont handler input
 
-    RaiseCont xcont ->
-      applyHandler xcont value
+    RaiseCont savedHandler ->
+      applyHandler savedHandler value
 
 
-applyHandler :: XCont -> Value -> Either RuntimeError Value
-applyHandler xcont value =
-  case xcont of
-    TryXCont x handlerExpr savedEnv nextCont nextXCont ->
-      valueOfExpr handlerExpr (Env.extend x value savedEnv) nextCont nextXCont
+applyHandler :: ExceptionHandler -> Value -> Either RuntimeError Value
+applyHandler handler value =
+  case handler of
+    Handler x handlerExpr savedEnv nextCont nextHandler ->
+      valueOfExpr handlerExpr (Env.extend x value savedEnv) nextCont nextHandler
 
-    EndXCont ->
+    NoHandler ->
       Left $ UncaughtException value
 
 
@@ -208,17 +209,17 @@ zero aValue = do
   return $ VBool $ a == 0
 
 
-computeIf :: Value -> Expr -> Expr -> Env -> Cont -> XCont -> Either RuntimeError Value
-computeIf conditionValue consequent alternative env cont xcont = do
+computeIf :: Value -> Expr -> Expr -> Env -> Cont -> ExceptionHandler -> Either RuntimeError Value
+computeIf conditionValue consequent alternative env cont handler = do
   b <- toBool conditionValue
   let expr = if b then consequent else alternative
-  valueOfExpr expr env cont xcont
+  valueOfExpr expr env cont handler
 
 
-apply :: Value -> Value -> Cont -> XCont -> Either RuntimeError Value
-apply ratorValue arg cont xcont = do
+apply :: Value -> Value -> Cont -> ExceptionHandler -> Either RuntimeError Value
+apply ratorValue arg cont handler = do
   Procedure param body savedEnv <- toProcedure ratorValue
-  valueOfExpr body (Env.extend param arg savedEnv) cont xcont
+  valueOfExpr body (Env.extend param arg savedEnv) cont handler
 
 
 toNumber :: Value -> Either RuntimeError Number
