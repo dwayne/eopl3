@@ -183,6 +183,16 @@ applyCont cont handler input = do
       applyCont nextCont handler input
 
     RaiseCont savedHandler ->
+      -- N.B. We need to use savedHandler here.
+      --
+      -- Consider the value of:
+      --
+      -- try raise try 1 catch (x) 2 catch (y) y
+      --
+      -- With savedHandler it's 1.
+      -- With handler it's 2.
+      --
+      -- Clearly it should be 1.
       applyHandler savedHandler value
 
 
