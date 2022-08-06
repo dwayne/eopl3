@@ -100,6 +100,10 @@ spec = do
         \  x                             "
       , VNumber 10
       )
+
+    , ( "try try raise 5 catch (x) raise -(x, 1) catch (x) x"
+      , VNumber 4
+      )
     ]
 
   describe "uncaught exception" $
