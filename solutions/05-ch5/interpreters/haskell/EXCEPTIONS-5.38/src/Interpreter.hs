@@ -94,6 +94,9 @@ valueOfExpr expr env cont =
     Diff aExpr bExpr ->
       valueOfExpr aExpr env (Diff1Cont bExpr env cont)
 
+    Div aExpr bExpr ->
+      valueOfExpr aExpr env (Div1Cont bExpr env cont)
+
     Zero aExpr ->
       valueOfExpr aExpr env (ZeroCont cont)
 
@@ -126,6 +129,8 @@ data Cont
   | IfCont Expr Expr Env Cont
   | Diff1Cont Expr Env Cont
   | Diff2Cont Value Cont
+  | Div1Cont Expr Env Cont
+  | Div2Cont Value Env Cont
   | RatorCont Expr Env Cont
   | RandCont Value Cont
   | TryCont Id Expr Env Cont
@@ -154,6 +159,12 @@ applyCont cont input = do
 
     Diff2Cont aValue nextCont ->
       applyCont nextCont $ diff aValue value
+
+    Div1Cont bExpr env nextCont ->
+      valueOfExpr bExpr env (Div2Cont value env nextCont)
+
+    Div2Cont aValue env nextCont ->
+      computeDiv aValue value env nextCont
 
     RatorCont rand env nextCont ->
       valueOfExpr rand env (RandCont value nextCont)
@@ -192,6 +203,12 @@ applyHandler cont value =
     Diff2Cont _ nextCont ->
       applyHandler nextCont value
 
+    Div1Cont _ _ nextCont ->
+      applyHandler nextCont value
+
+    Div2Cont _ _ nextCont ->
+      applyHandler nextCont value
+
     RatorCont _ _ nextCont ->
       applyHandler nextCont value
 
@@ -207,6 +224,16 @@ diff aValue bValue = do
   a <- toNumber aValue
   b <- toNumber bValue
   return $ VNumber $ a - b
+
+
+computeDiv :: Value -> Value -> Env -> Cont -> Either RuntimeError Value
+computeDiv aValue bValue env cont = do
+  a <- toNumber aValue
+  b <- toNumber bValue
+  if b == 0 then
+    valueOfExpr (Raise $ Const 0) env cont
+  else
+    return $ VNumber $ a `div` b
 
 
 zero :: Value -> Either RuntimeError Value

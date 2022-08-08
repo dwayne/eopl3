@@ -29,6 +29,7 @@ expr
   = constExpr
   <|> varExpr
   <|> diffExpr
+  <|> divExpr
   <|> zeroExpr
   <|> ifExpr
   <|> letExpr
@@ -52,6 +53,11 @@ varExpr =
 diffExpr :: Parser Expr
 diffExpr =
   hyphen *> parens (Diff <$> (expr <* comma) <*> expr)
+
+
+divExpr :: Parser Expr
+divExpr =
+  rDiv *> parens (Div <$> (expr <* comma) <*> expr)
 
 
 zeroExpr :: Parser Expr

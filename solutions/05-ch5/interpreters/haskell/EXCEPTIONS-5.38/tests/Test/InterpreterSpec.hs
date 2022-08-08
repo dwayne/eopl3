@@ -100,9 +100,13 @@ spec = do
         \  x                             "
       , VNumber 10
       )
+
+    , ( "div(6, 3)"
+      , VNumber 2
+      )
     ]
 
-  describe "uncaught exception" $
+  describe "uncaught exception" $ do
     it "example 1" $ do
       let input = "                        \
           \letrec                          \
@@ -118,6 +122,11 @@ spec = do
           \(f 8)                           "
 
       run input `shouldBe` Left (RuntimeError $ UncaughtException $ VNumber 99)
+
+    it "example 2" $ do
+      let input = "div(1, 0)"
+
+      run input `shouldBe` Left (RuntimeError $ UncaughtException $ VNumber 0)
 
 
 describeExamples :: String -> [(String, Value)] -> Spec
