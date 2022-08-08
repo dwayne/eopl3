@@ -10,9 +10,9 @@ data Expr
   | Zero Expr
   | If Expr Expr Expr
   | Let Id Expr Expr
-  | Proc Id Expr
+  | Proc [Id] Expr
   | Letrec Id Id Expr Expr
-  | Call Expr Expr
+  | Call Expr [Expr]
   | Try Expr Id Expr
   | Raise Expr
   deriving (Eq, Show)

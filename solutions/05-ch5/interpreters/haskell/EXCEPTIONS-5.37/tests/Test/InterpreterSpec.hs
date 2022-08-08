@@ -100,24 +100,58 @@ spec = do
         \  x                             "
       , VNumber 10
       )
+
+    , ( "let                       \
+        \  f = proc (a, b) -(a, b) \
+        \in                        \
+        \(f 5 1)                   "
+      , VNumber 4
+      )
     ]
 
-  describe "uncaught exception" $
+  describe "uncaught exception" $ do
     it "example 1" $ do
-      let input = "                        \
-          \letrec                          \
-          \  f(i) =                        \
-          \    if zero?(-(i, 5)) then      \
-          \      raise 99                  \
-          \    else                        \
-          \      if zero?(i) then          \
-          \        0                       \
-          \      else                      \
-          \        -((f -(i, 1)), -(0, i)) \
-          \in                              \
-          \(f 8)                           "
+      let input = "                      \
+        \letrec                          \
+        \  f(i) =                        \
+        \    if zero?(-(i, 5)) then      \
+        \      raise 99                  \
+        \    else                        \
+        \      if zero?(i) then          \
+        \        0                       \
+        \      else                      \
+        \        -((f -(i, 1)), -(0, i)) \
+        \in                              \
+        \(f 8)                           "
 
       run input `shouldBe` Left (RuntimeError $ UncaughtException $ VNumber 99)
+
+    it "example 2" $ do
+      let input = "                \
+        \let                       \
+        \  f = proc (a, b) -(a, b) \
+        \in                        \
+        \(f)                       "
+
+      run input `shouldBe` Left (RuntimeError $ UncaughtException $ VNumber 2)
+
+    it "example 3" $ do
+      let input = "                \
+        \let                       \
+        \  f = proc (a, b) -(a, b) \
+        \in                        \
+        \(f 5)                     "
+
+      run input `shouldBe` Left (RuntimeError $ UncaughtException $ VNumber 1)
+
+    it "example 4" $ do
+      let input = "                \
+        \let                       \
+        \  f = proc (a, b) -(a, b) \
+        \in                        \
+        \(f 5 1 2)                 "
+
+      run input `shouldBe` Left (RuntimeError $ UncaughtException $ VNumber (-1))
 
 
 describeExamples :: String -> [(String, Value)] -> Spec

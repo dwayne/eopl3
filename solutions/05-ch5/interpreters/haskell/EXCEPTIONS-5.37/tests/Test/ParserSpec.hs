@@ -14,9 +14,9 @@ spec =
     , ( "zero?(z)", Zero (Var "z") )
     , ( "if zero?(2) then 0 else 1", If (Zero (Const 2)) (Const 0) (Const 1) )
     , ( "let n = 10 in -(n, 1)", Let "n" (Const 10) (Diff (Var "n") (Const 1)) )
-    , ( "proc (x) -(x, 1)", Proc "x" (Diff (Var "x") (Const 1)) )
+    , ( "proc (x) -(x, 1)", Proc ["x"] (Diff (Var "x") (Const 1)) )
     , ( "letrec f(x) = a in b", Letrec "f" "x" (Var "a") (Var "b") )
-    , ( "(f x)", Call (Var "f") (Var "x") )
+    , ( "(f x)", Call (Var "f") [(Var "x")] )
     , ( "try 1 catch (x) 2", Try (Const 1) "x" (Const 2) )
     , ( "raise 99", Raise (Const 99) )
     ]

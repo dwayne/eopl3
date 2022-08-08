@@ -71,7 +71,7 @@ letExpr =
 
 procExpr :: Parser Expr
 procExpr =
-  Proc <$ rProc <*> parens identifier <*> expr
+  Proc <$ rProc <*> parens (commaSep identifier) <*> expr
 
 
 letrecExpr :: Parser Expr
@@ -86,7 +86,7 @@ letrecExpr =
 
 callExpr :: Parser Expr
 callExpr =
-  parens (Call <$> expr <*> expr)
+  parens (Call <$> expr <*> P.many expr)
 
 
 tryExpr :: Parser Expr
