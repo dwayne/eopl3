@@ -165,41 +165,41 @@ applyCont cont input = do
       applyCont nextCont input
 
     RaiseCont nextCont ->
-      applyHandler nextCont value
+      applyHandler nextCont nextCont value
 
 
-applyHandler :: Cont -> Value -> Either RuntimeError Value
-applyHandler cont value =
+applyHandler :: Cont -> Cont -> Value -> Either RuntimeError Value
+applyHandler savedCont cont value =
   case cont of
-    TryCont x handlerExpr savedEnv nextCont ->
-      valueOfExpr handlerExpr (Env.extend x value savedEnv) nextCont
+    TryCont x handlerExpr savedEnv _ ->
+      valueOfExpr handlerExpr (Env.extend x value savedEnv) savedCont
 
     EndCont ->
       Left $ UncaughtException value
 
     ZeroCont nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     LetCont _ _ _ nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     IfCont _ _ _ nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     Diff1Cont _ _ nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     Diff2Cont _ nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     RatorCont _ _ nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     RandCont _ nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     RaiseCont nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
 
 diff :: Value -> Value -> Either RuntimeError Value
