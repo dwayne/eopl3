@@ -100,6 +100,15 @@ spec = do
         \  x                             "
       , VNumber 10
       )
+    , ( "try                   \
+        \  let                 \
+        \    x = -(5, raise 1) \
+        \  in                  \
+        \  x                   \
+        \catch (x)             \
+        \ -(x, -(0, 1))        "
+      , VNumber 2
+      )
     ]
 
   describe "uncaught exception" $
