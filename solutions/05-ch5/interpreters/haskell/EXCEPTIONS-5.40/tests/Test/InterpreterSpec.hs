@@ -79,7 +79,7 @@ spec = do
         \in                              \
         \try                             \
         \  (f 8)                         \
-        \catch (x)                       \
+        \catch (x, c)                    \
         \  x                             "
       , VNumber 99
       )
@@ -96,9 +96,36 @@ spec = do
         \in                              \
         \try                             \
         \  (f 4)                         \
-        \catch (x)                       \
+        \catch (x, c)                    \
         \  x                             "
       , VNumber 10
+      )
+
+    , ( "letrec                          \
+        \  f(i) =                        \
+        \    if zero?(-(i, 5)) then      \
+        \      raise 99                  \
+        \    else                        \
+        \      if zero?(i) then          \
+        \        0                       \
+        \      else                      \
+        \        -((f -(i, 1)), -(0, i)) \
+        \in                              \
+        \try                             \
+        \  (f 8)                         \
+        \catch (x, c)                    \
+        \  resume(x, c)                  "
+      , VNumber 120
+      )
+
+    , ( "try                       \
+        \  let                     \
+        \    x = -(5, raise 1)     \
+        \  in                      \
+        \  x                       \
+        \catch (x, c)              \
+        \  resume(-(x, -(0, 1)), c)"
+      , VNumber 3
       )
     ]
 

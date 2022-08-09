@@ -17,6 +17,7 @@ data Value
   = VNumber Number
   | VBool Bool
   | VProc Procedure
+  | VCont Cont
 
 data Procedure
   = Procedure Id Expr Env
@@ -25,6 +26,7 @@ data Type
   = TNumber
   | TBool
   | TProc
+  | TCont
   deriving (Eq, Show)
 
 type Env = Env.Env Id Value Id Expr
@@ -51,6 +53,7 @@ instance Show Value where
   show (VNumber n) = show n
   show (VBool b) = show b
   show (VProc _) = "<proc>"
+  show (VCont _) = "<cont>"
 
 
 run :: String -> Either Error Value
@@ -112,11 +115,14 @@ valueOfExpr expr env cont =
     Call rator rand ->
       valueOfExpr rator env (RatorCont rand env cont)
 
-    Try aExpr x handlerExpr ->
-      valueOfExpr aExpr env (TryCont x handlerExpr env cont)
+    Try aExpr x c handlerExpr ->
+      valueOfExpr aExpr env (TryCont x c handlerExpr env cont)
 
     Raise aExpr ->
       valueOfExpr aExpr env (RaiseCont cont)
+
+    Resume aExpr bExpr ->
+      valueOfExpr aExpr env (Resume1Cont bExpr env cont)
 
 
 data Cont
@@ -128,8 +134,10 @@ data Cont
   | Diff2Cont Value Cont
   | RatorCont Expr Env Cont
   | RandCont Value Cont
-  | TryCont Id Expr Env Cont
+  | TryCont Id Id Expr Env Cont
   | RaiseCont Cont
+  | Resume1Cont Expr Env Cont
+  | Resume2Cont Value Cont
 
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
@@ -161,45 +169,62 @@ applyCont cont input = do
     RandCont ratorValue nextCont ->
       apply ratorValue value nextCont
 
-    TryCont _ _ _ nextCont ->
+    TryCont _ _ _ _ nextCont ->
       applyCont nextCont input
 
     RaiseCont nextCont ->
-      applyHandler nextCont value
+      applyHandler nextCont nextCont value
+
+    Resume1Cont bExpr env nextCont ->
+      valueOfExpr bExpr env (Resume2Cont value nextCont)
+
+    Resume2Cont aValue _ ->
+      resume aValue value
 
 
-applyHandler :: Cont -> Value -> Either RuntimeError Value
-applyHandler cont value =
+applyHandler :: Cont -> Cont -> Value -> Either RuntimeError Value
+applyHandler savedCont cont value =
   case cont of
-    TryCont x handlerExpr savedEnv nextCont ->
-      valueOfExpr handlerExpr (Env.extend x value savedEnv) nextCont
+    TryCont x c handlerExpr savedEnv nextCont ->
+      let
+        env =
+          Env.extend c (VCont savedCont)
+            (Env.extend x value savedEnv)
+      in
+      valueOfExpr handlerExpr env nextCont
 
     EndCont ->
       Left $ UncaughtException value
 
     ZeroCont nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     LetCont _ _ _ nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     IfCont _ _ _ nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     Diff1Cont _ _ nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     Diff2Cont _ nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     RatorCont _ _ nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     RandCont _ nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
 
     RaiseCont nextCont ->
-      applyHandler nextCont value
+      applyHandler savedCont nextCont value
+
+    Resume1Cont _ _ nextCont ->
+      applyHandler savedCont nextCont value
+
+    Resume2Cont _ nextCont ->
+      applyHandler savedCont nextCont value
 
 
 diff :: Value -> Value -> Either RuntimeError Value
@@ -220,6 +245,12 @@ computeIf conditionValue consequent alternative env cont = do
   b <- toBool conditionValue
   let expr = if b then consequent else alternative
   valueOfExpr expr env cont
+
+
+resume :: Value -> Value -> Either RuntimeError Value
+resume aValue bValue = do
+  cont <- toCont bValue
+  applyCont cont (Right aValue)
 
 
 apply :: Value -> Value -> Cont -> Either RuntimeError Value
@@ -243,7 +274,13 @@ toProcedure (VProc p) = Right p
 toProcedure value = Left $ TypeError TProc (typeOf value)
 
 
+toCont :: Value -> Either RuntimeError Cont
+toCont (VCont c) = Right c
+toCont value = Left $ TypeError TCont (typeOf value)
+
+
 typeOf :: Value -> Type
 typeOf (VNumber _) = TNumber
 typeOf (VBool _) = TBool
 typeOf (VProc _) = TProc
+typeOf (VCont _) = TCont

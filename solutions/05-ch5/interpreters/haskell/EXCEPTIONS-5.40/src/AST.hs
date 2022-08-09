@@ -13,8 +13,9 @@ data Expr
   | Proc Id Expr
   | Letrec Id Id Expr Expr
   | Call Expr Expr
-  | Try Expr Id Expr
+  | Try Expr Id Id Expr
   | Raise Expr
+  | Resume Expr Expr
   deriving (Eq, Show)
 
 type Number = Integer

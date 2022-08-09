@@ -1,7 +1,8 @@
 module Lexer
   ( number, identifier
 
-  , rCatch, rElse, rIf, rIn, rLet, rLetrec, rProc, rRaise, rThen, rTry, rZero
+  , rCatch, rElse, rIf, rIn, rLet, rLetrec
+  , rProc, rRaise, rResume, rThen, rTry, rZero
 
   , comma, equal, hyphen
 
@@ -63,6 +64,10 @@ rProc = reserved "proc"
 
 rRaise :: Parser ()
 rRaise = reserved "raise"
+
+
+rResume :: Parser ()
+rResume = reserved "resume"
 
 
 rThen :: Parser ()
@@ -136,6 +141,7 @@ languageDef =
         , "letrec"
         , "proc"
         , "raise"
+        , "resume"
         , "then"
         , "try"
         , "zero?"

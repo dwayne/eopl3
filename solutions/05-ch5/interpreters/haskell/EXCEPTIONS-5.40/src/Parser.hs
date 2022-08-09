@@ -37,6 +37,7 @@ expr
   <|> callExpr
   <|> tryExpr
   <|> raiseExpr
+  <|> resumeExpr
 
 
 constExpr :: Parser Expr
@@ -91,9 +92,21 @@ callExpr =
 
 tryExpr :: Parser Expr
 tryExpr =
-  Try <$ rTry <*> expr <*> (rCatch *> parens identifier) <*> expr
+  let
+    vars =
+      parens $ (,) <$> identifier <*> (comma *> identifier)
+
+    buildTry aExpr (x, c) handlerExpr =
+      Try aExpr x c handlerExpr
+  in
+  buildTry <$ rTry <*> expr <*> (rCatch *> vars) <*> expr
 
 
 raiseExpr :: Parser Expr
 raiseExpr =
   Raise <$ rRaise <*> expr
+
+
+resumeExpr :: Parser Expr
+resumeExpr =
+  rResume *> parens (Resume <$> (expr <* comma) <*> expr)
