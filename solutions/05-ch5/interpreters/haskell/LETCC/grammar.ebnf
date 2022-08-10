@@ -9,6 +9,8 @@ Let     ::= 'let' Id '=' Expr 'in' Expr
 Proc    ::= 'proc' '(' Id ')' Expr
 Letrec  ::= 'letrec' Id '(' Id ')' '=' Expr 'in' Expr
 Call    ::= '(' Expr Expr ')'
+Letcc   ::= 'letcc' Id 'in' Expr
+Throw   ::= 'throw' Expr 'to' Expr
 Number  ::= [0-9]+
 Id      ::= [a-z]+
 

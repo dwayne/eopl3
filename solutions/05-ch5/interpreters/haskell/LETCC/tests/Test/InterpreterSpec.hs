@@ -66,6 +66,13 @@ spec =
         \in (double 6)                                        "
       , VNumber 12
       )
+
+    -- Exercise 5.42
+    --
+    -- Test letcc and throw.
+    , ( "-(100, letcc c in -(1, -(2, -(3, throw 1 to c))))"
+      , VNumber 99
+      )
     ]
 
 

@@ -13,6 +13,8 @@ data Expr
   | Proc Id Expr
   | Letrec Id Id Expr Expr
   | Call Expr Expr
+  | Letcc Id Expr
+  | Throw Expr Expr
   deriving (Eq, Show)
 
 type Number = Integer

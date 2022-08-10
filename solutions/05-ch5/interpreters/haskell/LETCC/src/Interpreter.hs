@@ -17,6 +17,7 @@ data Value
   = VNumber Number
   | VBool Bool
   | VProc Procedure
+  | VCont Cont
 
 data Procedure
   = Procedure Id Expr Env
@@ -25,6 +26,7 @@ data Type
   = TNumber
   | TBool
   | TProc
+  | TCont
   deriving (Eq, Show)
 
 type Env = Env.Env Id Value Id Expr
@@ -50,6 +52,7 @@ instance Show Value where
   show (VNumber n) = show n
   show (VBool b) = show b
   show (VProc _) = "<proc>"
+  show (VCont _) = "<cont>"
 
 
 run :: String -> Either Error Value
@@ -111,6 +114,12 @@ valueOfExpr expr env cont =
     Call rator rand ->
       valueOfExpr rator env (RatorCont rand env cont)
 
+    Letcc x aExpr ->
+      valueOfExpr aExpr (Env.extend x (VCont cont) env) cont
+
+    Throw aExpr bExpr ->
+      valueOfExpr aExpr env (Throw1Cont bExpr env cont)
+
 
 data Cont
   = EndCont
@@ -121,6 +130,8 @@ data Cont
   | Diff2Cont Value Cont
   | RatorCont Expr Env Cont
   | RandCont Value Cont
+  | Throw1Cont Expr Env Cont
+  | Throw2Cont Value Cont
 
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
@@ -151,6 +162,20 @@ applyCont cont input = do
 
     RandCont ratorValue nextCont ->
       apply ratorValue value nextCont
+
+    Throw1Cont bExpr env nextCont ->
+      valueOfExpr bExpr env (Throw2Cont value nextCont)
+
+    Throw2Cont aValue _ ->
+      -- N.B. The current continuation, usually represented by nextCont,
+      -- is ignored.
+      computeThrow aValue value
+
+
+computeThrow :: Value -> Value -> Either RuntimeError Value
+computeThrow aValue bValue = do
+  cont <- toCont bValue
+  applyCont cont (Right aValue)
 
 
 diff :: Value -> Value -> Either RuntimeError Value
@@ -194,7 +219,13 @@ toProcedure (VProc p) = Right p
 toProcedure value = Left $ TypeError TProc (typeOf value)
 
 
+toCont :: Value -> Either RuntimeError Cont
+toCont (VCont c) = Right c
+toCont value = Left $ TypeError TCont (typeOf value)
+
+
 typeOf :: Value -> Type
 typeOf (VNumber _) = TNumber
 typeOf (VBool _) = TBool
 typeOf (VProc _) = TProc
+typeOf (VCont _) = TCont
