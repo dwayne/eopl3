@@ -65,7 +65,7 @@ run input =
 
 valueOfProgram :: Program -> Either RuntimeError Value
 valueOfProgram (Program expr) =
-  valueOfExpr expr initEnv EndCont
+  valueOfExpr expr initEnv endCont
   where
     initEnv =
       Env.extend "i" (VNumber 1)
@@ -92,16 +92,16 @@ valueOfExpr expr env cont =
           applyCont cont $ Left $ IdentifierNotFound x
 
     Diff aExpr bExpr ->
-      valueOfExpr aExpr env (Diff1Cont bExpr env cont)
+      valueOfExpr aExpr env (diff1Cont bExpr env cont)
 
     Zero aExpr ->
-      valueOfExpr aExpr env (ZeroCont cont)
+      valueOfExpr aExpr env (zeroCont cont)
 
     If condition consequent alternative ->
-      valueOfExpr condition env (IfCont consequent alternative env cont)
+      valueOfExpr condition env (ifCont consequent alternative env cont)
 
     Let x aExpr body ->
-      valueOfExpr aExpr env (LetCont x body env cont)
+      valueOfExpr aExpr env (letCont x body env cont)
 
     Proc param body ->
       applyCont cont $ Right $ VProc $ Procedure param body env
@@ -110,96 +110,117 @@ valueOfExpr expr env cont =
       valueOfExpr letrecBody (Env.extendRec name param body env) cont
 
     Call rator rand ->
-      valueOfExpr rator env (RatorCont rand env cont)
+      valueOfExpr rator env (ratorCont rand env cont)
 
     Try aExpr x handlerExpr ->
-      valueOfExpr aExpr env (TryCont x handlerExpr env cont)
+      valueOfExpr aExpr env (tryCont x handlerExpr env cont)
 
     Raise aExpr ->
-      valueOfExpr aExpr env (RaiseCont cont)
+      valueOfExpr aExpr env (raiseCont cont)
 
 
-data Cont
-  = EndCont
-  | ZeroCont Cont
-  | LetCont Id Expr Env Cont
-  | IfCont Expr Expr Env Cont
-  | Diff1Cont Expr Env Cont
-  | Diff2Cont Value Cont
-  | RatorCont Expr Env Cont
-  | RandCont Value Cont
-  | TryCont Id Expr Env Cont
-  | RaiseCont Cont
+type Cont =
+  ( Either RuntimeError Value -> Either RuntimeError Value
+  , Value -> Either RuntimeError Value
+  )
 
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
-applyCont cont input = do
-  value <- input
-  case cont of
-    EndCont ->
-      trace "End of computation" $
-        Right value
-
-    ZeroCont nextCont ->
-      applyCont nextCont $ zero value
-
-    LetCont x body env nextCont ->
-      valueOfExpr body (Env.extend x value env) nextCont
-
-    IfCont consequent alternative env nextCont ->
-      computeIf value consequent alternative env nextCont
-
-    Diff1Cont bExpr env nextCont ->
-      valueOfExpr bExpr env (Diff2Cont value nextCont)
-
-    Diff2Cont aValue nextCont ->
-      applyCont nextCont $ diff aValue value
-
-    RatorCont rand env nextCont ->
-      valueOfExpr rand env (RandCont value nextCont)
-
-    RandCont ratorValue nextCont ->
-      apply ratorValue value nextCont
-
-    TryCont _ _ _ nextCont ->
-      applyCont nextCont input
-
-    RaiseCont nextCont ->
-      applyHandler nextCont value
+applyCont cont = fst cont
 
 
 applyHandler :: Cont -> Value -> Either RuntimeError Value
-applyHandler cont value =
-  case cont of
-    TryCont x handlerExpr savedEnv nextCont ->
-      valueOfExpr handlerExpr (Env.extend x value savedEnv) nextCont
+applyHandler cont = snd cont
 
-    EndCont ->
-      Left $ UncaughtException value
 
-    ZeroCont nextCont ->
-      applyHandler nextCont value
+endCont :: Cont
+endCont =
+  ( \input -> do
+      value <- input
+      trace "End of computation" $
+        Right value
+  , Left . UncaughtException
+  )
 
-    LetCont _ _ _ nextCont ->
-      applyHandler nextCont value
 
-    IfCont _ _ _ nextCont ->
-      applyHandler nextCont value
+zeroCont :: Cont -> Cont
+zeroCont cont =
+  ( \input -> do
+      value <- input
+      applyCont cont $ zero value
+  , applyHandler cont
+  )
 
-    Diff1Cont _ _ nextCont ->
-      applyHandler nextCont value
 
-    Diff2Cont _ nextCont ->
-      applyHandler nextCont value
+letCont :: Id -> Expr -> Env -> Cont -> Cont
+letCont x body env cont =
+  ( \input -> do
+      value <- input
+      valueOfExpr body (Env.extend x value env) cont
+  , applyHandler cont
+  )
 
-    RatorCont _ _ nextCont ->
-      applyHandler nextCont value
 
-    RandCont _ nextCont ->
-      applyHandler nextCont value
+ifCont :: Expr -> Expr -> Env -> Cont -> Cont
+ifCont consequent alternative env cont =
+  ( \input -> do
+      value <- input
+      computeIf value consequent alternative env cont
+  , applyHandler cont
+  )
 
-    RaiseCont nextCont ->
-      applyHandler nextCont value
+
+diff1Cont :: Expr -> Env -> Cont -> Cont
+diff1Cont bExpr env cont =
+  ( \input -> do
+      value <- input
+      valueOfExpr bExpr env (diff2Cont value cont)
+  , applyHandler cont
+  )
+
+
+diff2Cont :: Value -> Cont -> Cont
+diff2Cont aValue cont =
+  ( \input -> do
+      value <- input
+      applyCont cont $ diff aValue value
+  , applyHandler cont
+  )
+
+
+ratorCont :: Expr -> Env -> Cont -> Cont
+ratorCont rand env cont =
+  ( \input -> do
+      value <- input
+      valueOfExpr rand env (randCont value cont)
+  , applyHandler cont
+  )
+
+
+randCont :: Value -> Cont -> Cont
+randCont ratorValue cont =
+  ( \input -> do
+      value <- input
+      apply ratorValue value cont
+  , applyHandler cont
+  )
+
+
+tryCont :: Id -> Expr -> Env -> Cont -> Cont
+tryCont x handlerExpr savedEnv cont =
+  ( applyCont cont
+  , \value ->
+      valueOfExpr handlerExpr (Env.extend x value savedEnv) cont
+  )
+
+
+raiseCont :: Cont -> Cont
+raiseCont cont =
+  ( \input -> do
+      value <- input
+      applyHandler cont value
+  , applyHandler cont
+  )
 
 
 diff :: Value -> Value -> Either RuntimeError Value
