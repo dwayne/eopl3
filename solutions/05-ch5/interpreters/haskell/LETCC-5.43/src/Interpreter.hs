@@ -38,7 +38,7 @@ data Error
 
 data RuntimeError
   = IdentifierNotFound Id
-  | TypeError Type Type
+  | TypeError [Type] Type
   deriving (Eq, Show)
 
 
@@ -111,14 +111,11 @@ valueOfExpr expr env cont =
     Letrec name param body letrecBody ->
       valueOfExpr letrecBody (Env.extendRec name param body env) cont
 
-    Call rator rand ->
-      valueOfExpr rator env (RatorCont rand env cont)
-
     Letcc x aExpr ->
       valueOfExpr aExpr (Env.extend x (VCont cont) env) cont
 
-    Throw aExpr bExpr ->
-      valueOfExpr aExpr env (Throw1Cont bExpr env cont)
+    Call rator rand ->
+      valueOfExpr rator env (RatorCont rand env cont)
 
 
 data Cont
@@ -130,8 +127,6 @@ data Cont
   | Diff2Cont Value Cont
   | RatorCont Expr Env Cont
   | RandCont Value Cont
-  | Throw1Cont Expr Env Cont
-  | Throw2Cont Value Cont
 
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
@@ -163,20 +158,6 @@ applyCont cont input = do
     RandCont ratorValue nextCont ->
       apply ratorValue value nextCont
 
-    Throw1Cont bExpr env nextCont ->
-      valueOfExpr bExpr env (Throw2Cont value nextCont)
-
-    Throw2Cont aValue _ ->
-      -- N.B. The current continuation, usually represented by nextCont,
-      -- is ignored.
-      computeThrow aValue value
-
-
-computeThrow :: Value -> Value -> Either RuntimeError Value
-computeThrow aValue bValue = do
-  cont <- toCont bValue
-  applyCont cont (Right aValue)
-
 
 diff :: Value -> Value -> Either RuntimeError Value
 diff aValue bValue = do
@@ -199,29 +180,26 @@ computeIf conditionValue consequent alternative env cont = do
 
 
 apply :: Value -> Value -> Cont -> Either RuntimeError Value
-apply ratorValue arg cont = do
-  Procedure param body savedEnv <- toProcedure ratorValue
-  valueOfExpr body (Env.extend param arg savedEnv) cont
+apply ratorValue arg cont =
+  case ratorValue of
+    VProc (Procedure param body savedEnv) ->
+      valueOfExpr body (Env.extend param arg savedEnv) cont
+
+    VCont savedCont ->
+      applyCont savedCont (Right arg)
+
+    _ ->
+      Left $ TypeError [TProc, TCont] (typeOf ratorValue)
 
 
 toNumber :: Value -> Either RuntimeError Number
 toNumber (VNumber n) = Right n
-toNumber value = Left $ TypeError TNumber (typeOf value)
+toNumber value = Left $ TypeError [TNumber] (typeOf value)
 
 
 toBool :: Value -> Either RuntimeError Bool
 toBool (VBool b) = Right b
-toBool value = Left $ TypeError TBool (typeOf value)
-
-
-toProcedure :: Value -> Either RuntimeError Procedure
-toProcedure (VProc p) = Right p
-toProcedure value = Left $ TypeError TProc (typeOf value)
-
-
-toCont :: Value -> Either RuntimeError Cont
-toCont (VCont c) = Right c
-toCont value = Left $ TypeError TCont (typeOf value)
+toBool value = Left $ TypeError [TBool] (typeOf value)
 
 
 typeOf :: Value -> Type

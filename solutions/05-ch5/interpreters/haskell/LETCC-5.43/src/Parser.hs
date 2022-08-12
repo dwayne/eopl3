@@ -34,9 +34,8 @@ expr
   <|> letExpr
   <|> procExpr
   <|> letrecExpr
-  <|> callExpr
   <|> letccExpr
-  <|> throwExpr
+  <|> callExpr
 
 
 constExpr :: Parser Expr
@@ -84,16 +83,11 @@ letrecExpr =
     <*> expr
 
 
-callExpr :: Parser Expr
-callExpr =
-  parens (Call <$> expr <*> expr)
-
-
 letccExpr :: Parser Expr
 letccExpr =
   Letcc <$ rLetcc <*> identifier <*> (rIn *> expr)
 
 
-throwExpr :: Parser Expr
-throwExpr =
-  Throw <$ rThrow <*> expr <*> (rTo *> expr)
+callExpr :: Parser Expr
+callExpr =
+  parens (Call <$> expr <*> expr)

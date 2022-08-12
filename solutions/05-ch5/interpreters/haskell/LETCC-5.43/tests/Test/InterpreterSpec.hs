@@ -67,10 +67,10 @@ spec =
       , VNumber 12
       )
 
-    -- Exercise 5.42
+    -- Exercise 5.43
     --
-    -- Test letcc and throw.
-    , ( "-(100, letcc c in -(1, -(2, -(3, throw 1 to c))))"
+    -- Test letcc and calling continuations.
+    , ( "-(100, letcc c in -(1, -(2, -(3, (c 1)))))"
       , VNumber 99
       )
     ]
