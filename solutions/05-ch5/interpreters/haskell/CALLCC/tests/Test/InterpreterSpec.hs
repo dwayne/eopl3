@@ -66,6 +66,13 @@ spec =
         \in (double 6)                                        "
       , VNumber 12
       )
+
+    -- Exercise 5.44
+    --
+    -- Test call-with-current-continuation.
+    , ( "-(100, call-with-current-continuation(proc (k) -(1, -(2, -(3, (k 1))))))"
+      , VNumber 99
+      )
     ]
 
 

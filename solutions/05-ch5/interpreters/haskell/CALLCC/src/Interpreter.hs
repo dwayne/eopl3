@@ -17,6 +17,7 @@ data Value
   = VNumber Number
   | VBool Bool
   | VProc Procedure
+  | VCont Cont
 
 data Procedure
   = Procedure Id Expr Env
@@ -25,6 +26,7 @@ data Type
   = TNumber
   | TBool
   | TProc
+  | TCont
   deriving (Eq, Show)
 
 type Env = Env.Env Id Value Id Expr
@@ -36,7 +38,7 @@ data Error
 
 data RuntimeError
   = IdentifierNotFound Id
-  | TypeError Type Type
+  | TypeError [Type] Type
   deriving (Eq, Show)
 
 
@@ -50,6 +52,7 @@ instance Show Value where
   show (VNumber n) = show n
   show (VBool b) = show b
   show (VProc _) = "<proc>"
+  show (VCont _) = "<cont>"
 
 
 run :: String -> Either Error Value
@@ -111,6 +114,9 @@ valueOfExpr expr env cont =
     Call rator rand ->
       valueOfExpr rator env (RatorCont rand env cont)
 
+    Callcc aExpr ->
+      valueOfExpr aExpr env (CallccCont cont)
+
 
 data Cont
   = EndCont
@@ -121,6 +127,7 @@ data Cont
   | Diff2Cont Value Cont
   | RatorCont Expr Env Cont
   | RandCont Value Cont
+  | CallccCont Cont
 
 
 applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
@@ -152,6 +159,14 @@ applyCont cont input = do
     RandCont ratorValue nextCont ->
       apply ratorValue value nextCont
 
+    CallccCont nextCont ->
+      callcc value nextCont
+
+
+callcc :: Value -> Cont -> Either RuntimeError Value
+callcc aValue cont =
+  apply aValue (VCont cont) cont
+
 
 diff :: Value -> Value -> Either RuntimeError Value
 diff aValue bValue = do
@@ -174,27 +189,30 @@ computeIf conditionValue consequent alternative env cont = do
 
 
 apply :: Value -> Value -> Cont -> Either RuntimeError Value
-apply ratorValue arg cont = do
-  Procedure param body savedEnv <- toProcedure ratorValue
-  valueOfExpr body (Env.extend param arg savedEnv) cont
+apply ratorValue arg cont =
+  case ratorValue of
+    VProc (Procedure param body savedEnv) ->
+      valueOfExpr body (Env.extend param arg savedEnv) cont
+
+    VCont savedCont ->
+      applyCont savedCont (Right arg)
+
+    _ ->
+      Left $ TypeError [TProc, TCont] (typeOf ratorValue)
 
 
 toNumber :: Value -> Either RuntimeError Number
 toNumber (VNumber n) = Right n
-toNumber value = Left $ TypeError TNumber (typeOf value)
+toNumber value = Left $ TypeError [TNumber] (typeOf value)
 
 
 toBool :: Value -> Either RuntimeError Bool
 toBool (VBool b) = Right b
-toBool value = Left $ TypeError TBool (typeOf value)
-
-
-toProcedure :: Value -> Either RuntimeError Procedure
-toProcedure (VProc p) = Right p
-toProcedure value = Left $ TypeError TProc (typeOf value)
+toBool value = Left $ TypeError [TBool] (typeOf value)
 
 
 typeOf :: Value -> Type
 typeOf (VNumber _) = TNumber
 typeOf (VBool _) = TBool
 typeOf (VProc _) = TProc
+typeOf (VCont _) = TCont

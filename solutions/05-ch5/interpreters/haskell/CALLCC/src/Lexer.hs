@@ -1,6 +1,7 @@
 module Lexer
   ( number, identifier
 
+  , rCallcc
   , rElse, rIf, rIn, rLet, rLetrec, rProc, rThen, rZero
 
   , comma, equal, hyphen
@@ -31,6 +32,10 @@ identifier = T.identifier lexer
 
 
 -- RESERVED NAMES
+
+
+rCallcc :: Parser ()
+rCallcc = reserved "call-with-current-continuation"
 
 
 rElse :: Parser ()
@@ -116,7 +121,8 @@ languageDef =
     { T.identStart = identStart
     , T.identLetter = identLetter
     , T.reservedNames =
-        [ "else"
+        [ "call-with-current-continuation"
+        , "else"
         , "if"
         , "in"
         , "let"
@@ -137,4 +143,4 @@ identStart = P.satisfy Char.isAsciiLower
 identLetter :: Parser Char
 identLetter = P.satisfy letter
   where
-    letter c = Char.isAsciiLower c || c == '?'
+    letter c = Char.isAsciiLower c || c == '-' || c == '?'

@@ -17,6 +17,7 @@ spec =
     , ( "proc (x) -(x, 1)", Proc "x" (Diff (Var "x") (Const 1)) )
     , ( "letrec f(x) = a in b", Letrec "f" "x" (Var "a") (Var "b") )
     , ( "(f x)", Call (Var "f") (Var "x") )
+    , ( "call-with-current-continuation(p)", Callcc (Var "p") )
     ]
 
 

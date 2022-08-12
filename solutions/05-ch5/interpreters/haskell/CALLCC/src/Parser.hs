@@ -35,6 +35,7 @@ expr
   <|> procExpr
   <|> letrecExpr
   <|> callExpr
+  <|> callccExpr
 
 
 constExpr :: Parser Expr
@@ -85,3 +86,8 @@ letrecExpr =
 callExpr :: Parser Expr
 callExpr =
   parens (Call <$> expr <*> expr)
+
+
+callccExpr :: Parser Expr
+callccExpr =
+  Callcc <$ rCallcc <*> parens expr
