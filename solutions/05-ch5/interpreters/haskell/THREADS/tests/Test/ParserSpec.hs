@@ -40,6 +40,7 @@ spec =
           ]
       )
     , ( "set x = 1", Assign "x" (Const 1) )
+    , ( "print(100)", Print (Const 100) )
     ]
 
 

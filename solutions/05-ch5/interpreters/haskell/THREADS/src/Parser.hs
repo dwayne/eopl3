@@ -43,6 +43,7 @@ expr
   <|> callExpr
   <|> beginExpr
   <|> assignExpr
+  <|> printExpr
 
 
 constExpr :: Parser Expr
@@ -132,3 +133,8 @@ beginExpr =
 assignExpr :: Parser Expr
 assignExpr =
   Assign <$ rSet <*> identifier <*> (equal *> expr)
+
+
+printExpr :: Parser Expr
+printExpr =
+  Print <$ rPrint <*> parens expr

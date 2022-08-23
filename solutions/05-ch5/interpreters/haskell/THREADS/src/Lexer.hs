@@ -2,7 +2,7 @@ module Lexer
   ( number, identifier
 
   , rBegin, rCar, rCdr, rCons, rElse, rEmptyList, rEnd, rIf, rIn
-  , rLet, rLetrec , rList, rNull, rProc, rSet, rThen, rZero
+  , rLet, rLetrec , rList, rNull, rPrint, rProc, rSet, rThen, rZero
 
   , comma, equal, hyphen
 
@@ -85,6 +85,10 @@ rList = reserved "list"
 
 rNull :: Parser ()
 rNull = reserved "null?"
+
+
+rPrint :: Parser ()
+rPrint = reserved "print"
 
 
 rProc :: Parser ()
@@ -175,6 +179,7 @@ languageDef =
         , "letrec"
         , "list"
         , "null?"
+        , "print"
         , "proc"
         , "set"
         , "then"
