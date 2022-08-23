@@ -135,7 +135,7 @@ valueOfExpr expr env store cont =
           applyCont cont $ Right (VList [], store)
 
         aExpr : restExprs ->
-          valueOfExpr aExpr env store (ListHeadCont restExprs env cont)
+          valueOfExpr aExpr env store (ListCont restExprs env [] cont)
 
     If condition consequent alternative ->
       valueOfExpr condition env store (IfCont consequent alternative env cont)
@@ -175,8 +175,7 @@ data Cont
   | CarCont Cont
   | CdrCont Cont
   | NullCont Cont
-  | ListHeadCont [Expr] Env Cont
-  | ListTailCont [Expr] Env [Value] Cont
+  | ListCont [Expr] Env [Value] Cont
   | IfCont Expr Expr Env Cont
   | RatorCont Expr Env Cont
   | RandCont Value Cont
@@ -223,15 +222,7 @@ applyCont cont input = do
     NullCont nextCont ->
       isNull value store nextCont
 
-    ListHeadCont exprs env nextCont ->
-      case exprs of
-        [] ->
-          applyCont nextCont $ Right (VList [value], store)
-
-        aExpr : restExprs ->
-          valueOfExpr aExpr env store (ListTailCont restExprs env [value] nextCont)
-
-    ListTailCont exprs env revValues nextCont ->
+    ListCont exprs env revValues nextCont ->
       let
         newRevValues =
           value : revValues
@@ -241,7 +232,7 @@ applyCont cont input = do
           applyCont nextCont $ Right (VList $ reverse newRevValues, store)
 
         aExpr : restExprs ->
-          valueOfExpr aExpr env store (ListTailCont restExprs env newRevValues nextCont)
+          valueOfExpr aExpr env store (ListCont restExprs env newRevValues nextCont)
 
     IfCont consequent alternative env nextCont ->
       computeIf value consequent alternative env store nextCont
