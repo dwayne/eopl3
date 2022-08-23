@@ -10,6 +10,7 @@ import qualified Env
 import qualified Store
 
 import Data.Bifunctor (bimap)
+import Data.List (intercalate)
 import Debug.Trace (trace)
 import Parser
 
@@ -17,6 +18,7 @@ import Parser
 data Value
   = VNumber Number
   | VBool Bool
+  | VList [Value]
   | VProc Procedure
 
 data Procedure
@@ -25,6 +27,7 @@ data Procedure
 data Type
   = TNumber
   | TBool
+  | TList
   | TProc
   deriving (Eq, Show)
 
@@ -40,6 +43,7 @@ data Error
 data RuntimeError
   = IdentifierNotFound Id
   | LocationNotFound Store.Ref
+  | EmptyListError
   | TypeError Type Type
   deriving (Eq, Show)
 
@@ -47,12 +51,14 @@ data RuntimeError
 instance Eq Value where
   (VNumber n1) == (VNumber n2) = n1 == n2
   (VBool b1) == (VBool b2) = b1 == b2
+  (VList l1) == (VList l2) = l1 == l2
   _ == _ = False
 
 
 instance Show Value where
   show (VNumber n) = show n
   show (VBool b) = show b
+  show (VList l) = "[" ++ intercalate ", " (map show l) ++ "]"
   show (VProc _) = "<proc>"
 
 
@@ -108,6 +114,29 @@ valueOfExpr expr env store cont =
     Zero aExpr ->
       valueOfExpr aExpr env store (ZeroCont cont)
 
+    Cons aExpr bExpr ->
+      valueOfExpr aExpr env store (Cons1Cont bExpr env cont)
+
+    Car aExpr ->
+      valueOfExpr aExpr env store (CarCont cont)
+
+    Cdr aExpr ->
+      valueOfExpr aExpr env store (CdrCont cont)
+
+    Null aExpr ->
+      valueOfExpr aExpr env store (NullCont cont)
+
+    Empty ->
+      applyCont cont $ Right (VList [], store)
+
+    List exprs ->
+      case exprs of
+        [] ->
+          applyCont cont $ Right (VList [], store)
+
+        aExpr : restExprs ->
+          valueOfExpr aExpr env store (ListHeadCont restExprs env cont)
+
     If condition consequent alternative ->
       valueOfExpr condition env store (IfCont consequent alternative env cont)
 
@@ -141,6 +170,13 @@ data Cont
   | LetCont Id Expr Env Cont
   | Diff1Cont Expr Env Cont
   | Diff2Cont Value Cont
+  | Cons1Cont Expr Env Cont
+  | Cons2Cont Value Cont
+  | CarCont Cont
+  | CdrCont Cont
+  | NullCont Cont
+  | ListHeadCont [Expr] Env Cont
+  | ListTailCont [Expr] Env [Value] Cont
   | IfCont Expr Expr Env Cont
   | RatorCont Expr Env Cont
   | RandCont Value Cont
@@ -171,6 +207,41 @@ applyCont cont input = do
 
     Diff2Cont aValue nextCont ->
       diff aValue value store nextCont
+
+    Cons1Cont bExpr env nextCont ->
+      valueOfExpr bExpr env store (Cons2Cont value nextCont)
+
+    Cons2Cont aValue nextCont ->
+      cons aValue value store nextCont
+
+    CarCont nextCont ->
+      car value store nextCont
+
+    CdrCont nextCont ->
+      cdr value store nextCont
+
+    NullCont nextCont ->
+      isNull value store nextCont
+
+    ListHeadCont exprs env nextCont ->
+      case exprs of
+        [] ->
+          applyCont nextCont $ Right (VList [value], store)
+
+        aExpr : restExprs ->
+          valueOfExpr aExpr env store (ListTailCont restExprs env [value] nextCont)
+
+    ListTailCont exprs env revValues nextCont ->
+      let
+        newRevValues =
+          value : revValues
+      in
+      case exprs of
+        [] ->
+          applyCont nextCont $ Right (VList $ reverse newRevValues, store)
+
+        aExpr : restExprs ->
+          valueOfExpr aExpr env store (ListTailCont restExprs env newRevValues nextCont)
 
     IfCont consequent alternative env nextCont ->
       computeIf value consequent alternative env store nextCont
@@ -221,6 +292,40 @@ diff aValue bValue store cont = do
   applyCont cont $ Right (VNumber $ a - b, store)
 
 
+cons :: Value -> Value -> Store -> Cont -> Either RuntimeError (Value, Store)
+cons a bValue store cont = do
+  l <- toList bValue
+  applyCont cont $ Right (VList $ a : l, store)
+
+
+car :: Value -> Store -> Cont -> Either RuntimeError (Value, Store)
+car aValue store cont = do
+  l <- toList aValue
+  case l of
+    [] ->
+      Left EmptyListError
+
+    x : _ ->
+      applyCont cont $ Right (x, store)
+
+
+cdr :: Value -> Store -> Cont -> Either RuntimeError (Value, Store)
+cdr aValue store cont = do
+  l <- toList aValue
+  case l of
+    [] ->
+      Left EmptyListError
+
+    _ : rest ->
+      applyCont cont $ Right (VList rest, store)
+
+
+isNull :: Value -> Store -> Cont -> Either RuntimeError (Value, Store)
+isNull aValue store cont = do
+  l <- toList aValue
+  applyCont cont $ Right (VBool $ l == [], store)
+
+
 zero :: Value -> Store -> Cont -> Either RuntimeError (Value, Store)
 zero aValue store cont = do
   a <- toNumber aValue
@@ -269,6 +374,11 @@ toBool (VBool b) = Right b
 toBool value = Left $ TypeError TBool (typeOf value)
 
 
+toList :: Value -> Either RuntimeError [Value]
+toList (VList l) = Right l
+toList value = Left $ TypeError TList (typeOf value)
+
+
 toProcedure :: Value -> Either RuntimeError Procedure
 toProcedure (VProc p) = Right p
 toProcedure value = Left $ TypeError TProc (typeOf value)
@@ -277,4 +387,5 @@ toProcedure value = Left $ TypeError TProc (typeOf value)
 typeOf :: Value -> Type
 typeOf (VNumber _) = TNumber
 typeOf (VBool _) = TBool
+typeOf (VList _) = TList
 typeOf (VProc _) = TProc

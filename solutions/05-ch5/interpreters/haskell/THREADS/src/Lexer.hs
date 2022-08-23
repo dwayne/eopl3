@@ -1,12 +1,13 @@
 module Lexer
   ( number, identifier
 
-  , rBegin, rElse, rEnd, rIf, rIn, rLet, rLetrec, rProc, rSet, rThen, rZero
+  , rBegin, rCar, rCdr, rCons, rElse, rEmptyList, rEnd, rIf, rIn
+  , rLet, rLetrec , rList, rNull, rProc, rSet, rThen, rZero
 
   , comma, equal, hyphen
 
   , parens
-  , semiSep
+  , commaSep, semiSep
   , whiteSpace
   )
   where
@@ -38,8 +39,24 @@ rBegin :: Parser ()
 rBegin = reserved "begin"
 
 
+rCar :: Parser ()
+rCar = reserved "car"
+
+
+rCdr :: Parser ()
+rCdr = reserved "cdr"
+
+
+rCons :: Parser ()
+rCons = reserved "cons"
+
+
 rElse :: Parser ()
 rElse = reserved "else"
+
+
+rEmptyList :: Parser ()
+rEmptyList = reserved "emptylist"
 
 
 rEnd :: Parser ()
@@ -60,6 +77,14 @@ rLet = reserved "let"
 
 rLetrec :: Parser ()
 rLetrec = reserved "letrec"
+
+
+rList :: Parser ()
+rList = reserved "list"
+
+
+rNull :: Parser ()
+rNull = reserved "null?"
 
 
 rProc :: Parser ()
@@ -100,6 +125,10 @@ parens :: Parser a -> Parser a
 parens = T.parens lexer
 
 
+commaSep :: Parser a -> Parser [a]
+commaSep = T.commaSep lexer
+
+
 semiSep :: Parser a -> Parser [a]
 semiSep = T.semiSep lexer
 
@@ -134,12 +163,18 @@ languageDef =
     , T.identLetter = identLetter
     , T.reservedNames =
         [ "begin"
+        , "car"
+        , "cdr"
+        , "cons"
         , "else"
+        , "emptylist"
         , "end"
         , "if"
         , "in"
         , "let"
         , "letrec"
+        , "list"
+        , "null?"
         , "proc"
         , "set"
         , "then"

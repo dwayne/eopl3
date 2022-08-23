@@ -191,6 +191,53 @@ spec =
         \in ((f 44) 33)               "
       , VNumber 12
       )
+
+    -- Test list related functions
+
+    , ( "emptylist"
+      , VList []
+      )
+
+    , ( "cons(4, emptylist)"
+      , VList [ VNumber 4 ]
+      )
+
+    , ( "let                        \
+        \  x = 4                    \
+        \in                         \
+        \cons(x,                    \
+        \     cons(cons(-(x, 1),    \
+        \               emptylist), \
+        \          emptylist))      "
+      , VList [ VNumber 4, VList [ VNumber 3 ] ]
+      )
+
+    , ( "car(cons(1, cons(2, emptylist)))"
+      , VNumber 1
+      )
+
+    , ( "cdr(cons(1, cons(2, emptylist)))"
+      , VList [ VNumber 2 ]
+      )
+
+    , ( "null?(cdr(cdr(cons(1, cons(2, emptylist)))))"
+      , VBool True
+      )
+
+    , ( "null?(cdr(cons(1, cons(2, emptylist))))"
+      , VBool False
+      )
+
+    , ( "let                      \
+        \  x = 4                  \
+        \in                       \
+        \list(x, -(x, 1), -(x, 3))"
+      , VList [ VNumber 4, VNumber 3, VNumber 1 ]
+      )
+
+    , ( "null?(list())"
+      , VBool True
+      )
     ]
 
 
