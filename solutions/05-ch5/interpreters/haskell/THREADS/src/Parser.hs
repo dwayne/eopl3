@@ -44,6 +44,7 @@ expr
   <|> beginExpr
   <|> assignExpr
   <|> printExpr
+  <|> spawnExpr
 
 
 constExpr :: Parser Expr
@@ -138,3 +139,8 @@ assignExpr =
 printExpr :: Parser Expr
 printExpr =
   Print <$ rPrint <*> parens expr
+
+
+spawnExpr :: Parser Expr
+spawnExpr =
+  Spawn <$ rSpawn <*> parens expr

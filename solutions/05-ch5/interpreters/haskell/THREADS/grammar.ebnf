@@ -18,6 +18,7 @@ Call    ::= '(' Expr Expr ')'
 Begin   ::= 'begin' Expr (';' Expr)* 'end'
 Assign  ::= 'set' Id '=' Expr
 Print   ::= 'print' '(' Expr ')'
+Spawn   ::= 'spawn' '(' Expr ')'
 Number  ::= [0-9]+
 Id      ::= [a-z]+
 

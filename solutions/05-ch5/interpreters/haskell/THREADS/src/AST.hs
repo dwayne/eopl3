@@ -22,6 +22,7 @@ data Expr
   | Begin [Expr]
   | Assign Id Expr
   | Print Expr
+  | Spawn Expr
   deriving (Eq, Show)
 
 type Number = Integer

@@ -194,6 +194,9 @@ valueOfExpr expr env store io cont =
     Print aExpr ->
       valueOfExpr aExpr env store io (PrintCont cont)
 
+    Spawn _ ->
+      undefined
+
 
 data Cont
   = EndCont

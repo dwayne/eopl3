@@ -1,8 +1,8 @@
 module Lexer
   ( number, identifier
 
-  , rBegin, rCar, rCdr, rCons, rElse, rEmptyList, rEnd, rIf, rIn
-  , rLet, rLetrec , rList, rNull, rPrint, rProc, rSet, rThen, rZero
+  , rBegin, rCar, rCdr, rCons, rElse, rEmptyList, rEnd, rIf, rIn, rLet
+  , rLetrec , rList, rNull, rPrint, rProc, rSet, rSpawn, rThen, rZero
 
   , comma, equal, hyphen
 
@@ -99,6 +99,10 @@ rSet :: Parser ()
 rSet = reserved "set"
 
 
+rSpawn :: Parser ()
+rSpawn = reserved "spawn"
+
+
 rThen :: Parser ()
 rThen = reserved "then"
 
@@ -182,6 +186,7 @@ languageDef =
         , "print"
         , "proc"
         , "set"
+        , "spawn"
         , "then"
         , "zero?"
         ]
