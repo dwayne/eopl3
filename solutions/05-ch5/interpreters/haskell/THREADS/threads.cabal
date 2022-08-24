@@ -23,6 +23,7 @@ library
     Parser
     Queue
     Store
+    Thread
 
 
 test-suite tests
