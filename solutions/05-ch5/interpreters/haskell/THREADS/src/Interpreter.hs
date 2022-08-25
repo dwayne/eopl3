@@ -10,7 +10,7 @@ module Interpreter
 import qualified Env
 import qualified Store
 
-import Data.Bifunctor (bimap)
+import Data.Bifunctor (first)
 import Data.List (intercalate)
 import Debug.Trace (trace)
 import Parser
@@ -70,7 +70,7 @@ run input =
       Left $ SyntaxError err
 
     Right program ->
-      bimap RuntimeError fst $ valueOfProgram program
+      first RuntimeError $ snd $ valueOfProgram program
 
 
 --
@@ -92,107 +92,209 @@ runIO input =
       error $ show $ SyntaxError err
 
     Right program ->
-      case valueOfProgram program of
+      let
+        ((_, io), eitherValue) =
+          valueOfProgram program
+      in
+      case eitherValue of
         Left err ->
           error $ show $ RuntimeError err
 
-        Right (value, (_, io)) ->
+        Right value ->
           io >> return value
 
 
-valueOfProgram :: Program -> Either RuntimeError (Value, (Store, IO ()))
+valueOfProgram :: Program -> ((Store, IO ()), Either RuntimeError Value)
 valueOfProgram (Program expr) =
-  valueOfExpr expr initEnv initStore (return ()) EndCont
+  runEval initStore io $
+    valueOfExpr expr initEnv EndCont
   where
-    store0 = Store.empty
-    (iRef, store1) = Store.newref (VNumber 1) store0
-    (vRef, store2) = Store.newref (VNumber 5) store1
-    (xRef, initStore) = Store.newref (VNumber 10) store2
-
     initEnv =
       Env.extend "i" iRef
         (Env.extend "v" vRef
           (Env.extend "x" xRef
             Env.empty))
 
+    store0 = Store.empty
+    (iRef, store1) = Store.newref (VNumber 1) store0
+    (vRef, store2) = Store.newref (VNumber 5) store1
+    (xRef, initStore) = Store.newref (VNumber 10) store2
 
-valueOfExpr :: Expr -> Env -> Store -> IO () -> Cont -> Either RuntimeError (Value, (Store, IO ()))
-valueOfExpr expr env store io cont =
+    io = return ()
+
+
+data Eval a =
+  Eval (Store -> IO () -> ((Store, IO ()), Either RuntimeError a))
+
+
+runEval :: Store -> IO () -> Eval a -> ((Store, IO ()), Either RuntimeError a)
+runEval store io (Eval t) = t store io
+
+
+instance Functor Eval where
+  fmap f (Eval t) =
+    Eval $ \store io ->
+      (fmap . fmap) f $ t store io
+
+
+instance Applicative Eval where
+  pure a =
+    Eval $ \store io ->
+      ((store, io), Right a)
+
+  Eval tF <*> Eval t =
+    Eval $ \store0 io0 ->
+      let
+        ((store1, io1), eitherF) =
+          tF store0 io0
+
+        ((store2, io2), eitherA) =
+          t store1 io1
+      in
+      ((store2, io2), eitherF <*> eitherA)
+
+
+instance Monad Eval where
+  Eval t >>= f =
+    Eval $ \store0 io0 ->
+      let
+        ((store1, io1), eitherA) =
+          t store0 io0
+      in
+      case eitherA of
+        Right a ->
+          let
+            Eval u =
+              f a
+          in
+          u store1 io1
+
+        Left err ->
+          ((store1, io1), Left err)
+
+
+throwError :: RuntimeError -> Eval a
+throwError err =
+  Eval $ \store io ->
+    ((store, io), Left err)
+
+
+newref :: Value -> Eval Store.Ref
+newref value =
+  Eval $ \store0 io ->
+    let
+      (ref, store1) =
+        Store.newref value store0
+    in
+    ((store1, io), Right ref)
+
+
+deref :: Store.Ref -> Eval (Maybe Value)
+deref ref =
+  Eval $ \store io ->
+    ((store, io), Right $ Store.deref ref store)
+
+
+setref :: Store.Ref -> Value -> Eval ()
+setref ref value =
+  Eval $ \store0 io ->
+    let
+      maybeStore =
+        Store.setref ref value store0
+    in
+    case maybeStore of
+      Just store1 ->
+        ((store1, io), Right ())
+
+      Nothing ->
+        ((store0, io), Left $ LocationNotFound ref)
+
+
+println :: Show a => a -> Eval ()
+println a =
+  Eval $ \store io ->
+    ((store, io >> print a), Right ())
+
+
+valueOfExpr :: Expr -> Env -> Cont -> Eval Value
+valueOfExpr expr env cont =
   case expr of
     Const n ->
-      applyCont cont $ Right (VNumber n, (store, io))
+      applyCont cont $ VNumber n
 
-    Var x ->
-      applyCont cont $
-        case find x env store of
-          Just (ref, store1) ->
-            case Store.deref ref store1 of
-              Just value ->
-                Right (value, (store1, io))
+    Var x -> do
+      maybeRef <- find x env
+      case maybeRef of
+        Just ref -> do
+          maybeValue <- deref ref
+          case maybeValue of
+            Just value ->
+              applyCont cont value
 
-              Nothing ->
-                Left $ LocationNotFound ref
+            Nothing ->
+              throwError $ LocationNotFound ref
 
-          Nothing ->
-            Left $ IdentifierNotFound x
+        Nothing ->
+          throwError $ IdentifierNotFound x
 
     Diff aExpr bExpr ->
-      valueOfExpr aExpr env store io (Diff1Cont bExpr env cont)
+      valueOfExpr aExpr env (Diff1Cont bExpr env cont)
 
     Zero aExpr ->
-      valueOfExpr aExpr env store io (ZeroCont cont)
+      valueOfExpr aExpr env (ZeroCont cont)
 
     Cons aExpr bExpr ->
-      valueOfExpr aExpr env store io (Cons1Cont bExpr env cont)
+      valueOfExpr aExpr env (Cons1Cont bExpr env cont)
 
     Car aExpr ->
-      valueOfExpr aExpr env store io (CarCont cont)
+      valueOfExpr aExpr env (CarCont cont)
 
     Cdr aExpr ->
-      valueOfExpr aExpr env store io (CdrCont cont)
+      valueOfExpr aExpr env (CdrCont cont)
 
     Null aExpr ->
-      valueOfExpr aExpr env store io (NullCont cont)
+      valueOfExpr aExpr env (NullCont cont)
 
     Empty ->
-      applyCont cont $ Right (VList [], (store, io))
+      applyCont cont $ VList []
 
     List exprs ->
       case exprs of
         [] ->
-          applyCont cont $ Right (VList [], (store, io))
+          applyCont cont $ VList []
 
         aExpr : restExprs ->
-          valueOfExpr aExpr env store io (ListCont restExprs env [] cont)
+          valueOfExpr aExpr env (ListCont restExprs env [] cont)
 
     If condition consequent alternative ->
-      valueOfExpr condition env store io (IfCont consequent alternative env cont)
+      valueOfExpr condition env (IfCont consequent alternative env cont)
 
     Let x aExpr body ->
-      valueOfExpr aExpr env store io (LetCont x body env cont)
+      valueOfExpr aExpr env (LetCont x body env cont)
 
     Proc param body ->
-      applyCont cont $ Right (VProc $ Procedure param body env, (store, io))
+      applyCont cont $ VProc $ Procedure param body env
 
     Letrec declarations letrecBody ->
-      valueOfExpr letrecBody (Env.extendRec declarations env) store io cont
+      valueOfExpr letrecBody (Env.extendRec declarations env) cont
 
     Call rator rand ->
-      valueOfExpr rator env store io (RatorCont rand env cont)
+      valueOfExpr rator env (RatorCont rand env cont)
 
     Begin exprs ->
-      computeBegin exprs env store io cont
+      computeBegin exprs env cont
 
-    Assign x aExpr ->
-      case find x env store of
-        Just (ref, store1) ->
-          valueOfExpr aExpr env store1 io (AssignCont ref cont)
+    Assign x aExpr -> do
+      maybeRef <- find x env
+      case maybeRef of
+        Just ref ->
+          valueOfExpr aExpr env (AssignCont ref cont)
 
         Nothing ->
-          Left $ IdentifierNotFound x
+          throwError $ IdentifierNotFound x
 
     Print aExpr ->
-      valueOfExpr aExpr env store io (PrintCont cont)
+      valueOfExpr aExpr env (PrintCont cont)
 
     Spawn _ ->
       undefined
@@ -218,44 +320,40 @@ data Cont
   | PrintCont Cont
 
 
-applyCont :: Cont -> Either RuntimeError (Value, (Store, IO ())) -> Either RuntimeError (Value, (Store, IO ()))
-applyCont cont input = do
-  (value, (store, io)) <- input
+applyCont :: Cont -> Value -> Eval Value
+applyCont cont value =
   case cont of
     EndCont ->
       trace "End of computation" $
-        Right (value, (store, io))
+        return value
 
     ZeroCont nextCont ->
-      zero value store io nextCont
+      zero value nextCont
 
-    LetCont x body env nextCont ->
-      let
-        (aRef, store1) =
-          Store.newref value store
-      in
-      valueOfExpr body (Env.extend x aRef env) store1 io nextCont
+    LetCont x body env nextCont -> do
+      aRef <- newref value
+      valueOfExpr body (Env.extend x aRef env) nextCont
 
     Diff1Cont bExpr env nextCont ->
-      valueOfExpr bExpr env store io (Diff2Cont value nextCont)
+      valueOfExpr bExpr env (Diff2Cont value nextCont)
 
     Diff2Cont aValue nextCont ->
-      diff aValue value store io nextCont
+      diff aValue value nextCont
 
     Cons1Cont bExpr env nextCont ->
-      valueOfExpr bExpr env store io (Cons2Cont value nextCont)
+      valueOfExpr bExpr env (Cons2Cont value nextCont)
 
     Cons2Cont aValue nextCont ->
-      cons aValue value store io nextCont
+      cons aValue value nextCont
 
     CarCont nextCont ->
-      car value store io nextCont
+      car value nextCont
 
     CdrCont nextCont ->
-      cdr value store io nextCont
+      cdr value nextCont
 
     NullCont nextCont ->
-      isNull value store io nextCont
+      isNull value nextCont
 
     ListCont exprs env revValues nextCont ->
       let
@@ -264,125 +362,118 @@ applyCont cont input = do
       in
       case exprs of
         [] ->
-          applyCont nextCont $ Right (VList $ reverse newRevValues, (store, io))
+          applyCont nextCont $ VList $ reverse newRevValues
 
         aExpr : restExprs ->
-          valueOfExpr aExpr env store io (ListCont restExprs env newRevValues nextCont)
+          valueOfExpr aExpr env (ListCont restExprs env newRevValues nextCont)
 
     IfCont consequent alternative env nextCont ->
-      computeIf value consequent alternative env store io nextCont
+      computeIf value consequent alternative env nextCont
 
     RatorCont rand env nextCont ->
-      valueOfExpr rand env store io (RandCont value nextCont)
+      valueOfExpr rand env (RandCont value nextCont)
 
     RandCont ratorValue nextCont ->
-      apply ratorValue value store io nextCont
+      apply ratorValue value nextCont
 
     BeginCont restExprs env nextCont ->
-      computeBegin restExprs env store io nextCont
+      computeBegin restExprs env nextCont
 
-    AssignCont ref nextCont ->
-      applyCont nextCont $
-        case Store.setref ref value store of
-          Just store1 ->
-            Right (value, (store1, io))
+    AssignCont ref nextCont -> do
+      setref ref value
+      applyCont nextCont value
 
-          Nothing ->
-            Left $ LocationNotFound ref
-
-    PrintCont nextCont ->
-      applyCont nextCont $ Right (value, (store, io >> print value))
+    PrintCont nextCont -> do
+      println value
+      applyCont nextCont value
 
 
-find :: Id -> Env -> Store -> Maybe (Store.Ref, Store)
-find x env store =
+find :: Id -> Env -> Eval (Maybe Store.Ref)
+find x env =
   case Env.find x env of
     Just (Env.Value ref) ->
-      Just (ref, store)
+      return $ Just ref
 
     Just (Env.Procedure param body savedEnv) ->
       let
         value =
           VProc $ Procedure param body savedEnv
-
-        (ref, store1) =
-          Store.newref value store
-      in
-      Just (ref, store1)
+      in do
+      Just <$> newref value
 
     Nothing ->
-      Nothing
+      return Nothing
 
 
-diff :: Value -> Value -> Store -> IO () -> Cont -> Either RuntimeError (Value, (Store, IO ()))
-diff aValue bValue store io cont = do
+diff :: Value -> Value -> Cont -> Eval Value
+diff aValue bValue cont = do
   a <- toNumber aValue
   b <- toNumber bValue
-  applyCont cont $ Right (VNumber $ a - b, (store, io))
+  applyCont cont $ VNumber $ a - b
 
 
-cons :: Value -> Value -> Store -> IO () -> Cont -> Either RuntimeError (Value, (Store, IO ()))
-cons a bValue store io cont = do
+cons :: Value -> Value -> Cont -> Eval Value
+cons a bValue cont = do
   l <- toList bValue
-  applyCont cont $ Right (VList $ a : l, (store, io))
+  applyCont cont $ VList $ a : l
 
 
-car :: Value -> Store -> IO () -> Cont -> Either RuntimeError (Value, (Store, IO ()))
-car aValue store io cont = do
+car :: Value -> Cont -> Eval Value
+car aValue cont = do
   l <- toList aValue
   case l of
     [] ->
-      Left EmptyListError
+      throwError EmptyListError
 
     x : _ ->
-      applyCont cont $ Right (x, (store, io))
+      applyCont cont x
 
 
-cdr :: Value -> Store -> IO () -> Cont -> Either RuntimeError (Value, (Store, IO ()))
-cdr aValue store io cont = do
+cdr :: Value -> Cont -> Eval Value
+cdr aValue cont = do
   l <- toList aValue
   case l of
     [] ->
-      Left EmptyListError
+      throwError EmptyListError
 
     _ : rest ->
-      applyCont cont $ Right (VList rest, (store, io))
+      applyCont cont $ VList rest
 
 
-isNull :: Value -> Store -> IO () -> Cont -> Either RuntimeError (Value, (Store, IO ()))
-isNull aValue store io cont = do
+isNull :: Value -> Cont -> Eval Value
+isNull aValue cont = do
   l <- toList aValue
-  applyCont cont $ Right (VBool $ l == [], (store, io))
+  applyCont cont $ VBool $ l == []
 
 
-zero :: Value -> Store -> IO () -> Cont -> Either RuntimeError (Value, (Store, IO ()))
-zero aValue store io cont = do
+zero :: Value -> Cont -> Eval Value
+zero aValue cont = do
   a <- toNumber aValue
-  applyCont cont $ Right (VBool $ a == 0, (store, io))
+  applyCont cont $ VBool $ a == 0
 
 
-computeIf :: Value -> Expr -> Expr -> Env -> Store -> IO () -> Cont -> Either RuntimeError (Value, (Store, IO ()))
-computeIf conditionValue consequent alternative env store io cont = do
+computeIf :: Value -> Expr -> Expr -> Env -> Cont -> Eval Value
+computeIf conditionValue consequent alternative env cont = do
   a <- toBool conditionValue
   let expr = if a then consequent else alternative
-  valueOfExpr expr env store io cont
+  valueOfExpr expr env cont
 
 
-apply :: Value -> Value -> Store -> IO () -> Cont -> Either RuntimeError (Value, (Store, IO ()))
-apply ratorValue arg store io cont = do
+apply :: Value -> Value -> Cont -> Eval Value
+apply ratorValue arg cont = do
   Procedure param body savedEnv <- toProcedure ratorValue
-  let (argRef, store1) = Store.newref arg store
-  valueOfExpr body (Env.extend param argRef savedEnv) store1 io cont
+  argRef <- newref arg
+  valueOfExpr body (Env.extend param argRef savedEnv) cont
 
 
-computeBegin :: [Expr] -> Env -> Store -> IO () -> Cont -> Either RuntimeError (Value, (Store, IO ()))
-computeBegin exprs env store io cont =
+computeBegin :: [Expr] -> Env -> Cont -> Eval Value
+computeBegin exprs env cont =
   case exprs of
     [expr] ->
-      valueOfExpr expr env store io cont
+      valueOfExpr expr env cont
 
     expr : restExprs -> do
-      valueOfExpr expr env store io (BeginCont restExprs env cont)
+      valueOfExpr expr env (BeginCont restExprs env cont)
 
     [] ->
       -- N.B. Based on the grammar this condition will never be reached.
@@ -393,24 +484,24 @@ computeBegin exprs env store io cont =
       undefined
 
 
-toNumber :: Value -> Either RuntimeError Number
-toNumber (VNumber n) = Right n
-toNumber value = Left $ TypeError TNumber (typeOf value)
+toNumber :: Value -> Eval Number
+toNumber (VNumber n) = return n
+toNumber value = throwError $ TypeError TNumber (typeOf value)
 
 
-toBool :: Value -> Either RuntimeError Bool
-toBool (VBool b) = Right b
-toBool value = Left $ TypeError TBool (typeOf value)
+toBool :: Value -> Eval Bool
+toBool (VBool b) = return b
+toBool value = throwError $ TypeError TBool (typeOf value)
 
 
-toList :: Value -> Either RuntimeError [Value]
-toList (VList l) = Right l
-toList value = Left $ TypeError TList (typeOf value)
+toList :: Value -> Eval [Value]
+toList (VList l) = return l
+toList value = throwError $ TypeError TList (typeOf value)
 
 
-toProcedure :: Value -> Either RuntimeError Procedure
-toProcedure (VProc p) = Right p
-toProcedure value = Left $ TypeError TProc (typeOf value)
+toProcedure :: Value -> Eval Procedure
+toProcedure (VProc p) = return p
+toProcedure value = throwError $ TypeError TProc (typeOf value)
 
 
 typeOf :: Value -> Type
