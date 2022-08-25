@@ -179,41 +179,59 @@ throwError err =
     ((store, io), Left err)
 
 
+getStore :: Eval Store
+getStore =
+  Eval $ \store io ->
+    ((store, io), Right store)
+
+
+setStore :: Store -> Eval ()
+setStore store =
+  Eval $ \_ io ->
+    ((store, io), Right ())
+
+
+getIO :: Eval (IO ())
+getIO =
+  Eval $ \store io ->
+    ((store, io), Right io)
+
+
+setIO :: IO () -> Eval ()
+setIO io =
+  Eval $ \store _ ->
+    ((store, io), Right ())
+
+
 newref :: Value -> Eval Store.Ref
-newref value =
-  Eval $ \store0 io ->
-    let
-      (ref, store1) =
-        Store.newref value store0
-    in
-    ((store1, io), Right ref)
+newref value = do
+  store0 <- getStore
+  let (ref, store1) = Store.newref value store0
+  setStore store1
+  return ref
 
 
 deref :: Store.Ref -> Eval (Maybe Value)
-deref ref =
-  Eval $ \store io ->
-    ((store, io), Right $ Store.deref ref store)
+deref ref = do
+  store <- getStore
+  return $ Store.deref ref store
 
 
 setref :: Store.Ref -> Value -> Eval ()
-setref ref value =
-  Eval $ \store0 io ->
-    let
-      maybeStore =
-        Store.setref ref value store0
-    in
-    case maybeStore of
-      Just store1 ->
-        ((store1, io), Right ())
+setref ref value = do
+  store0 <- getStore
+  case Store.setref ref value store0 of
+    Just store1 -> do
+      setStore store1
 
-      Nothing ->
-        ((store0, io), Left $ LocationNotFound ref)
+    Nothing ->
+      throwError $ LocationNotFound ref
 
 
 println :: Show a => a -> Eval ()
-println a =
-  Eval $ \store io ->
-    ((store, io >> print a), Right ())
+println a = do
+  io <- getIO
+  setIO $ io >> print a
 
 
 valueOfExpr :: Expr -> Env -> Cont -> Eval Value
