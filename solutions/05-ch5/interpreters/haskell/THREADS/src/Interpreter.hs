@@ -8,12 +8,14 @@ module Interpreter
 
 
 import qualified Env
+import qualified Scheduler
 import qualified Store
+import qualified Thread
 
 import Data.Bifunctor (first)
 import Data.List (intercalate)
-import Debug.Trace (trace)
 import Parser
+import Thread (Thread)
 
 
 data Value
@@ -70,7 +72,7 @@ run input =
       Left $ SyntaxError err
 
     Right program ->
-      first RuntimeError $ snd $ valueOfProgram program
+      first RuntimeError $ snd $ valueOfProgram 5 program
 
 
 --
@@ -79,14 +81,14 @@ run input =
 -- Example 1:
 --
 -- $ stack ghci
--- > runIO "let x = 5 in begin print(list(1, 2, 3)); set x = 6; print(x); -(x, 1) end"
--- End of computation
+-- > runIO 5 "let x = 5 in begin print(list(1, 2, 3)); set x = 6; print(x); -(x, 1) end"
 -- [1, 2, 3]
 -- 6
+-- "End of main thread computation"
 -- 5
 --
-runIO :: String -> IO Value
-runIO input =
+runIO :: Int -> String -> IO Value
+runIO maxTimeSlice input =
   case parse input of
     Left err ->
       error $ show $ SyntaxError err
@@ -94,7 +96,7 @@ runIO input =
     Right program ->
       let
         (State { _io = io }, eitherValue) =
-          valueOfProgram program
+          valueOfProgram maxTimeSlice program
       in
       case eitherValue of
         Left err ->
@@ -104,10 +106,10 @@ runIO input =
           io >> return value
 
 
-valueOfProgram :: Program -> (State, Either RuntimeError Value)
-valueOfProgram (Program expr) =
+valueOfProgram :: Int -> Program -> (State, Either RuntimeError Value)
+valueOfProgram maxTimeSlice (Program expr) =
   runEval state $
-    valueOfExpr expr initEnv EndCont
+    valueOfExpr expr initEnv EndMainThreadCont
   where
     initEnv =
       Env.extend "i" iRef
@@ -117,7 +119,8 @@ valueOfProgram (Program expr) =
 
     state =
       State
-        { _store = initStore
+        { _scheduler = Scheduler.new maxTimeSlice
+        , _store = initStore
         , _io = io
         }
 
@@ -134,9 +137,12 @@ data Eval a =
 
 data State =
   State
-    { _store :: Store
+    { _scheduler :: Scheduler
+    , _store :: Store
     , _io :: IO ()
     }
+
+type Scheduler = Scheduler.Scheduler (Eval Value)
 
 
 runEval :: State -> Eval a -> (State, Either RuntimeError a)
@@ -191,6 +197,18 @@ throwError err =
     (state, Left err)
 
 
+getScheduler :: Eval Scheduler
+getScheduler =
+  Eval $ \state@(State { _scheduler = scheduler }) ->
+    (state, Right scheduler)
+
+
+setScheduler :: Scheduler -> Eval ()
+setScheduler scheduler =
+  Eval $ \state ->
+    (state { _scheduler = scheduler }, Right ())
+
+
 getStore :: Eval Store
 getStore =
   Eval $ \state@(State { _store = store }) ->
@@ -213,6 +231,43 @@ setIO :: IO () -> Eval ()
 setIO io =
   Eval $ \state ->
     (state { _io = io }, Right ())
+
+
+setFinalAnswer :: Eval Value -> Eval ()
+setFinalAnswer valueOfComputation = do
+  scheduler <- getScheduler
+  setScheduler $ Scheduler.setFinalAnswer valueOfComputation scheduler
+
+
+isTimeExpired :: Eval Bool
+isTimeExpired = do
+  scheduler <- getScheduler
+  return $ Scheduler.isTimeExpired scheduler
+
+
+schedule :: Thread (Eval Value) -> Eval ()
+schedule thread = do
+  scheduler <- getScheduler
+  setScheduler $ Scheduler.schedule thread scheduler
+
+
+runNextThread :: Eval Value
+runNextThread = do
+  scheduler0 <- getScheduler
+  case Scheduler.runNextThread scheduler0 of
+    (Just valueOfComputation, scheduler1) -> do
+      setScheduler scheduler1
+      valueOfComputation
+
+    (Nothing, _) ->
+      -- This SHOULD NOT be possible.
+      undefined
+
+
+tick :: Eval ()
+tick = do
+  scheduler <- getScheduler
+  setScheduler $ Scheduler.tick scheduler
 
 
 newref :: Value -> Eval Store.Ref
@@ -326,12 +381,13 @@ valueOfExpr expr env cont =
     Print aExpr ->
       valueOfExpr aExpr env (PrintCont cont)
 
-    Spawn _ ->
-      undefined
+    Spawn aExpr ->
+      valueOfExpr aExpr env (SpawnCont cont)
 
 
 data Cont
-  = EndCont
+  = EndMainThreadCont
+  | EndSubthreadCont
   | ZeroCont Cont
   | LetCont Id Expr Env Cont
   | Diff1Cont Expr Env Cont
@@ -348,74 +404,96 @@ data Cont
   | BeginCont [Expr] Env Cont
   | AssignCont Store.Ref Cont
   | PrintCont Cont
+  | SpawnCont Cont
 
 
 applyCont :: Cont -> Value -> Eval Value
-applyCont cont value =
-  case cont of
-    EndCont ->
-      trace "End of computation" $
-        return value
+applyCont cont value = do
+  preempt <- isTimeExpired
+  if preempt then do
+    schedule $ Thread.new (\_ -> applyCont cont value)
+    runNextThread
+  else do
+    tick
+    case cont of
+      EndMainThreadCont -> do
+        println "End of main thread computation"
+        setFinalAnswer $ return value
+        runNextThread
 
-    ZeroCont nextCont ->
-      zero value nextCont
+      EndSubthreadCont -> do
+        println "End of subthread computation"
+        runNextThread
 
-    LetCont x body env nextCont -> do
-      aRef <- newref value
-      valueOfExpr body (Env.extend x aRef env) nextCont
+      ZeroCont nextCont ->
+        zero value nextCont
 
-    Diff1Cont bExpr env nextCont ->
-      valueOfExpr bExpr env (Diff2Cont value nextCont)
+      LetCont x body env nextCont -> do
+        aRef <- newref value
+        valueOfExpr body (Env.extend x aRef env) nextCont
 
-    Diff2Cont aValue nextCont ->
-      diff aValue value nextCont
+      Diff1Cont bExpr env nextCont ->
+        valueOfExpr bExpr env (Diff2Cont value nextCont)
 
-    Cons1Cont bExpr env nextCont ->
-      valueOfExpr bExpr env (Cons2Cont value nextCont)
+      Diff2Cont aValue nextCont ->
+        diff aValue value nextCont
 
-    Cons2Cont aValue nextCont ->
-      cons aValue value nextCont
+      Cons1Cont bExpr env nextCont ->
+        valueOfExpr bExpr env (Cons2Cont value nextCont)
 
-    CarCont nextCont ->
-      car value nextCont
+      Cons2Cont aValue nextCont ->
+        cons aValue value nextCont
 
-    CdrCont nextCont ->
-      cdr value nextCont
+      CarCont nextCont ->
+        car value nextCont
 
-    NullCont nextCont ->
-      isNull value nextCont
+      CdrCont nextCont ->
+        cdr value nextCont
 
-    ListCont exprs env revValues nextCont ->
-      let
-        newRevValues =
-          value : revValues
-      in
-      case exprs of
-        [] ->
-          applyCont nextCont $ VList $ reverse newRevValues
+      NullCont nextCont ->
+        isNull value nextCont
 
-        aExpr : restExprs ->
-          valueOfExpr aExpr env (ListCont restExprs env newRevValues nextCont)
+      ListCont exprs env revValues nextCont ->
+        let
+          newRevValues =
+            value : revValues
+        in
+        case exprs of
+          [] ->
+            applyCont nextCont $ VList $ reverse newRevValues
 
-    IfCont consequent alternative env nextCont ->
-      computeIf value consequent alternative env nextCont
+          aExpr : restExprs ->
+            valueOfExpr aExpr env (ListCont restExprs env newRevValues nextCont)
 
-    RatorCont rand env nextCont ->
-      valueOfExpr rand env (RandCont value nextCont)
+      IfCont consequent alternative env nextCont ->
+        computeIf value consequent alternative env nextCont
 
-    RandCont ratorValue nextCont ->
-      apply ratorValue value nextCont
+      RatorCont rand env nextCont ->
+        valueOfExpr rand env (RandCont value nextCont)
 
-    BeginCont restExprs env nextCont ->
-      computeBegin restExprs env nextCont
+      RandCont ratorValue nextCont ->
+        apply ratorValue value nextCont
 
-    AssignCont ref nextCont -> do
-      setref ref value
-      applyCont nextCont value
+      BeginCont restExprs env nextCont ->
+        computeBegin restExprs env nextCont
 
-    PrintCont nextCont -> do
-      println value
-      applyCont nextCont value
+      AssignCont ref nextCont -> do
+        setref ref value
+        applyCont nextCont value
+
+      PrintCont nextCont -> do
+        println value
+        applyCont nextCont value
+
+      SpawnCont nextCont -> do
+        spawn value nextCont
+
+
+spawn :: Value -> Cont -> Eval Value
+spawn aValue cont = do
+  p <- toProcedure aValue
+  schedule $ Thread.new (\_ -> applyProcedure p (VNumber 28) EndSubthreadCont)
+  applyCont cont $ VNumber 73
 
 
 find :: Id -> Env -> Eval (Maybe Store.Ref)
@@ -491,7 +569,12 @@ computeIf conditionValue consequent alternative env cont = do
 
 apply :: Value -> Value -> Cont -> Eval Value
 apply ratorValue arg cont = do
-  Procedure param body savedEnv <- toProcedure ratorValue
+  p <- toProcedure ratorValue
+  applyProcedure p arg cont
+
+
+applyProcedure :: Procedure -> Value -> Cont -> Eval Value
+applyProcedure (Procedure param body savedEnv) arg cont = do
   argRef <- newref arg
   valueOfExpr body (Env.extend param argRef savedEnv) cont
 
