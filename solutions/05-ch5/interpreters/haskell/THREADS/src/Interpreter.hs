@@ -93,7 +93,7 @@ runIO input =
 
     Right program ->
       let
-        ((_, io), eitherValue) =
+        (State { _io = io }, eitherValue) =
           valueOfProgram program
       in
       case eitherValue of
@@ -104,9 +104,9 @@ runIO input =
           io >> return value
 
 
-valueOfProgram :: Program -> ((Store, IO ()), Either RuntimeError Value)
+valueOfProgram :: Program -> (State, Either RuntimeError Value)
 valueOfProgram (Program expr) =
-  runEval initStore io $
+  runEval state $
     valueOfExpr expr initEnv EndCont
   where
     initEnv =
@@ -114,6 +114,12 @@ valueOfProgram (Program expr) =
         (Env.extend "v" vRef
           (Env.extend "x" xRef
             Env.empty))
+
+    state =
+      State
+        { _store = initStore
+        , _io = io
+        }
 
     store0 = Store.empty
     (iRef, store1) = Store.newref (VNumber 1) store0
@@ -124,42 +130,48 @@ valueOfProgram (Program expr) =
 
 
 data Eval a =
-  Eval (Store -> IO () -> ((Store, IO ()), Either RuntimeError a))
+  Eval (State -> (State, Either RuntimeError a))
+
+data State =
+  State
+    { _store :: Store
+    , _io :: IO ()
+    }
 
 
-runEval :: Store -> IO () -> Eval a -> ((Store, IO ()), Either RuntimeError a)
-runEval store io (Eval t) = t store io
+runEval :: State -> Eval a -> (State, Either RuntimeError a)
+runEval state (Eval t) = t state
 
 
 instance Functor Eval where
   fmap f (Eval t) =
-    Eval $ \store io ->
-      (fmap . fmap) f $ t store io
+    Eval $ \state ->
+      (fmap . fmap) f $ t state
 
 
 instance Applicative Eval where
   pure a =
-    Eval $ \store io ->
-      ((store, io), Right a)
+    Eval $ \state ->
+      (state, Right a)
 
   Eval tF <*> Eval t =
-    Eval $ \store0 io0 ->
+    Eval $ \state0 ->
       let
-        ((store1, io1), eitherF) =
-          tF store0 io0
+        (state1, eitherF) =
+          tF state0
 
-        ((store2, io2), eitherA) =
-          t store1 io1
+        (state2, eitherA) =
+          t state1
       in
-      ((store2, io2), eitherF <*> eitherA)
+      (state2, eitherF <*> eitherA)
 
 
 instance Monad Eval where
   Eval t >>= f =
-    Eval $ \store0 io0 ->
+    Eval $ \state0 ->
       let
-        ((store1, io1), eitherA) =
-          t store0 io0
+        (state1, eitherA) =
+          t state0
       in
       case eitherA of
         Right a ->
@@ -167,40 +179,40 @@ instance Monad Eval where
             Eval u =
               f a
           in
-          u store1 io1
+          u state1
 
         Left err ->
-          ((store1, io1), Left err)
+          (state1, Left err)
 
 
 throwError :: RuntimeError -> Eval a
 throwError err =
-  Eval $ \store io ->
-    ((store, io), Left err)
+  Eval $ \state ->
+    (state, Left err)
 
 
 getStore :: Eval Store
 getStore =
-  Eval $ \store io ->
-    ((store, io), Right store)
+  Eval $ \state@(State { _store = store }) ->
+    (state, Right store)
 
 
 setStore :: Store -> Eval ()
 setStore store =
-  Eval $ \_ io ->
-    ((store, io), Right ())
+  Eval $ \state ->
+    (state { _store = store }, Right ())
 
 
 getIO :: Eval (IO ())
 getIO =
-  Eval $ \store io ->
-    ((store, io), Right io)
+  Eval $ \state@(State { _io = io }) ->
+    (state, Right io)
 
 
 setIO :: IO () -> Eval ()
 setIO io =
-  Eval $ \store _ ->
-    ((store, io), Right ())
+  Eval $ \state ->
+    (state { _io = io }, Right ())
 
 
 newref :: Value -> Eval Store.Ref
