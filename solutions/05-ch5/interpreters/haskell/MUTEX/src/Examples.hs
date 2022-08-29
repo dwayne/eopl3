@@ -1,6 +1,7 @@
 module Examples
   ( example1
   , example2
+  , example3a, example3b
   ) where
 
 
@@ -100,3 +101,98 @@ example2 maxTimeSlice =
 -- "End of main thread computation"
 -- 44
 --
+
+
+-- Example 3a: An unsafe counter.
+--
+example3a :: Int -> IO I.Value
+example3a maxTimeSlice =
+  let
+    input =
+      "let                              \
+      \  x = 0                          \
+      \in                               \
+      \let                              \
+      \  incrx =                        \
+      \    proc (id)                    \
+      \      proc (dummy)               \
+      \        begin                    \
+      \          set x = -(x, -(0, 1)); \
+      \          print(-(id, -(0, x)))  \
+      \        end                      \
+      \in                               \
+      \  begin                          \
+      \    spawn((incrx 100));          \
+      \    spawn((incrx 200));          \
+      \    spawn((incrx 300))           \
+      \  end                            "
+  in
+  I.runIO maxTimeSlice input
+-- Results:
+--
+-- All executions give: 101, 202, 303.
+--
+-- NOTE: The problem doesn't show itself because of how the scheduler is
+-- implemented.
+--
+-- 1. Each thread gets an equal time slice.
+-- 2. Threads are executed in-turn.
+--
+-- Let's try something else then:
+
+
+example3b :: Int -> IO I.Value
+example3b maxTimeSlice =
+  let
+    input =
+      "let                              \
+      \  x = 0                          \
+      \in                               \
+      \let                              \
+      \  incra =                        \
+      \    proc (id)                    \
+      \      proc (dummy)               \
+      \        begin                    \
+      \          id; id;                \
+      \          set x = -(x, -(0, 1)); \
+      \          print(-(id, -(0, x)))  \
+      \        end                      \
+      \in                               \
+      \let                              \
+      \  incrb =                        \
+      \    proc (id)                    \
+      \      proc (dummy)               \
+      \        begin                    \
+      \          id;                    \
+      \          set x = -(x, -(0, 1)); \
+      \          print(-(id, -(0, x)))  \
+      \        end                      \
+      \in                               \
+      \let                              \
+      \  incrc =                        \
+      \    proc (id)                    \
+      \      proc (dummy)               \
+      \        begin                    \
+      \          set x = -(x, -(0, 1)); \
+      \          print(-(id, -(0, x)))  \
+      \        end                      \
+      \in                               \
+      \  begin                          \
+      \    spawn((incra 100));          \
+      \    spawn((incrb 200));          \
+      \    spawn((incrc 300))           \
+      \  end                            "
+  in
+  I.runIO maxTimeSlice input
+-- Results:
+--
+-- 1 - 101, 201, 302
+-- 4 - 101, 202, 303
+-- 5 - 101, 202, 302
+-- 6 - 201, 101, 302
+-- 8 - 101, 203, 303
+-- 100 - 101, 202, 303
+--
+-- Can I get it to produce 1?
+--
+-- i.e. the sequence: 101, 201, 301.
