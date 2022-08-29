@@ -45,6 +45,9 @@ expr
   <|> assignExpr
   <|> printExpr
   <|> spawnExpr
+  <|> mutexExpr
+  <|> waitExpr
+  <|> signalExpr
 
 
 constExpr :: Parser Expr
@@ -144,3 +147,18 @@ printExpr =
 spawnExpr :: Parser Expr
 spawnExpr =
   Spawn <$ rSpawn <*> parens expr
+
+
+mutexExpr :: Parser Expr
+mutexExpr =
+  Mutex <$ rMutex <* parens whiteSpace
+
+
+waitExpr :: Parser Expr
+waitExpr =
+  Wait <$ rWait <*> parens expr
+
+
+signalExpr :: Parser Expr
+signalExpr =
+  Signal <$ rSignal <*> parens expr

@@ -19,6 +19,9 @@ Begin   ::= 'begin' Expr (';' Expr)* 'end'
 Assign  ::= 'set' Id '=' Expr
 Print   ::= 'print' '(' Expr ')'
 Spawn   ::= 'spawn' '(' Expr ')'
+Mutex   ::= 'mutex' '(' ')'
+Wait    ::= 'wait' '(' Expr ')'
+Signal  ::= 'signal' '(' Expr ')'
 Number  ::= [0-9]+
 Id      ::= [a-z]+
 

@@ -23,6 +23,9 @@ data Expr
   | Assign Id Expr
   | Print Expr
   | Spawn Expr
+  | Mutex
+  | Wait Expr
+  | Signal Expr
   deriving (Eq, Show)
 
 type Number = Integer

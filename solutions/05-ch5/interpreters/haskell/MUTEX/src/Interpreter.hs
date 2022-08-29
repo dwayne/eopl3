@@ -384,6 +384,15 @@ valueOfExpr expr env cont =
     Spawn aExpr ->
       valueOfExpr aExpr env (SpawnCont cont)
 
+    Mutex ->
+      undefined
+
+    Wait _ ->
+      undefined
+
+    Signal _ ->
+      undefined
+
 
 data Cont
   = EndMainThreadCont

@@ -42,6 +42,9 @@ spec =
     , ( "set x = 1", Assign "x" (Const 1) )
     , ( "print(100)", Print (Const 100) )
     , ( "spawn(proc (x) x)", Spawn (Proc "x" (Var "x")) )
+    , ( "mutex()", Mutex )
+    , ( "wait(mut)", Wait (Var "mut") )
+    , ( "signal(mut)", Signal (Var "mut") )
     ]
 
 

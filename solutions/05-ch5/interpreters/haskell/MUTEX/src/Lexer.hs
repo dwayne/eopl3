@@ -2,7 +2,8 @@ module Lexer
   ( number, identifier
 
   , rBegin, rCar, rCdr, rCons, rElse, rEmptyList, rEnd, rIf, rIn, rLet
-  , rLetrec , rList, rNull, rPrint, rProc, rSet, rSpawn, rThen, rZero
+  , rLetrec , rList, rMutex, rNull, rPrint, rProc, rSet, rSignal, rSpawn
+  , rThen, rWait, rZero
 
   , comma, equal, hyphen
 
@@ -83,6 +84,10 @@ rList :: Parser ()
 rList = reserved "list"
 
 
+rMutex :: Parser ()
+rMutex = reserved "mutex"
+
+
 rNull :: Parser ()
 rNull = reserved "null?"
 
@@ -99,12 +104,20 @@ rSet :: Parser ()
 rSet = reserved "set"
 
 
+rSignal :: Parser ()
+rSignal = reserved "signal"
+
+
 rSpawn :: Parser ()
 rSpawn = reserved "spawn"
 
 
 rThen :: Parser ()
 rThen = reserved "then"
+
+
+rWait :: Parser ()
+rWait = reserved "wait"
 
 
 rZero :: Parser ()
@@ -182,12 +195,15 @@ languageDef =
         , "let"
         , "letrec"
         , "list"
+        , "mutex"
         , "null?"
         , "print"
         , "proc"
         , "set"
+        , "signal"
         , "spawn"
         , "then"
+        , "wait"
         , "zero?"
         ]
     , T.opStart = mzero
