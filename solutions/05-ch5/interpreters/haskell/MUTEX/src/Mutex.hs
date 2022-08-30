@@ -1,7 +1,7 @@
 module Mutex
   ( Mutex
   , new
-  , isClosed, isEmpty
+  , isClosed
   , open, close
   , enqueue, dequeue
   ) where
@@ -30,10 +30,6 @@ new =
 
 isClosed :: Mutex a -> Bool
 isClosed = _isClosed
-
-
-isEmpty :: Mutex a -> Bool
-isEmpty = Queue.isEmpty . _waitQueue
 
 
 open :: Mutex a -> Mutex a

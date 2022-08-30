@@ -390,8 +390,8 @@ valueOfExpr expr env cont =
     Wait aExpr ->
       valueOfExpr aExpr env (WaitCont cont)
 
-    Signal _ ->
-      undefined
+    Signal aExpr ->
+      valueOfExpr aExpr env (SignalCont cont)
 
 
 newMutex :: Cont -> Eval Value
@@ -421,6 +421,7 @@ data Cont
   | PrintCont Cont
   | SpawnCont Cont
   | WaitCont Cont
+  | SignalCont Cont
 
 
 applyCont :: Cont -> Value -> Eval Value
@@ -507,6 +508,9 @@ applyCont cont value = do
       WaitCont nextCont ->
         wait value nextCont
 
+      SignalCont nextCont ->
+        signal value nextCont
+
 
 spawn :: Value -> Cont -> Eval Value
 spawn aValue cont = do
@@ -530,6 +534,28 @@ wait aValue cont = do
   else do
     setref ref (VMutex $ Mutex.close mutex)
     computation ()
+
+
+signal :: Value -> Cont -> Eval Value
+signal aValue cont = do
+  ref <- toRef aValue
+  bValue <- deref ref
+  mutex0 <- toMutex bValue
+
+  if Mutex.isClosed mutex0 then
+    let
+      (maybeThread, mutex1) = Mutex.dequeue mutex0
+    in
+    case maybeThread of
+      Nothing ->
+        setref ref $ VMutex $ Mutex.open mutex1
+
+      Just thread ->
+        schedule thread
+  else
+    return ()
+
+  applyCont cont $ VNumber 53
 
 
 find :: Id -> Env -> Eval Store.Ref
