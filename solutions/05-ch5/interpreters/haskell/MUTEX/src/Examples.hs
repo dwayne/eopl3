@@ -2,6 +2,7 @@ module Examples
   ( example1
   , example2
   , example3a, example3b
+  , example4
   ) where
 
 
@@ -196,3 +197,37 @@ example3b maxTimeSlice =
 -- Can I get it to produce 1?
 --
 -- i.e. the sequence: 101, 201, 301.
+
+
+-- Example 4: A safe counter using a mutex.
+--
+example4 :: Int -> IO I.Value
+example4 maxTimeSlice =
+  let
+    input =
+      "let                              \
+      \  x = 0                          \
+      \in                               \
+      \let                              \
+      \  mut = mutex()                  \
+      \in                               \
+      \let                              \
+      \  incrx =                        \
+      \    proc (id)                    \
+      \      proc (dummy)               \
+      \        begin                    \
+      \          wait(mut);             \
+      \          set x = -(x, -(0, 1)); \
+      \          print(-(id, -(0, x))); \
+      \          signal(mut)            \
+      \        end                      \
+      \in                               \
+      \  begin                          \
+      \    spawn((incrx 100));          \
+      \    spawn((incrx 200));          \
+      \    spawn((incrx 300))           \
+      \  end                            "
+  in
+  I.runIO maxTimeSlice input
+-- FIXME: The example doesn't work for 1 to 14. I suspect deadlock.
+-- Are the wait and signal implementations correct?
