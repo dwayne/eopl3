@@ -288,10 +288,15 @@ newref value = do
   return ref
 
 
-deref :: Store.Ref -> Eval (Maybe Value)
+deref :: Store.Ref -> Eval Value
 deref ref = do
   store <- getStore
-  return $ Store.deref ref store
+  case Store.deref ref store of
+    Just value ->
+      return value
+
+    Nothing ->
+      throwError $ LocationNotFound ref
 
 
 setref :: Store.Ref -> Value -> Eval ()
@@ -318,19 +323,9 @@ valueOfExpr expr env cont =
       applyCont cont $ VNumber n
 
     Var x -> do
-      maybeRef <- find x env
-      case maybeRef of
-        Just ref -> do
-          maybeValue <- deref ref
-          case maybeValue of
-            Just value ->
-              applyCont cont value
-
-            Nothing ->
-              throwError $ LocationNotFound ref
-
-        Nothing ->
-          throwError $ IdentifierNotFound x
+      ref <- find x env
+      value <- deref ref
+      applyCont cont value
 
     Diff aExpr bExpr ->
       valueOfExpr aExpr env (Diff1Cont bExpr env cont)
@@ -380,13 +375,8 @@ valueOfExpr expr env cont =
       computeBegin exprs env cont
 
     Assign x aExpr -> do
-      maybeRef <- find x env
-      case maybeRef of
-        Just ref ->
-          valueOfExpr aExpr env (AssignCont ref cont)
-
-        Nothing ->
-          throwError $ IdentifierNotFound x
+      ref <- find x env
+      valueOfExpr aExpr env (AssignCont ref cont)
 
     Print aExpr ->
       valueOfExpr aExpr env (PrintCont cont)
@@ -521,21 +511,17 @@ spawn aValue cont = do
   applyCont cont $ VNumber 73
 
 
-find :: Id -> Env -> Eval (Maybe Store.Ref)
+find :: Id -> Env -> Eval Store.Ref
 find x env =
   case Env.find x env of
     Just (Env.Value ref) ->
-      return $ Just ref
+      return ref
 
     Just (Env.Procedure param body savedEnv) ->
-      let
-        value =
-          VProc $ Procedure param body savedEnv
-      in do
-      Just <$> newref value
+      newref $ VProc $ Procedure param body savedEnv
 
     Nothing ->
-      return Nothing
+      throwError $ IdentifierNotFound x
 
 
 diff :: Value -> Value -> Cont -> Eval Value
