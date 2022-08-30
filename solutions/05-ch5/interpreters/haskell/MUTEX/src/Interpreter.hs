@@ -387,8 +387,8 @@ valueOfExpr expr env cont =
     Mutex ->
       newMutex cont
 
-    Wait _ ->
-      undefined
+    Wait aExpr ->
+      valueOfExpr aExpr env (WaitCont cont)
 
     Signal _ ->
       undefined
@@ -420,6 +420,7 @@ data Cont
   | AssignCont Store.Ref Cont
   | PrintCont Cont
   | SpawnCont Cont
+  | WaitCont Cont
 
 
 applyCont :: Cont -> Value -> Eval Value
@@ -503,12 +504,32 @@ applyCont cont value = do
       SpawnCont nextCont -> do
         spawn value nextCont
 
+      WaitCont nextCont ->
+        wait value nextCont
+
 
 spawn :: Value -> Cont -> Eval Value
 spawn aValue cont = do
   p <- toProcedure aValue
   schedule $ Thread.new (\_ -> applyProcedure p (VNumber 28) EndSubthreadCont)
   applyCont cont $ VNumber 73
+
+
+wait :: Value -> Cont -> Eval Value
+wait aValue cont = do
+  ref <- toRef aValue
+  bValue <- deref ref
+  mutex <- toMutex bValue
+
+  let computation = \_ -> applyCont cont $ VNumber 52
+
+  if Mutex.isClosed mutex then do
+    let currentThread = Thread.new computation
+    setref ref (VMutex $ Mutex.enqueue currentThread mutex)
+    runNextThread
+  else do
+    setref ref (VMutex $ Mutex.close mutex)
+    computation ()
 
 
 find :: Id -> Env -> Eval Store.Ref
