@@ -8,6 +8,7 @@ module Interpreter
 
 
 import qualified Env
+import qualified Mutex
 import qualified Scheduler
 import qualified Store
 import qualified Thread
@@ -23,6 +24,8 @@ data Value
   | VBool Bool
   | VList [Value]
   | VProc Procedure
+  | VMutex Mutex
+  | VRef Store.Ref
 
 data Procedure
   = Procedure Id Expr Env
@@ -32,6 +35,8 @@ data Type
   | TBool
   | TList
   | TProc
+  | TMutex
+  | TRef
   deriving (Eq, Show)
 
 type Env = Env.Env Id Store.Ref Id Expr
@@ -55,6 +60,7 @@ instance Eq Value where
   (VNumber n1) == (VNumber n2) = n1 == n2
   (VBool b1) == (VBool b2) = b1 == b2
   (VList l1) == (VList l2) = l1 == l2
+  (VRef r1) == (VRef r2) = r1 == r2
   _ == _ = False
 
 
@@ -63,6 +69,8 @@ instance Show Value where
   show (VBool b) = show b
   show (VList l) = "[" ++ intercalate ", " (map show l) ++ "]"
   show (VProc _) = "<proc>"
+  show (VMutex _) = "<mutex>"
+  show (VRef r) = show r
 
 
 run :: String -> Either Error Value
@@ -143,6 +151,8 @@ data State =
     }
 
 type Scheduler = Scheduler.Scheduler (Eval Value)
+
+type Mutex = Mutex.Mutex (Eval Value)
 
 
 runEval :: State -> Eval a -> (State, Either RuntimeError a)
@@ -385,13 +395,19 @@ valueOfExpr expr env cont =
       valueOfExpr aExpr env (SpawnCont cont)
 
     Mutex ->
-      undefined
+      newMutex cont
 
     Wait _ ->
       undefined
 
     Signal _ ->
       undefined
+
+
+newMutex :: Cont -> Eval Value
+newMutex cont = do
+  ref <- newref $ VMutex Mutex.new
+  applyCont cont $ VRef ref
 
 
 data Cont
@@ -626,8 +642,20 @@ toProcedure (VProc p) = return p
 toProcedure value = throwError $ TypeError TProc (typeOf value)
 
 
+toMutex :: Value -> Eval Mutex
+toMutex (VMutex m) = return m
+toMutex value = throwError $ TypeError TMutex (typeOf value)
+
+
+toRef :: Value -> Eval Store.Ref
+toRef (VRef r) = return r
+toRef value = throwError $ TypeError TRef (typeOf value)
+
+
 typeOf :: Value -> Type
 typeOf (VNumber _) = TNumber
 typeOf (VBool _) = TBool
 typeOf (VList _) = TList
 typeOf (VProc _) = TProc
+typeOf (VMutex _) = TMutex
+typeOf (VRef _) = TRef
