@@ -21,6 +21,7 @@ library
     Examples
     Interpreter
     Lexer
+    Mutex
     Parser
     Queue
     Scheduler

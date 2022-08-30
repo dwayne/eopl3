@@ -1,6 +1,7 @@
 module Queue
   ( Queue
   , empty
+  , isEmpty
   , enqueue, dequeue
   ) where
 
@@ -12,6 +13,11 @@ data Queue a
 empty :: Queue a
 empty =
   Queue [] []
+
+
+isEmpty :: Queue a -> Bool
+isEmpty (Queue [] []) = True
+isEmpty _ = False
 
 
 enqueue :: a -> Queue a -> Queue a
