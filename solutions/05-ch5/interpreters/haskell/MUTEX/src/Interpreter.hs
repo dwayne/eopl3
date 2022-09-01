@@ -550,7 +550,8 @@ signal aValue cont = do
       Nothing ->
         setref ref $ VMutex $ Mutex.open mutex1
 
-      Just thread ->
+      Just thread -> do
+        setref ref $ VMutex mutex1
         schedule thread
   else
     return ()

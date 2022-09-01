@@ -229,5 +229,3 @@ example4 maxTimeSlice =
       \  end                            "
   in
   I.runIO maxTimeSlice input
--- FIXME: The example doesn't work for 1 to 14. I suspect deadlock.
--- Are the wait and signal implementations correct?
