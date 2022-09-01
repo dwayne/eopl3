@@ -303,7 +303,7 @@ setref :: Store.Ref -> Value -> Eval ()
 setref ref value = do
   store0 <- getStore
   case Store.setref ref value store0 of
-    Just store1 -> do
+    Just store1 ->
       setStore store1
 
     Nothing ->
@@ -502,7 +502,7 @@ applyCont cont value = do
         println value
         applyCont nextCont value
 
-      SpawnCont nextCont -> do
+      SpawnCont nextCont ->
         spawn value nextCont
 
       WaitCont nextCont ->
