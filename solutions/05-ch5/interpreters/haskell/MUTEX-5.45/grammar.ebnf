@@ -22,6 +22,7 @@ Spawn   ::= 'spawn' '(' Expr ')'
 Mutex   ::= 'mutex' '(' ')'
 Wait    ::= 'wait' '(' Expr ')'
 Signal  ::= 'signal' '(' Expr ')'
+Yield   ::= 'yield'
 Number  ::= [0-9]+
 Id      ::= [a-z]+
 

@@ -45,6 +45,7 @@ spec =
     , ( "mutex()", Mutex )
     , ( "wait(mut)", Wait (Var "mut") )
     , ( "signal(mut)", Signal (Var "mut") )
+    , ( "yield", Yield )
     ]
 
 

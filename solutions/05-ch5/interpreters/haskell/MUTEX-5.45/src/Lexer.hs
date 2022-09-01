@@ -3,7 +3,7 @@ module Lexer
 
   , rBegin, rCar, rCdr, rCons, rElse, rEmptyList, rEnd, rIf, rIn, rLet
   , rLetrec , rList, rMutex, rNull, rPrint, rProc, rSet, rSignal, rSpawn
-  , rThen, rWait, rZero
+  , rThen, rWait, rYield, rZero
 
   , comma, equal, hyphen
 
@@ -120,6 +120,10 @@ rWait :: Parser ()
 rWait = reserved "wait"
 
 
+rYield :: Parser ()
+rYield = reserved "yield"
+
+
 rZero :: Parser ()
 rZero = reserved "zero?"
 
@@ -204,6 +208,7 @@ languageDef =
         , "spawn"
         , "then"
         , "wait"
+        , "yield"
         , "zero?"
         ]
     , T.opStart = mzero

@@ -48,6 +48,7 @@ expr
   <|> mutexExpr
   <|> waitExpr
   <|> signalExpr
+  <|> yieldExpr
 
 
 constExpr :: Parser Expr
@@ -162,3 +163,8 @@ waitExpr =
 signalExpr :: Parser Expr
 signalExpr =
   Signal <$ rSignal <*> parens expr
+
+
+yieldExpr :: Parser Expr
+yieldExpr =
+  Yield <$ rYield

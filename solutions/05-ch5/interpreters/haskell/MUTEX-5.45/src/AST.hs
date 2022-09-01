@@ -26,6 +26,7 @@ data Expr
   | Mutex
   | Wait Expr
   | Signal Expr
+  | Yield
   deriving (Eq, Show)
 
 type Number = Integer

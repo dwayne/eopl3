@@ -238,6 +238,10 @@ spec =
     , ( "null?(list())"
       , VBool True
       )
+
+    , ( "yield"
+      , VNumber 99
+      )
     ]
 
 

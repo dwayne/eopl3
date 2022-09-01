@@ -393,11 +393,21 @@ valueOfExpr expr env cont =
     Signal aExpr ->
       valueOfExpr aExpr env (SignalCont cont)
 
+    Yield ->
+      yield cont
+
 
 newMutex :: Cont -> Eval Value
 newMutex cont = do
   ref <- newref $ VMutex Mutex.new
   applyCont cont $ VRef ref
+
+
+yield :: Cont -> Eval Value
+yield cont = do
+  schedule $ Thread.new $ \_ -> applyCont cont $ VNumber 99
+  runNextThread
+
 
 
 data Cont

@@ -3,6 +3,7 @@ module Examples
   , example2
   , example3a, example3b
   , example4
+  , example5
   ) where
 
 
@@ -227,5 +228,38 @@ example4 maxTimeSlice =
       \    spawn((incrx 200));          \
       \    spawn((incrx 300))           \
       \  end                            "
+  in
+  I.runIO maxTimeSlice input
+
+
+-- Example 5: An example for Exercise 5.45.
+example5 :: Int -> IO I.Value
+example5 maxTimeSlice =
+  let
+    input =
+      "let                                      \
+      \  printloop =                            \
+      \    proc (id)                            \
+      \      proc (n)                           \
+      \        letrec                           \
+      \          loop (n) =                     \
+      \            if zero?(-(n, 20)) then      \
+      \              print(yield)               \
+      \            else                         \
+      \              if zero?(n) then           \
+      \                print(id)                \
+      \              else                       \
+      \                begin                    \
+      \                  print(-(id, -(0, n))); \
+      \                  (loop -(n, 1))         \
+      \                end                      \
+      \        in                               \
+      \        (loop n)                         \
+      \in                                       \
+      \begin                                    \
+      \  spawn(proc (d) ((printloop 100) 25));  \
+      \  spawn(proc (d) ((printloop 200) 10));  \
+      \  ((printloop 300) 5)                    \
+      \end                                      "
   in
   I.runIO maxTimeSlice input
