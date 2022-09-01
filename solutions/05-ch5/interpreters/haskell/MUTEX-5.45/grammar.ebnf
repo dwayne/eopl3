@@ -1,0 +1,28 @@
+Program ::= Expr
+Expr    ::= Const | Var | Diff | Zero | If | Let | Proc | Call | Letrec
+Const   ::= Number
+Var     ::= Id
+Diff    ::= '-' '(' Expr ',' Expr ')'
+Zero    ::= 'zero?' '(' Expr ')'
+Cons    ::= 'cons' '(' Expr ',' Expr ')'
+Car     ::= 'car' '(' Expr ')'
+Cdr     ::= 'cdr' '(' Expr ')'
+Null    ::= 'null?' '(' Expr ')'
+Empty   ::= 'emptylist'
+List    ::= 'list' '(' (Expr (',' Expr)*)? ')'
+If      ::= 'if' Expr 'then' Expr 'else' Expr
+Let     ::= 'let' Id '=' Expr 'in' Expr
+Proc    ::= 'proc' '(' Id ')' Expr
+Letrec  ::= 'letrec' ( Id '(' Id ')' '=' Expr )* 'in' Expr
+Call    ::= '(' Expr Expr ')'
+Begin   ::= 'begin' Expr (';' Expr)* 'end'
+Assign  ::= 'set' Id '=' Expr
+Print   ::= 'print' '(' Expr ')'
+Spawn   ::= 'spawn' '(' Expr ')'
+Mutex   ::= 'mutex' '(' ')'
+Wait    ::= 'wait' '(' Expr ')'
+Signal  ::= 'signal' '(' Expr ')'
+Number  ::= [0-9]+
+Id      ::= [a-z]+
+
+/* Use https://www.bottlecaps.de/rr/ui to view it as a Railroad Diagram. */
