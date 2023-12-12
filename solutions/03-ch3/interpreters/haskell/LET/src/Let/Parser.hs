@@ -43,7 +43,7 @@ diffExpr = minus *> (parens (Diff <$> (expr <* comma) <*> expr))
     comma = lexeme (char ',')
 
 zeroExpr :: Parser Expr
-zeroExpr = reserved "zero?" *> (parens (Zero <$> expr))
+zeroExpr = Zero <$ reserved "zero?" <*> parens expr
 
 ifExpr :: Parser Expr
 ifExpr =
