@@ -5,6 +5,7 @@ import qualified Factorial.Iterative
 import qualified Factorial.CPSDataStructure
 import qualified Factorial.CPSProcedural
 import qualified Factorial.Registerized
+import qualified Factorial.Trampolined
 
 import Test.Hspec
 
@@ -18,3 +19,4 @@ spec =
             Factorial.CPSDataStructure.fact 5 `shouldBe` 120
             Factorial.CPSProcedural.fact 5 `shouldBe` 120
             Factorial.Registerized.fact 5 `shouldBe` 120
+            Factorial.Trampolined.fact 5 `shouldBe` 120

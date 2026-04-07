@@ -7,4 +7,5 @@ ghci> Factorial.Iterative.fact 5
 ghci> Factorial.CPSDataStructure.fact 5
 ghci> Factorial.CPSProcedural.fact 5
 ghci> Factorial.Registerized.fact 5
+ghci> Factorial.Trampolined.fact 5
 ```

@@ -12,6 +12,7 @@ library
         Factorial.CPSProcedural
         Factorial.Iterative
         Factorial.Registerized
+        Factorial.Trampolined
 
     ghc-options: -Wall
 
