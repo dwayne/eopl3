@@ -13,6 +13,7 @@
             pkgs.elmPackages.elm
             pkgs.elmPackages.elm-test
             pkgs.haskell.compiler.ghc9103
+            pkgs.racket
           ];
 
           shellHook = ''

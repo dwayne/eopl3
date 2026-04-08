@@ -1,6 +1,6 @@
 #lang racket
 
-(require "../ch1/ex1.31.rkt")
+(require "../../01-ch1/racket/ex1.31.rkt")
 (require "./ex2.26.rkt")
 
 (require rackunit)

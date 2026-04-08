@@ -13,7 +13,7 @@
 ;; replaced by a leaf node that contains the number of red nodes
 ;; on the path between it and the root.
 
-(require "../ch1/ex1.31.rkt")
+(require "../../01-ch1/racket/ex1.31.rkt")
 
 (provide
 

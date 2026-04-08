@@ -4,7 +4,7 @@
 ;;
 ;; Extend the interpreter to include variables.
 
-(require "../ch2/ex2.5.rkt")
+(require "../02-ch2/racket/ex2.5.rkt")
 (require "./exb.4.parser.rkt")
 
 (provide interpret)

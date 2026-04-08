@@ -1,6 +1,6 @@
 #lang racket
 
-(require "./PROC/interpreter.rkt")
+(require "./PROC+/interpreter.rkt")
 
 (module+ test
   (require rackunit)
