@@ -6,6 +6,13 @@ module Interpreter
   ) where
 
 
+--
+-- I think this implementation is the correct implementation of the continuation-passing style version of EXCEPTIONS.
+--
+-- It requires two continuations, a success and a failure continuation, to ensure that every function call is in tail position.
+--
+
+
 import qualified Env
 
 import Data.Bifunctor (first)
@@ -65,7 +72,7 @@ run input =
 
 valueOfProgram :: Program -> Either RuntimeError Value
 valueOfProgram (Program expr) =
-  valueOfExpr expr initEnv EndCont
+  valueOfExpr expr initEnv SEndCont FEndCont
   where
     initEnv =
       Env.extend "i" (VNumber 1)
@@ -74,158 +81,192 @@ valueOfProgram (Program expr) =
             Env.empty))
 
 
-valueOfExpr :: Expr -> Env -> Cont -> Either RuntimeError Value
-valueOfExpr expr env cont =
+valueOfExpr :: Expr -> Env -> SuccessCont -> FailureCont -> Either RuntimeError Value
+valueOfExpr expr env sCont fCont =
   case expr of
     Const n ->
-      applyCont cont $ Right $ VNumber n
+      applySuccessCont sCont fCont (VNumber n)
 
     Var x ->
       case Env.find x env of
         Just (Env.Value value) ->
-          applyCont cont $ Right value
+          applySuccessCont sCont fCont value
 
         Just (Env.Procedure param body savedEnv) ->
-          applyCont cont $ Right $ VProc $ Procedure param body savedEnv
+          applySuccessCont sCont fCont (VProc $ Procedure param body savedEnv)
 
         Nothing ->
-          applyCont cont $ Left $ IdentifierNotFound x
+          applyFailureCont fCont (IdentifierNotFound x)
 
     Diff aExpr bExpr ->
-      valueOfExpr aExpr env (Diff1Cont bExpr env cont)
+      valueOfExpr aExpr env (Diff1Cont bExpr env sCont) fCont
 
     Zero aExpr ->
-      valueOfExpr aExpr env (ZeroCont cont)
+      valueOfExpr aExpr env (ZeroCont sCont) fCont
 
     If condition consequent alternative ->
-      valueOfExpr condition env (IfCont consequent alternative env cont)
+      valueOfExpr condition env (IfCont consequent alternative env sCont) fCont
 
     Let x aExpr body ->
-      valueOfExpr aExpr env (LetCont x body env cont)
+      valueOfExpr aExpr env (LetCont x body env sCont) fCont
 
     Proc param body ->
-      applyCont cont $ Right $ VProc $ Procedure param body env
+      applySuccessCont sCont fCont (VProc $ Procedure param body env)
 
     Letrec name param body letrecBody ->
-      valueOfExpr letrecBody (Env.extendRec name param body env) cont
+      valueOfExpr letrecBody (Env.extendRec name param body env) sCont fCont
 
     Call rator rand ->
-      valueOfExpr rator env (RatorCont rand env cont)
+      valueOfExpr rator env (RatorCont rand env sCont) fCont
 
     Try aExpr x handlerExpr ->
-      valueOfExpr aExpr env (TryCont x handlerExpr env cont)
+      valueOfExpr aExpr env (TryCont x handlerExpr env sCont) fCont
 
     Raise aExpr ->
-      valueOfExpr aExpr env (RaiseCont cont)
+      valueOfExpr aExpr env (RaiseCont sCont) fCont
 
 
-data Cont
-  = EndCont
-  | ZeroCont Cont
-  | LetCont Id Expr Env Cont
-  | IfCont Expr Expr Env Cont
-  | Diff1Cont Expr Env Cont
-  | Diff2Cont Value Cont
-  | RatorCont Expr Env Cont
-  | RandCont Value Cont
-  | TryCont Id Expr Env Cont
-  | RaiseCont Cont
+data SuccessCont
+  = SEndCont
+  | ZeroCont SuccessCont
+  | LetCont Id Expr Env SuccessCont
+  | IfCont Expr Expr Env SuccessCont
+  | Diff1Cont Expr Env SuccessCont
+  | Diff2Cont Value SuccessCont
+  | RatorCont Expr Env SuccessCont
+  | RandCont Value SuccessCont
+  | TryCont Id Expr Env SuccessCont
+  | RaiseCont SuccessCont
 
 
-applyCont :: Cont -> Either RuntimeError Value -> Either RuntimeError Value
-applyCont cont input = do
-  value <- input
-  case cont of
-    EndCont ->
-      trace "End of computation" $
+
+data FailureCont
+  = FEndCont
+
+
+applySuccessCont :: SuccessCont -> FailureCont -> Value -> Either RuntimeError Value
+applySuccessCont sCont fCont value =
+  case sCont of
+    SEndCont ->
+      trace "End of a successful computation" $
         Right value
 
-    ZeroCont nextCont ->
-      applyCont nextCont $ zero value
+    ZeroCont nextSCont ->
+      zero value nextSCont fCont
 
-    LetCont x body env nextCont ->
-      valueOfExpr body (Env.extend x value env) nextCont
+    LetCont x body env nextSCont ->
+      valueOfExpr body (Env.extend x value env) nextSCont fCont
 
-    IfCont consequent alternative env nextCont ->
-      computeIf value consequent alternative env nextCont
+    IfCont consequent alternative env nextSCont ->
+      computeIf value consequent alternative env nextSCont fCont
 
-    Diff1Cont bExpr env nextCont ->
-      valueOfExpr bExpr env (Diff2Cont value nextCont)
+    Diff1Cont bExpr env nextSCont ->
+      valueOfExpr bExpr env (Diff2Cont value nextSCont) fCont
 
-    Diff2Cont aValue nextCont ->
-      applyCont nextCont $ diff aValue value
+    Diff2Cont aValue nextSCont ->
+      diff aValue value nextSCont fCont
 
-    RatorCont rand env nextCont ->
-      valueOfExpr rand env (RandCont value nextCont)
+    RatorCont rand env nextSCont ->
+      valueOfExpr rand env (RandCont value nextSCont) fCont
 
-    RandCont ratorValue nextCont ->
-      apply ratorValue value nextCont
+    RandCont ratorValue nextSCont ->
+      apply ratorValue value nextSCont fCont
 
-    TryCont _ _ _ nextCont ->
-      applyCont nextCont input
+    TryCont _ _ _ nextSCont ->
+      applySuccessCont nextSCont fCont value
 
-    RaiseCont nextCont ->
-      applyHandler nextCont value
-
-
-applyHandler :: Cont -> Value -> Either RuntimeError Value
-applyHandler cont value =
-  case cont of
-    TryCont x handlerExpr savedEnv nextCont ->
-      valueOfExpr handlerExpr (Env.extend x value savedEnv) nextCont
-
-    EndCont ->
-      Left $ UncaughtException value
-
-    ZeroCont nextCont ->
-      applyHandler nextCont value
-
-    LetCont _ _ _ nextCont ->
-      applyHandler nextCont value
-
-    IfCont _ _ _ nextCont ->
-      applyHandler nextCont value
-
-    Diff1Cont _ _ nextCont ->
-      applyHandler nextCont value
-
-    Diff2Cont _ nextCont ->
-      applyHandler nextCont value
-
-    RatorCont _ _ nextCont ->
-      applyHandler nextCont value
-
-    RandCont _ nextCont ->
-      applyHandler nextCont value
-
-    RaiseCont nextCont ->
-      applyHandler nextCont value
+    RaiseCont nextSCont ->
+      applyHandler nextSCont fCont value
 
 
-diff :: Value -> Value -> Either RuntimeError Value
-diff aValue bValue = do
-  a <- toNumber aValue
-  b <- toNumber bValue
-  return $ VNumber $ a - b
+applyHandler :: SuccessCont -> FailureCont -> Value -> Either RuntimeError Value
+applyHandler sCont fCont value =
+  case sCont of
+    TryCont x handlerExpr savedEnv nextSCont ->
+      valueOfExpr handlerExpr (Env.extend x value savedEnv) nextSCont fCont
+
+    SEndCont ->
+      applyFailureCont fCont (UncaughtException value)
+
+    ZeroCont nextSCont ->
+      applyHandler nextSCont fCont value
+
+    LetCont _ _ _ nextSCont ->
+      applyHandler nextSCont fCont value
+
+    IfCont _ _ _ nextSCont ->
+      applyHandler nextSCont fCont value
+
+    Diff1Cont _ _ nextSCont ->
+      applyHandler nextSCont fCont value
+
+    Diff2Cont _ nextSCont ->
+      applyHandler nextSCont fCont value
+
+    RatorCont _ _ nextSCont ->
+      applyHandler nextSCont fCont value
+
+    RandCont _ nextSCont ->
+      applyHandler nextSCont fCont value
+
+    RaiseCont nextSCont ->
+      applyHandler nextSCont fCont value
 
 
-zero :: Value -> Either RuntimeError Value
-zero aValue = do
-  a <- toNumber aValue
-  return $ VBool $ a == 0
+applyFailureCont :: FailureCont -> RuntimeError -> Either RuntimeError Value
+applyFailureCont fCont err =
+  case fCont of
+    FEndCont ->
+      trace "End of a failed computation" $
+        Left err
 
 
-computeIf :: Value -> Expr -> Expr -> Env -> Cont -> Either RuntimeError Value
-computeIf conditionValue consequent alternative env cont = do
-  b <- toBool conditionValue
-  let expr = if b then consequent else alternative
-  valueOfExpr expr env cont
+zero :: Value -> SuccessCont -> FailureCont -> Either RuntimeError Value
+zero aValue sCont fCont =
+  case toNumber aValue of
+    Right a ->
+      applySuccessCont sCont fCont (VBool $ a == 0)
+
+    Left err ->
+      applyFailureCont fCont err
 
 
-apply :: Value -> Value -> Cont -> Either RuntimeError Value
-apply ratorValue arg cont = do
-  Procedure param body savedEnv <- toProcedure ratorValue
-  valueOfExpr body (Env.extend param arg savedEnv) cont
+computeIf :: Value -> Expr -> Expr -> Env -> SuccessCont -> FailureCont -> Either RuntimeError Value
+computeIf conditionValue consequent alternative env sCont fCont =
+  case toBool conditionValue of
+    Right b ->
+      let
+        expr = if b then consequent else alternative
+      in
+      valueOfExpr expr env sCont fCont
+
+    Left err ->
+      applyFailureCont fCont err
+
+
+diff :: Value -> Value -> SuccessCont -> FailureCont -> Either RuntimeError Value
+diff aValue bValue sCont fCont =
+  case toNumber aValue of
+    Right a ->
+      case toNumber bValue of
+          Right b ->
+            applySuccessCont sCont fCont (VNumber $ a - b)
+
+          Left err ->
+            applyFailureCont fCont err
+
+    Left err ->
+      applyFailureCont fCont err
+
+
+apply :: Value -> Value -> SuccessCont -> FailureCont -> Either RuntimeError Value
+apply ratorValue arg sCont fCont =
+  case toProcedure ratorValue of
+    Right (Procedure param body savedEnv) ->
+      valueOfExpr body (Env.extend param arg savedEnv) sCont fCont
+
+    Left err ->
+      applyFailureCont fCont err
 
 
 toNumber :: Value -> Either RuntimeError Number
