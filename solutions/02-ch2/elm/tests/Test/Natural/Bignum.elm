@@ -64,7 +64,7 @@ additionIsCommutative : Test
 additionIsCommutative =
   let
     ab =
-      Fuzz.tuple (naturalFuzzer, naturalFuzzer)
+      Fuzz.pair naturalFuzzer naturalFuzzer
   in
     fuzz ab "plus a b == plus b a for all natural a, b" <|
       \(a, b) ->

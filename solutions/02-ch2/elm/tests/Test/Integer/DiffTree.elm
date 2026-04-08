@@ -66,7 +66,7 @@ additionIsCommutative : Test
 additionIsCommutative =
   let
     ab =
-      Fuzz.tuple (integerFuzzer, integerFuzzer)
+      Fuzz.pair integerFuzzer integerFuzzer
   in
     fuzz ab "plus a b == plus b a for all integers a, b" <|
       \(a, b) ->

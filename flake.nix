@@ -10,6 +10,8 @@
 
           packages = [
             pkgs.cabal-install
+            pkgs.elmPackages.elm
+            pkgs.elmPackages.elm-test
             pkgs.haskell.compiler.ghc9103
           ];
 
