@@ -1,6 +1,8 @@
 module Let.AST (Program(..), Expr(..), Number, Id) where
 
+
 data Program = Program Expr deriving Show
+
 
 data Expr
   = Const Number
@@ -11,6 +13,8 @@ data Expr
   | Let Id Expr Expr
   deriving Show
 
+
 type Number = Integer
+
 
 type Id = String

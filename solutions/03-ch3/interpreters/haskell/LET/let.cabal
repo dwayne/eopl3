@@ -13,6 +13,7 @@ library
   other-modules:
     Let.AST
     Let.Env
+    Let.Lexer
     Let.Parser
 
   build-depends:
