@@ -8,5 +8,4 @@ main :: IO ()
 main = hspec spec
 
 spec :: Spec
-spec = do
-  describe "Interpreter" Test.Interpreter.spec
+spec = describe "Interpreter" Test.Interpreter.spec
