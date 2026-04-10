@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
+
 module Interpreter
   ( Value(..)
   , Type(..)
@@ -24,7 +26,7 @@ module Interpreter
 -- [x] Start with EXCEPTIONS
 -- [x] Extend the data structure representation version to use 2 continuations
 -- [x] Use a procedural representation
--- [ ] Inline the procedural representation
+-- [x] Inline the procedural representation
 --
 
 
@@ -85,9 +87,27 @@ run input =
       first RuntimeError $ valueOfProgram program
 
 
+type SuccessCont = FailureCont -> Value -> Either RuntimeError Value
+type ExceptionCont = FailureCont -> Value -> Either RuntimeError Value
+type FailureCont = RuntimeError -> Either RuntimeError Value
+
+
 valueOfProgram :: Program -> Either RuntimeError Value
 valueOfProgram (Program expr) =
-  valueOfExpr expr initEnv sEndCont fEndCont
+  valueOfExpr
+    expr
+    initEnv
+    (\_ value ->
+      trace "End of a successful computation" $
+        Right value
+    )
+    (\fCont value ->
+      fCont (UncaughtException value)
+    )
+    (\err ->
+      trace "End of a failed computation" $
+        Left err
+    )
   where
     initEnv =
       Env.extend "i" (VNumber 1)
@@ -96,203 +116,138 @@ valueOfProgram (Program expr) =
             Env.empty))
 
 
-valueOfExpr :: Expr -> Env -> SuccessCont -> FailureCont -> Either RuntimeError Value
-valueOfExpr expr env sCont fCont =
+valueOfExpr :: Expr -> Env -> SuccessCont -> ExceptionCont -> FailureCont -> Either RuntimeError Value
+valueOfExpr expr env sCont eCont fCont =
+  --
+  -- sCont represents the success continuation under the applySuccessCont observer
+  -- eCont represents the exception continuation under the applyHandler observer
+  -- fCont represents the failure continuation under the applyFailureCont observer
+  --
   case expr of
     Const n ->
-      applySuccessCont sCont fCont (VNumber n)
+      sCont fCont (VNumber n)
 
     Var x ->
       case Env.find x env of
         Just (Env.Value value) ->
-          applySuccessCont sCont fCont value
+          sCont fCont value
 
         Just (Env.Procedure param body savedEnv) ->
-          applySuccessCont sCont fCont (VProc $ Procedure param body savedEnv)
+          sCont fCont (VProc $ Procedure param body savedEnv)
 
         Nothing ->
-          applyFailureCont fCont (IdentifierNotFound x)
+          fCont (IdentifierNotFound x)
 
     Diff aExpr bExpr ->
-      valueOfExpr aExpr env (diff1Cont bExpr env sCont) fCont
+      valueOfExpr
+        aExpr
+        env
+        (\fCont aValue ->
+          valueOfExpr
+            bExpr
+            env
+            (\fCont value ->
+              diff aValue value sCont fCont
+            )
+            eCont
+            fCont
+        )
+        eCont
+        fCont
 
     Zero aExpr ->
-      valueOfExpr aExpr env (zeroCont sCont) fCont
+      valueOfExpr
+        aExpr
+        env
+        (\fCont value ->
+          zero value sCont fCont
+        )
+        eCont
+        fCont
 
     If condition consequent alternative ->
-      valueOfExpr condition env (ifCont consequent alternative env sCont) fCont
+      valueOfExpr
+        condition
+        env
+        (\fCont value ->
+          computeIf value consequent alternative env sCont eCont fCont
+        )
+        eCont
+        fCont
 
     Let x aExpr body ->
-      valueOfExpr aExpr env (letCont x body env sCont) fCont
+      valueOfExpr
+        aExpr
+        env
+        (\fCont value ->
+          valueOfExpr body (Env.extend x value env) sCont eCont fCont
+        )
+        eCont
+        fCont
 
     Proc param body ->
-      applySuccessCont sCont fCont (VProc $ Procedure param body env)
+      sCont fCont (VProc $ Procedure param body env)
 
     Letrec name param body letrecBody ->
-      valueOfExpr letrecBody (Env.extendRec name param body env) sCont fCont
+      valueOfExpr letrecBody (Env.extendRec name param body env) sCont eCont fCont
 
     Call rator rand ->
-      valueOfExpr rator env (ratorCont rand env sCont) fCont
+      valueOfExpr
+        rator
+        env
+        (\fCont ratorValue ->
+          valueOfExpr
+            rand
+            env
+            (\fCont value ->
+              apply ratorValue value sCont eCont fCont
+            )
+            eCont
+            fCont
+        )
+        eCont
+        fCont
 
     Try aExpr x handlerExpr ->
-      valueOfExpr aExpr env (tryCont x handlerExpr env sCont) fCont
+      valueOfExpr
+        aExpr
+        env
+        sCont
+        (\fCont value ->
+          valueOfExpr handlerExpr (Env.extend x value env) sCont eCont fCont
+        )
+        fCont
 
     Raise aExpr ->
-      valueOfExpr aExpr env (raiseCont sCont) fCont
-
-
-data SuccessCont
-  = SuccessCont
-      { scApply :: FailureCont -> Value -> Either RuntimeError Value
-      , scApplyHandler :: FailureCont -> Value -> Either RuntimeError Value
-      }
-
-
-sEndCont :: SuccessCont
-sEndCont =
-  SuccessCont
-    { scApply = \_ value ->
-        trace "End of a successful computation" $
-          Right value
-    , scApplyHandler = \fCont value ->
-        applyFailureCont fCont (UncaughtException value)
-    }
-
-
-zeroCont :: SuccessCont -> SuccessCont
-zeroCont nextSCont =
-  SuccessCont
-    { scApply = \fCont value ->
-        zero value nextSCont fCont
-    , scApplyHandler = \fCont value ->
-        applyHandler nextSCont fCont value
-    }
-
-
-letCont :: Id -> Expr -> Env -> SuccessCont -> SuccessCont
-letCont x body env nextSCont =
-  SuccessCont
-    { scApply = \fCont value ->
-        valueOfExpr body (Env.extend x value env) nextSCont fCont
-    , scApplyHandler = \fCont value ->
-        applyHandler nextSCont fCont value
-    }
-
-
-ifCont :: Expr -> Expr -> Env -> SuccessCont -> SuccessCont
-ifCont consequent alternative env nextSCont =
-  SuccessCont
-    { scApply = \fCont value ->
-        computeIf value consequent alternative env nextSCont fCont
-    , scApplyHandler = \fCont value ->
-        applyHandler nextSCont fCont value
-    }
-
-
-diff1Cont :: Expr -> Env -> SuccessCont -> SuccessCont
-diff1Cont bExpr env nextSCont =
-  SuccessCont
-    { scApply = \fCont value ->
-        valueOfExpr bExpr env (diff2Cont value nextSCont) fCont
-    , scApplyHandler = \fCont value ->
-        applyHandler nextSCont fCont value
-    }
-
-
-diff2Cont :: Value -> SuccessCont -> SuccessCont
-diff2Cont aValue nextSCont =
-  SuccessCont
-    { scApply = \fCont value ->
-        diff aValue value nextSCont fCont
-    , scApplyHandler = \fCont value ->
-        applyHandler nextSCont fCont value
-    }
-
-
-ratorCont :: Expr -> Env -> SuccessCont -> SuccessCont
-ratorCont rand env nextSCont =
-  SuccessCont
-    { scApply = \fCont value ->
-        valueOfExpr rand env (randCont value nextSCont) fCont
-    , scApplyHandler = \fCont value ->
-        applyHandler nextSCont fCont value
-    }
-
-
-randCont :: Value -> SuccessCont -> SuccessCont
-randCont ratorValue nextSCont =
-  SuccessCont
-    { scApply = \fCont value ->
-        apply ratorValue value nextSCont fCont
-    , scApplyHandler = \fCont value ->
-        applyHandler nextSCont fCont value
-    }
-
-
-tryCont :: Id -> Expr -> Env -> SuccessCont -> SuccessCont
-tryCont x handlerExpr savedEnv nextSCont =
-  SuccessCont
-    { scApply = \fCont value ->
-        applySuccessCont nextSCont fCont value
-    , scApplyHandler = \fCont value ->
-        valueOfExpr handlerExpr (Env.extend x value savedEnv) nextSCont fCont
-    }
-
-
-raiseCont :: SuccessCont -> SuccessCont
-raiseCont nextSCont =
-  SuccessCont
-    { scApply = \fCont value ->
-        applyHandler nextSCont fCont value
-    , scApplyHandler = \fCont value ->
-        applyHandler nextSCont fCont value
-    }
-
-
-applySuccessCont :: SuccessCont -> FailureCont -> Value -> Either RuntimeError Value
-applySuccessCont sCont fCont value = scApply sCont fCont value
-
-
-applyHandler :: SuccessCont -> FailureCont -> Value -> Either RuntimeError Value
-applyHandler sCont fCont value = scApplyHandler sCont fCont value
-
-
-data FailureCont
-  = FailureCont (RuntimeError -> Either RuntimeError Value)
-
-
-fEndCont :: FailureCont
-fEndCont =
-  FailureCont $ \err ->
-    trace "End of a failed computation" $
-        Left err
-
-
-applyFailureCont :: FailureCont -> RuntimeError -> Either RuntimeError Value
-applyFailureCont (FailureCont f) err = f err
+      valueOfExpr
+        aExpr
+        env
+        eCont -- N.B. Not sCont but eCont
+        eCont
+        fCont
 
 
 zero :: Value -> SuccessCont -> FailureCont -> Either RuntimeError Value
 zero aValue sCont fCont =
   case toNumber aValue of
     Right a ->
-      applySuccessCont sCont fCont (VBool $ a == 0)
+      sCont fCont (VBool $ a == 0)
 
     Left err ->
-      applyFailureCont fCont err
+      fCont err
 
 
-computeIf :: Value -> Expr -> Expr -> Env -> SuccessCont -> FailureCont -> Either RuntimeError Value
-computeIf conditionValue consequent alternative env sCont fCont =
+computeIf :: Value -> Expr -> Expr -> Env -> SuccessCont -> ExceptionCont -> FailureCont -> Either RuntimeError Value
+computeIf conditionValue consequent alternative env sCont eCont fCont =
   case toBool conditionValue of
     Right b ->
       let
         expr = if b then consequent else alternative
       in
-      valueOfExpr expr env sCont fCont
+      valueOfExpr expr env sCont eCont fCont
 
     Left err ->
-      applyFailureCont fCont err
+      fCont err
 
 
 diff :: Value -> Value -> SuccessCont -> FailureCont -> Either RuntimeError Value
@@ -301,23 +256,23 @@ diff aValue bValue sCont fCont =
     Right a ->
       case toNumber bValue of
           Right b ->
-            applySuccessCont sCont fCont (VNumber $ a - b)
+            sCont fCont (VNumber $ a - b)
 
           Left err ->
-            applyFailureCont fCont err
+            fCont err
 
     Left err ->
-      applyFailureCont fCont err
+      fCont err
 
 
-apply :: Value -> Value -> SuccessCont -> FailureCont -> Either RuntimeError Value
-apply ratorValue arg sCont fCont =
+apply :: Value -> Value -> SuccessCont -> ExceptionCont -> FailureCont -> Either RuntimeError Value
+apply ratorValue arg sCont eCont fCont =
   case toProcedure ratorValue of
     Right (Procedure param body savedEnv) ->
-      valueOfExpr body (Env.extend param arg savedEnv) sCont fCont
+      valueOfExpr body (Env.extend param arg savedEnv) sCont eCont fCont
 
     Left err ->
-      applyFailureCont fCont err
+      fCont err
 
 
 toNumber :: Value -> Either RuntimeError Number
