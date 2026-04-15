@@ -48,3 +48,30 @@
   (check-equal?
    (occurs-in? 6 '((1 2) 3 (5 4)) endk)
    #f))
+
+;; 3
+(define (remfirst n s k)
+  (define (loop s k)
+    (if (null? s)
+        (k '())
+        (if (number? (car s))
+            (if (equal? n (car s))
+                (k (cdr s))
+                (loop (cdr s)
+                      (lambda (t)
+                        (k (cons (car s) t)))))
+            (occurs-in? n (car s)
+                        (lambda (b)
+                          (if b
+                              (remfirst n (car s)
+                                        (lambda (h)
+                                          (k (cons h (cdr s)))))
+                              (remfirst n (cdr s)
+                                        (lambda (t)
+                                          (k (cons (car s) t))))))))))
+  (loop s k))
+
+(module+ test
+  (check-equal?
+   (remfirst 3 '(((1 2)) (((((3))))) 3 5) endk)
+   '(((1 2)) ((((())))) 3 5)))
