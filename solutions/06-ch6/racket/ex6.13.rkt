@@ -135,3 +135,22 @@
   (check-equal?
    (map square '(1 2 3 4 5) (endk 6))
    '(1 4 9 16 25)))
+
+;; 7
+(define (fnlrgtn n-list n k)
+  (if (null? n-list)
+      (k #f)
+      (if (number? (car n-list))
+          (if (> (car n-list) n)
+              (k (car n-list))
+              (fnlrgtn (cdr n-list) n k))
+          (fnlrgtn (car n-list) n
+                   (lambda (first)
+                     (if (number? first)
+                         (k first)
+                         (fnlrgtn (cdr n-list) n k)))))))
+
+(module+ test
+  (check-equal?
+   (fnlrgtn '(1 (3 (2) 7 (9))) 6 (endk 7))
+   7))
