@@ -154,3 +154,16 @@
   (check-equal?
    (fnlrgtn '(1 (3 (2) 7 (9))) 6 (endk 7))
    7))
+
+;; 8
+(define (every pred l k)
+  (if (null? l)
+      (k #t)
+      (if (pred (car l))
+          (every pred (cdr l) k)
+          (k #f))))
+
+(module+ test
+  (check-equal?
+   (every (lambda (n) (> n 5)) '(6 7 8 9) (endk 8))
+   #t))
