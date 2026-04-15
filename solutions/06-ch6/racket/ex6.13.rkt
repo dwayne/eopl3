@@ -75,3 +75,24 @@
   (check-equal?
    (remfirst 3 '(((1 2)) (((((3))))) 3 5) endk)
    '(((1 2)) ((((())))) 3 5)))
+
+;; 4
+(define (depth s k)
+  (if (null? s)
+      (k 1)
+      (if (number? (car s))
+          (depth (cdr s) k)
+          (depth (car s)
+                 (lambda (l1)
+                   (depth (cdr s)
+                          (lambda (r)
+                            (if (< (+ 1 l1) r)
+                                (depth (cdr s) k)
+                                (depth (car s)
+                                       (lambda (l2)
+                                         (k (+ 1 l2))))))))))))
+
+(module+ test
+  (check-equal?
+   (depth '(1 (2) ((3))) endk)
+   3))
