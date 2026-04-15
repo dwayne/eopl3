@@ -19,12 +19,13 @@
 (module+ test
   (require rackunit)
 
-  (define (endk x)
-    (displayln "End of computation")
-    x)
+  (define (endk n)
+    (lambda (x)
+      (printf "End of computation ~a~n" n)
+      x))
 
   (check-equal?
-   (removeall 1 '(1 2 3 4 1 2 1) endk)
+   (removeall 1 '(1 2 3 4 1 2 1) (endk 1))
    '(2 3 4 2)))
 
 ;; 2
@@ -43,10 +44,10 @@
 
 (module+ test
   (check-equal?
-   (occurs-in? 5 '((1 2) 3 (5 4)) endk)
+   (occurs-in? 5 '((1 2) 3 (5 4)) (endk 2.1))
    #t)
   (check-equal?
-   (occurs-in? 6 '((1 2) 3 (5 4)) endk)
+   (occurs-in? 6 '((1 2) 3 (5 4)) (endk 2.2))
    #f))
 
 ;; 3
@@ -73,7 +74,7 @@
 
 (module+ test
   (check-equal?
-   (remfirst 3 '(((1 2)) (((((3))))) 3 5) endk)
+   (remfirst 3 '(((1 2)) (((((3))))) 3 5) (endk 3))
    '(((1 2)) ((((())))) 3 5)))
 
 ;; 4
@@ -94,7 +95,7 @@
 
 (module+ test
   (check-equal?
-   (depth '(1 (2) ((3))) endk)
+   (depth '(1 (2) ((3))) (endk 4))
    3))
 
 ;; 5
@@ -115,5 +116,22 @@
 
 (module+ test
   (check-equal?
-   (depth-with-let '(1 (2) ((3))) endk)
+   (depth-with-let '(1 (2) ((3))) (endk 5))
    3))
+
+;; 6
+(define (map f l k)
+  (if (null? l)
+      (k '())
+      (f (car l)
+         (lambda (h)
+           (map f (cdr l)
+                (lambda (t)
+                  (k (cons h t))))))))
+
+(module+ test
+  (define (square n k)
+    (k (* n n)))
+  (check-equal?
+   (map square '(1 2 3 4 5) (endk 6))
+   '(1 4 9 16 25)))
