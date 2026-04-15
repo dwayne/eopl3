@@ -96,3 +96,24 @@
   (check-equal?
    (depth '(1 (2) ((3))) endk)
    3))
+
+;; 5
+(define (depth-with-let s k)
+  (if (null? s)
+      (k 1)
+      (if (number? (car s))
+          (depth-with-let (cdr s) k)
+          (depth-with-let (car s)
+                          (lambda (l)
+                            (depth-with-let (cdr s)
+                                            (lambda (r)
+                                              (let ((dfirst (+ 1 l))
+                                                    (drest r))
+                                                (if (< dfirst drest)
+                                                    (k drest)
+                                                    (k dfirst))))))))))
+
+(module+ test
+  (check-equal?
+   (depth-with-let '(1 (2) ((3))) endk)
+   3))
