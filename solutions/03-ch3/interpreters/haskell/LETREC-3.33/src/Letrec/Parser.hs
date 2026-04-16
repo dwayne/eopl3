@@ -21,7 +21,7 @@ parse input =
       p
 
 program :: Parser Program
-program = pure Program <* whiteSpace <*> expr <* eof
+program = Program <$ whiteSpace <*> expr <* eof
 
 expr :: Parser Expr
 expr
@@ -41,29 +41,29 @@ constExpr = Const <$> number
 
 
 diffExpr :: Parser Expr
-diffExpr = hyphen *> parens (pure Diff <*> expr <* comma <*> expr)
+diffExpr = hyphen *> parens (Diff <$> expr <* comma <*> expr)
 
 
 zeroExpr :: Parser Expr
-zeroExpr = pure Zero <* rZero <*> parens expr
+zeroExpr = Zero <$ rZero <*> parens expr
 
 
 ifExpr :: Parser Expr
-ifExpr = pure If <* rIf <*> expr <* rThen <*> expr <* rElse <*> expr
+ifExpr = If <$ rIf <*> expr <* rThen <*> expr <* rElse <*> expr
 
 
 letrecExpr :: Parser Expr
-letrecExpr = pure Letrec <* rLetrec <*> many recProc <* rIn <*> expr
+letrecExpr = Letrec <$ rLetrec <*> many recProc <* rIn <*> expr
   where
-    recProc = pure (,,) <*> identifier <*> parens (commaSep identifier) <* equal <*> expr
+    recProc = (,,) <$> identifier <*> parens (commaSep identifier) <* equal <*> expr
 
 
 letExpr :: Parser Expr
-letExpr = pure Let <* rLet <*> identifier <* equal <*> expr <* rIn <*> expr
+letExpr = Let <$ rLet <*> identifier <* equal <*> expr <* rIn <*> expr
 
 
 procExpr :: Parser Expr
-procExpr = pure Proc <* rProc <*> parens identifier <*> expr
+procExpr = Proc <$ rProc <*> parens identifier <*> expr
 
 
 callExpr :: Parser Expr
