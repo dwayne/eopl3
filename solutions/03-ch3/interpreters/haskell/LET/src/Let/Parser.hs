@@ -23,7 +23,7 @@ parse input =
 
 
 program :: Parser Program
-program = Program <$> (whiteSpace *> expr <* eof)
+program = Program <$ whiteSpace <*> expr <* eof
 
 
 expr :: Parser Expr
@@ -45,7 +45,7 @@ varExpr = Var <$> identifier
 
 
 diffExpr :: Parser Expr
-diffExpr = hyphen *> parens (Diff <$> (expr <* comma) <*> expr)
+diffExpr = hyphen *> parens (Diff <$> expr <* comma <*> expr)
 
 
 zeroExpr :: Parser Expr
@@ -53,10 +53,8 @@ zeroExpr = Zero <$ rZero <*> parens expr
 
 
 ifExpr :: Parser Expr
-ifExpr =
-  If <$> (rIf *> expr) <*> (rThen *> expr) <*> (rElse *> expr)
+ifExpr = If <$ rIf <*> expr <* rThen <*> expr <* rElse <*> expr
 
 
 letExpr :: Parser Expr
-letExpr =
-  Let <$> (rLet *> identifier) <*> (equal *> expr) <*> (rIn *> expr)
+letExpr = Let <$ rLet <*> identifier <* equal <*> expr <* rIn <*> expr
