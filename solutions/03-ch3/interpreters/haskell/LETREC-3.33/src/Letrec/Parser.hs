@@ -9,6 +9,7 @@ import Text.Parsec.String (Parser)
 import Text.Parsec.Token (LanguageDef, TokenParser)
 
 import Letrec.AST
+import Letrec.Lexer
 
 parse :: String -> Program
 parse input =
@@ -19,10 +20,8 @@ parse input =
     Right p ->
       p
 
--- Non-terminals
-
 program :: Parser Program
-program = Program <$> (whiteSpace *> expr <* eof)
+program = pure Program <* whiteSpace <*> expr <* eof
 
 expr :: Parser Expr
 expr
@@ -36,96 +35,40 @@ expr
   <|> callExpr
   <|> varExpr
 
+
 constExpr :: Parser Expr
 constExpr = Const <$> number
 
+
 diffExpr :: Parser Expr
-diffExpr = minus *> (parens (Diff <$> (expr <* comma) <*> expr))
-  where
-    minus = char '-'
-    comma = lexeme (char ',')
+diffExpr = hyphen *> parens (pure Diff <*> expr <* comma <*> expr)
+
 
 zeroExpr :: Parser Expr
-zeroExpr = reserved "zero?" *> (parens (Zero <$> expr))
+zeroExpr = pure Zero <* rZero <*> parens expr
+
 
 ifExpr :: Parser Expr
-ifExpr =
-  If <$> (ifToken *> expr) <*> (thenToken *> expr) <*> (elseToken *> expr)
-  where
-    ifToken = reserved "if"
-    thenToken = reserved "then"
-    elseToken = reserved "else"
+ifExpr = pure If <* rIf <*> expr <* rThen <*> expr <* rElse <*> expr
+
 
 letrecExpr :: Parser Expr
-letrecExpr =
-  Letrec <$> (letrecToken *> many recProc) <*> (inToken *> expr)
+letrecExpr = pure Letrec <* rLetrec <*> many recProc <* rIn <*> expr
   where
-    letrecToken = reserved "letrec"
-    recProc = (,,) <$> identifier <*> (parens (commaSep identifier)) <*> (equal *> expr)
+    recProc = pure (,,) <*> identifier <*> parens (commaSep identifier) <* equal <*> expr
+
 
 letExpr :: Parser Expr
-letExpr =
-  Let <$> (letToken *> identifier) <*> (equal *> expr) <*> (inToken *> expr)
-  where
-    letToken = reserved "let"
+letExpr = pure Let <* rLet <*> identifier <* equal <*> expr <* rIn <*> expr
+
 
 procExpr :: Parser Expr
-procExpr =
-  Proc <$> (procToken *> parens identifier) <*> expr
-  where
-    procToken = reserved "proc"
+procExpr = pure Proc <* rProc <*> parens identifier <*> expr
+
 
 callExpr :: Parser Expr
-callExpr =
-  parens (Call <$> expr <*> many expr)
+callExpr = parens (Call <$> expr <*> many expr)
+
 
 varExpr :: Parser Expr
 varExpr = Var <$> identifier
-
--- Helpers
-
-inToken :: Parser ()
-inToken = reserved "in"
-
-equal :: Parser Char
-equal = lexeme (char '=')
-
-number :: Parser Number
-number = lexeme (Token.decimal lexer)
-
-identifier :: Parser Id
-identifier = Token.identifier lexer
-
-reserved :: String -> Parser ()
-reserved = Token.reserved lexer
-
-parens :: Parser a -> Parser a
-parens = Token.parens lexer
-
-commaSep :: Parser a -> Parser [a]
-commaSep = Token.commaSep lexer
-
-whiteSpace :: Parser ()
-whiteSpace = Token.whiteSpace lexer
-
-lexeme :: Parser a -> Parser a
-lexeme = Token.lexeme lexer
-
-lexer :: TokenParser st
-lexer = Token.makeTokenParser letDef
-
-letDef :: LanguageDef st
-letDef = emptyDef
-  { Token.identStart = oneOf ['a'..'z']
-  , Token.identLetter = Token.identStart letDef
-  , Token.reservedNames =
-      [ "else"
-      , "if"
-      , "in"
-      , "let"
-      , "letrec"
-      , "proc"
-      , "then"
-      , "zero?"
-      ]
-  }

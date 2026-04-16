@@ -13,6 +13,7 @@ library
   other-modules:
     Letrec.AST
     Letrec.Env
+    Letrec.Lexer
     Letrec.Parser
 
   build-depends:
