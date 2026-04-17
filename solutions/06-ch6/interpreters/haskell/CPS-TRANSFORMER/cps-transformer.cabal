@@ -9,6 +9,7 @@ library
 
   exposed-modules:
     Interpreter_IN
+    Interpreter_OUT
 
   other-modules:
     AST.CPS_IN
