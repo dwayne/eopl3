@@ -1,4 +1,4 @@
-module Letrec.AST (Program(..), Expr(..), Number, Id) where
+module AST (Program(..), Expr(..), Number, Id) where
 
 data Program = Program Expr deriving Show
 

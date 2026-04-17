@@ -1,9 +1,9 @@
-module Letrec.Interpreter (Value, run) where
+module Interpreter (Value, run) where
 
-import qualified Letrec.Env as Env
+import qualified Env
 
-import Letrec.AST
-import Letrec.Parser (parse)
+import AST
+import Parser (parse)
 
 data Value
   = NumberVal Number

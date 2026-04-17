@@ -8,13 +8,13 @@ library
   hs-source-dirs: src
 
   exposed-modules:
-    Letrec.Interpreter
+    Interpreter
 
   other-modules:
-    Letrec.AST
-    Letrec.Env
-    Letrec.Lexer
-    Letrec.Parser
+    AST
+    Env
+    Lexer
+    Parser
 
   build-depends:
     base,

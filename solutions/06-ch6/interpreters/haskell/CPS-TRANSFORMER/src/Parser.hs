@@ -1,4 +1,4 @@
-module Letrec.Parser where
+module Parser where
 
 import qualified Text.Parsec as Parsec
 import qualified Text.Parsec.Token as Token
@@ -8,8 +8,8 @@ import Text.Parsec.Language (emptyDef)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Token (LanguageDef, TokenParser)
 
-import Letrec.AST
-import Letrec.Lexer
+import AST
+import Lexer
 
 parse :: String -> Program
 parse input =

@@ -1,4 +1,4 @@
-module Letrec.Env (Env, empty, extend, extendRec, apply) where
+module Env (Env, empty, extend, extendRec, apply) where
 
 import qualified Data.List as List
 

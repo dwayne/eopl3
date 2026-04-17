@@ -1,4 +1,4 @@
-module Letrec.Lexer
+module Lexer
   ( number, identifier
 
   , rElse, rIf, rIn, rLet, rLetrec, rProc, rThen, rZero
@@ -16,7 +16,7 @@ import qualified Data.Char as Char
 import qualified Text.Parsec as P
 import qualified Text.Parsec.Token as T
 
-import Letrec.AST (Id, Number)
+import AST (Id, Number)
 import Control.Monad (mzero, void)
 import Text.Parsec.Language (LanguageDef, emptyDef)
 import Text.Parsec.String (Parser)

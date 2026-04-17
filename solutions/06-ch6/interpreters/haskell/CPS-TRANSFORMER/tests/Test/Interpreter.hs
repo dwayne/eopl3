@@ -2,7 +2,7 @@ module Test.Interpreter (spec) where
 
 import Test.Hspec
 
-import qualified Letrec.Interpreter as I
+import qualified Interpreter as I
 
 spec :: Spec
 spec = do
