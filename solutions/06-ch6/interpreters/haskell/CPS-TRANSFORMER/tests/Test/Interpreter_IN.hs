@@ -1,8 +1,8 @@
-module Test.Interpreter (spec) where
+module Test.Interpreter_IN (spec) where
 
 import Test.Hspec
 
-import qualified Interpreter as I
+import qualified Interpreter_IN as I
 
 spec :: Spec
 spec = do

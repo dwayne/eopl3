@@ -8,7 +8,7 @@ library
   hs-source-dirs: src
 
   exposed-modules:
-    Interpreter
+    Interpreter_IN
 
   other-modules:
     AST.CPS_IN
@@ -29,7 +29,7 @@ test-suite tests
   main-is: Main.hs
 
   other-modules:
-    Test.Interpreter
+    Test.Interpreter_IN
 
   build-depends:
     base,

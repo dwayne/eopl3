@@ -1,4 +1,4 @@
-module Interpreter (Value, run) where
+module Interpreter_IN (Value, run) where
 
 import qualified Env
 
