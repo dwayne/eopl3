@@ -8,7 +8,7 @@ import Text.Parsec.Language (emptyDef)
 import Text.Parsec.String (Parser)
 import Text.Parsec.Token (LanguageDef, TokenParser)
 
-import AST
+import AST.CPS_IN
 import Lexer
 
 parse :: String -> Program

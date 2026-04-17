@@ -16,7 +16,7 @@ import qualified Data.Char as Char
 import qualified Text.Parsec as P
 import qualified Text.Parsec.Token as T
 
-import AST (Id, Number)
+import AST.CPS_IN (Id, Number)
 import Control.Monad (mzero, void)
 import Text.Parsec.Language (LanguageDef, emptyDef)
 import Text.Parsec.String (Parser)

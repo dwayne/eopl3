@@ -11,7 +11,7 @@ library
     Interpreter
 
   other-modules:
-    AST
+    AST.CPS_IN
     Env
     Lexer
     Parser

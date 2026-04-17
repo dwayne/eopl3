@@ -2,7 +2,7 @@ module Interpreter (Value, run) where
 
 import qualified Env
 
-import AST
+import AST.CPS_IN
 import Parser (parse)
 
 data Value
