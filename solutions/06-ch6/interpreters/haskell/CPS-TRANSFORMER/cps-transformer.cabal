@@ -12,6 +12,7 @@ library
 
   other-modules:
     AST.CPS_IN
+    AST.CPS_OUT
     Env
     Lexer
     Parser
