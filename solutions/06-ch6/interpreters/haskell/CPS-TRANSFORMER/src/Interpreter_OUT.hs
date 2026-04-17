@@ -22,7 +22,7 @@ run = valueOfProgram
 
 valueOfProgram :: Program -> Value
 valueOfProgram (Program tfExpr) =
-  valueOfTfExpr tfExpr initEnv EndCont
+  valueOfTfExpr tfExpr initEnv
   where
     initEnv =
       Env.extend "i" (NumberVal 1)
@@ -30,36 +30,36 @@ valueOfProgram (Program tfExpr) =
           (Env.extend "x" (NumberVal 10)
             Env.empty))
 
-valueOfTfExpr :: TfExpr -> Environment -> Cont -> Value
-valueOfTfExpr tfExpr env cont =
+valueOfTfExpr :: TfExpr -> Environment -> Value
+valueOfTfExpr tfExpr env =
   case tfExpr of
     Simple simpleExpr ->
-      applyCont cont (valueOfSimpleExpr simpleExpr env)
+      valueOfSimpleExpr simpleExpr env
 
     If test consequent alternative ->
       let
         testVal = valueOfSimpleExpr test env
       in
         if (toBool testVal) then
-          valueOfTfExpr consequent env cont
+          valueOfTfExpr consequent env
         else
-          valueOfTfExpr alternative env cont
+          valueOfTfExpr alternative env
 
     Let var e body ->
       let
         val = valueOfSimpleExpr e env
       in
-        valueOfTfExpr body (Env.extend var val env) cont
+        valueOfTfExpr body (Env.extend var val env)
 
     Letrec recProcs e ->
-      valueOfTfExpr e (Env.extendRec recProcs env) cont
+      valueOfTfExpr e (Env.extendRec recProcs env)
 
     Call f args ->
       let
         fVal = valueOfSimpleExpr f env
         argVals = map (\arg -> valueOfSimpleExpr arg env) args
       in
-        applyProcedure (toProcedure fVal) argVals cont
+        applyProcedure (toProcedure fVal) argVals
 
 valueOfSimpleExpr :: SimpleExpr -> Environment -> Value
 valueOfSimpleExpr simpleExpr env =
@@ -109,8 +109,8 @@ procedureVal :: [Id] -> TfExpr -> Environment -> Value
 procedureVal vars body env =
   ProcedureVal (procedure vars body env)
 
-applyProcedure :: Procedure -> [Value] -> Cont -> Value
-applyProcedure (Procedure vars body env) vals cont =
+applyProcedure :: Procedure -> [Value] -> Value
+applyProcedure (Procedure vars body env) vals =
   let
     extend [] [] env = env
     extend _ [] env = error "Too few arguments"
@@ -118,16 +118,4 @@ applyProcedure (Procedure vars body env) vals cont =
     extend (var:vars) (val:vals) env =
       extend vars vals (Env.extend var val env)
   in
-    valueOfTfExpr body (extend vars vals env) cont
-
--- Continuation
-
-data Cont
-  = EndCont
-
-applyCont :: Cont -> Value -> Value
-applyCont cont val =
-  case cont of
-    EndCont ->
-      trace "End of computation" $
-        val
+    valueOfTfExpr body (extend vars vals env)
