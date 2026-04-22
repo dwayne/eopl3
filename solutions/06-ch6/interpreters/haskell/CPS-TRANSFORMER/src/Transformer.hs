@@ -13,5 +13,11 @@ cpsOfExpr expr k =
             --
             CPS_OUT_AST.Call k [CPS_OUT_AST.Const n]
 
+        CPS_IN_AST.Var v ->
+            --
+            -- (k v)
+            --
+            CPS_OUT_AST.Call k [CPS_OUT_AST.Var v]
+
         _ ->
             error "To be implemented"
