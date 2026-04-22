@@ -10,6 +10,7 @@ library
   exposed-modules:
     Interpreter_IN
     Interpreter_OUT
+    Transformer
 
   other-modules:
     AST.CPS_IN
