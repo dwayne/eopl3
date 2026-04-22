@@ -83,8 +83,8 @@ valueOfSimpleExpr simpleExpr env =
       in
         BoolVal (toNumber val == 0)
 
-    Proc var body ->
-      procedureVal [var] body env
+    Proc vars body ->
+      procedureVal vars body env
 
 toNumber :: Value -> Number
 toNumber (NumberVal n) = n

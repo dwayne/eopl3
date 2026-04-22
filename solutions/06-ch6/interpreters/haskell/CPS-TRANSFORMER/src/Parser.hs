@@ -63,7 +63,7 @@ letExpr = Let <$ rLet <*> identifier <* equal <*> expr <* rIn <*> expr
 
 
 procExpr :: Parser Expr
-procExpr = Proc <$ rProc <*> parens identifier <*> expr
+procExpr = Proc <$ rProc <*> parens (commaSep identifier) <*> expr
 
 
 callExpr :: Parser Expr

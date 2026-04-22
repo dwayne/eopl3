@@ -15,7 +15,7 @@ data SimpleExpr
   | Var Id
   | Diff SimpleExpr SimpleExpr
   | Zero SimpleExpr
-  | Proc Id TfExpr
+  | Proc [Id] TfExpr
   deriving Show
 
 type Number = Integer
