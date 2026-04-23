@@ -19,5 +19,23 @@ cpsOfExpr expr k =
             --
             CPS_OUT_AST.Call k [CPS_OUT_AST.Var v]
 
+        CPS_IN_AST.Proc vars body ->
+            let
+                --
+                -- kid is a fresh variable
+                --
+                -- I prefix an underscore so that it doesn't clash
+                -- with any variable name the user might have used.
+                --
+                -- Why it works? Because the user isn't allowed to
+                -- start their variable names with an underscore.
+                --
+                kid = "_k"
+                kvar = CPS_OUT_AST.Var kid
+            in
+            CPS_OUT_AST.Call
+                k
+                [CPS_OUT_AST.Proc (vars ++ [ kid ]) (cpsOfExpr body kvar)]
+
         _ ->
             error "To be implemented"
