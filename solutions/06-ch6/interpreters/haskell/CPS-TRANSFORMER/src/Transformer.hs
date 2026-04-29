@@ -4,20 +4,24 @@ import qualified AST.CPS_IN as CPS_IN_AST
 import qualified AST.CPS_OUT as CPS_OUT_AST
 
 
-cpsOfExpr :: CPS_IN_AST.Expr -> CPS_OUT_AST.SimpleExpr -> CPS_OUT_AST.TfExpr
-cpsOfExpr expr k =
+cpsOfExpr :: CPS_IN_AST.Expr -> CPS_OUT_AST.SimpleExpr -> Int -> ( CPS_OUT_AST.TfExpr, Int )
+cpsOfExpr expr k counter0 =
     case expr of
         CPS_IN_AST.Const n ->
             --
             -- (k n)
             --
-            CPS_OUT_AST.Call k [CPS_OUT_AST.Const n]
+            ( CPS_OUT_AST.Call k [CPS_OUT_AST.Const n]
+            , counter0
+            )
 
         CPS_IN_AST.Var v ->
             --
             -- (k v)
             --
-            CPS_OUT_AST.Call k [CPS_OUT_AST.Var v]
+            ( CPS_OUT_AST.Call k [CPS_OUT_AST.Var v]
+            , counter0
+            )
 
         CPS_IN_AST.Proc vars body ->
             let
@@ -32,23 +36,32 @@ cpsOfExpr expr k =
                 --
                 kid = "_k"
                 kvar = CPS_OUT_AST.Var kid
+
+                ( tfbody, counter1 ) = cpsOfExpr body kvar counter0
             in
-            CPS_OUT_AST.Call
+            ( CPS_OUT_AST.Call
                 k
-                [CPS_OUT_AST.Proc (vars ++ [ kid ]) (cpsOfExpr body kvar)]
+                [CPS_OUT_AST.Proc (vars ++ [ kid ]) tfbody]
+            , counter1
+            )
 
         _ ->
             error "To be implemented"
 
 
-cpsOfExprs :: [CPS_IN_AST.Expr] -> ([CPS_OUT_AST.SimpleExpr] -> CPS_OUT_AST.TfExpr) -> CPS_OUT_AST.TfExpr
-cpsOfExprs exprs build =
+cpsOfExprs :: [CPS_IN_AST.Expr] -> ([CPS_OUT_AST.SimpleExpr] -> CPS_OUT_AST.TfExpr) -> Int -> ( CPS_OUT_AST.TfExpr, Int )
+cpsOfExprs exprs build counter0 =
     case findFirstNonSimpleExpr exprs of
         Nothing ->
             --
             -- All are simple.
             --
-            build (map toSimpleExpr exprs)
+            let
+                ( simpleExprs, counter1 ) = toSimpleExprs exprs counter0
+            in
+            ( build simpleExprs
+            , counter1
+            )
 
         Just (before, expr, after) ->
             --
@@ -57,14 +70,12 @@ cpsOfExprs exprs build =
             -- after is a list of simple/non-simple expressions
             --
             let
-                --
-                -- N.B. This isn't quite right. vid needs to be unique.
-                --
-                vid = "_v"
+                vid = "_v" ++ show counter0
                 vvar = CPS_IN_AST.Var vid
-            in
-            cpsOfExpr expr (CPS_OUT_AST.Proc [vid] (cpsOfExprs (before ++ [vvar] ++ after) build))
 
+                ( body, counter1 ) = cpsOfExprs (before ++ [vvar] ++ after) build counter0
+            in
+            cpsOfExpr expr (CPS_OUT_AST.Proc [vid] body) counter1
 
 
 isSimpleExpr :: CPS_IN_AST.Expr -> Bool
@@ -89,23 +100,56 @@ isSimpleExpr expr =
             False
 
 
-toSimpleExpr :: CPS_IN_AST.Expr -> CPS_OUT_AST.SimpleExpr
-toSimpleExpr expr =
+toSimpleExprs :: [CPS_IN_AST.Expr] -> Int -> ( [CPS_OUT_AST.SimpleExpr], Int )
+toSimpleExprs exprs counter0 =
+    toSimpleExprsHelper [] exprs counter0
+
+
+toSimpleExprsHelper :: [CPS_OUT_AST.SimpleExpr] -> [CPS_IN_AST.Expr] -> Int -> ( [CPS_OUT_AST.SimpleExpr], Int )
+toSimpleExprsHelper simpleExprs exprs counter0 =
+    case exprs of
+        [] ->
+            ( reverse simpleExprs, counter0 )
+
+        expr : restExprs ->
+            let
+                ( simpleExpr, counter1 ) = toSimpleExpr expr counter0
+            in
+            toSimpleExprsHelper (simpleExpr : simpleExprs) restExprs counter1
+
+
+toSimpleExpr :: CPS_IN_AST.Expr -> Int -> ( CPS_OUT_AST.SimpleExpr, Int )
+toSimpleExpr expr counter0 =
     --
     -- N.B. Assumes isSimpleExpr expr is true.
     --
     case expr of
         CPS_IN_AST.Const n ->
-            CPS_OUT_AST.Const n
+            ( CPS_OUT_AST.Const n
+            , counter0
+            )
 
         CPS_IN_AST.Var v ->
-            CPS_OUT_AST.Var v
+            ( CPS_OUT_AST.Var v
+            , counter0
+            )
 
         CPS_IN_AST.Diff a b ->
-            CPS_OUT_AST.Diff (toSimpleExpr a) (toSimpleExpr b)
+            let
+                ( simpleA, counter1 ) = toSimpleExpr a counter0
+                ( simpleB, counter2 ) = toSimpleExpr b counter1
+            in
+            ( CPS_OUT_AST.Diff simpleA simpleB
+            , counter2
+            )
 
         CPS_IN_AST.Zero e ->
-            CPS_OUT_AST.Zero (toSimpleExpr e)
+            let
+                ( simpleE, counter1 ) = toSimpleExpr e counter0
+            in
+            ( CPS_OUT_AST.Zero simpleE
+            , counter1
+            )
 
         CPS_IN_AST.Proc vars body ->
             let
@@ -114,8 +158,12 @@ toSimpleExpr expr =
                 --
                 kid = "_k"
                 kvar = CPS_OUT_AST.Var kid
+
+                ( tfbody, counter1 ) = cpsOfExpr body kvar counter0
             in
-            CPS_OUT_AST.Proc (vars ++ [kid]) (cpsOfExpr body kvar)
+            ( CPS_OUT_AST.Proc (vars ++ [kid]) tfbody
+            , counter1
+            )
 
         _ ->
             --
