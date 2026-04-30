@@ -45,6 +45,14 @@ cpsOfExpr expr k counter0 =
             , counter1
             )
 
+        CPS_IN_AST.Call f args ->
+            cpsOfExprs
+                (f : args)
+                (\(simpleF : simpleArgs) ->
+                    CPS_OUT_AST.Call simpleF (simpleArgs ++ [k])
+                )
+                counter0
+
         _ ->
             error "To be implemented"
 
