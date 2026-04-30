@@ -98,8 +98,14 @@ cpsOfExpr expr k counter0 =
                 )
                 counter1
 
-        _ ->
-            error "To be implemented"
+        CPS_IN_AST.Letrec recProcs e ->
+            let
+                ( recProcsTf, counter1 ) = cpsOfRecProcs [] recProcs counter0
+                ( eTf, counter2 ) = cpsOfExpr e k counter1
+            in
+            ( CPS_OUT_AST.Letrec recProcsTf eTf
+            , counter2
+            )
 
 
 cpsOfExprs :: [CPS_IN_AST.Expr] -> ([CPS_OUT_AST.SimpleExpr] -> CPS_OUT_AST.TfExpr) -> Int -> ( CPS_OUT_AST.TfExpr, Int )
@@ -246,3 +252,27 @@ findFirstNonSimpleExprHelper verp exprs =
                     , expr
                     , restOfExprs
                     )
+
+
+cpsOfRecProcs :: [(CPS_OUT_AST.Id, [CPS_OUT_AST.Id], CPS_OUT_AST.TfExpr)] -> [(CPS_IN_AST.Id, [CPS_IN_AST.Id], CPS_IN_AST.Expr)] -> Int -> ( [(CPS_OUT_AST.Id, [CPS_OUT_AST.Id], CPS_OUT_AST.TfExpr)], Int )
+cpsOfRecProcs result recProcs counter0 =
+    case recProcs of
+        [] ->
+            ( reverse result
+            , counter0
+            )
+
+        (name, params, body) : restOfRecProcs ->
+            let
+                --
+                -- See previous note about kid.
+                --
+                kid = "_k"
+                kvar = CPS_OUT_AST.Var kid
+
+                ( bodyTf, counter1 ) = cpsOfExpr body kvar counter0
+            in
+            cpsOfRecProcs
+                ((name, params ++ [kid], bodyTf) : result)
+                restOfRecProcs
+                counter1
