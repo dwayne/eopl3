@@ -87,6 +87,17 @@ cpsOfExpr expr k counter0 =
                 )
                 counter2
 
+        CPS_IN_AST.Let var e body ->
+            let
+                ( bodyTf, counter1 ) = cpsOfExpr body k counter0
+            in
+            cpsOfExprs
+                [e]
+                (\[simpleE] ->
+                    CPS_OUT_AST.Let var simpleE bodyTf
+                )
+                counter1
+
         _ ->
             error "To be implemented"
 
