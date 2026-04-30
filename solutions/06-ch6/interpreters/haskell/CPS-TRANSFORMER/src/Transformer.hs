@@ -37,11 +37,11 @@ cpsOfExpr expr k counter0 =
                 kid = "_k"
                 kvar = CPS_OUT_AST.Var kid
 
-                ( tfbody, counter1 ) = cpsOfExpr body kvar counter0
+                ( bodyTf, counter1 ) = cpsOfExpr body kvar counter0
             in
             ( CPS_OUT_AST.Call
                 k
-                [CPS_OUT_AST.Proc (vars ++ [ kid ]) tfbody]
+                [CPS_OUT_AST.Proc (vars ++ [ kid ]) bodyTf]
             , counter1
             )
 
@@ -218,9 +218,9 @@ toSimpleExpr expr counter0 =
                 kid = "_k"
                 kvar = CPS_OUT_AST.Var kid
 
-                ( tfbody, counter1 ) = cpsOfExpr body kvar counter0
+                ( bodyTf, counter1 ) = cpsOfExpr body kvar counter0
             in
-            ( CPS_OUT_AST.Proc (vars ++ [kid]) tfbody
+            ( CPS_OUT_AST.Proc (vars ++ [kid]) bodyTf
             , counter1
             )
 
