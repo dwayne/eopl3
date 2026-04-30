@@ -4,6 +4,20 @@ import qualified AST.CPS_IN as CPS_IN_AST
 import qualified AST.CPS_OUT as CPS_OUT_AST
 
 
+cpsOfProgram :: CPS_IN_AST.Program -> CPS_OUT_AST.Program
+cpsOfProgram (CPS_IN_AST.Program expr) =
+    let
+        ( exprTf, _ ) =
+            cpsOfExprs
+                [expr]
+                (\[simpleExpr] ->
+                    CPS_OUT_AST.Simple simpleExpr
+                )
+                0
+    in
+    CPS_OUT_AST.Program exprTf
+
+
 cpsOfExpr :: CPS_IN_AST.Expr -> CPS_OUT_AST.SimpleExpr -> Int -> ( CPS_OUT_AST.TfExpr, Int )
 cpsOfExpr expr k counter0 =
     case expr of
