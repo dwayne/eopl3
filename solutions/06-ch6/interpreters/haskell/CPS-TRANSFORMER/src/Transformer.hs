@@ -1,7 +1,13 @@
-module Transformer (cpsOfExpr) where
+module Transformer (run) where
 
 import qualified AST.CPS_IN as CPS_IN_AST
 import qualified AST.CPS_OUT as CPS_OUT_AST
+
+import Parser (parse)
+
+
+run :: String -> CPS_OUT_AST.Program
+run = cpsOfProgram . parse
 
 
 cpsOfProgram :: CPS_IN_AST.Program -> CPS_OUT_AST.Program
