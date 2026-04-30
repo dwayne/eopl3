@@ -152,7 +152,18 @@ cpsOfExprs exprs build counter0 =
                 vid = "_v" ++ show counter0
                 vvar = CPS_IN_AST.Var vid
 
-                ( body, counter1 ) = cpsOfExprs (before ++ [vvar] ++ after) build counter0
+                --
+                -- We've used counter0
+                -- So we should increment it so other invocations don't use it
+                --
+                -- Fogetting to increment counter0 led to the following bug:
+                --
+                -- run "proc (x) (h (f x) -(44, y) (g y))"
+                -- => Program (Simple (Proc ["x","_k"] (Call (Var "f") [Var "x",Proc ["_v0"] (Call (Var "g") [Var "y",Proc ["_v0"] (Call (Var "h") [Var "_v0",Diff (Const 44) (Var "y"),Var "_v0",Var "_k"])])])))
+                --
+                -- Notice the two v0's in (h v0 -(44 y) v0 _k).
+                --
+                ( body, counter1 ) = cpsOfExprs (before ++ [vvar] ++ after) build (counter0 + 1)
             in
             cpsOfExpr expr (CPS_OUT_AST.Proc [vid] body) counter1
 
