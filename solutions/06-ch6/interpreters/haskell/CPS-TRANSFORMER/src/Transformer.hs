@@ -53,6 +53,40 @@ cpsOfExpr expr k counter0 =
                 )
                 counter0
 
+        CPS_IN_AST.Zero e ->
+            cpsOfExprs
+                [e]
+                (\[simpleE] ->
+                    CPS_OUT_AST.Simple (CPS_OUT_AST.Zero simpleE)
+                )
+                counter0
+
+        CPS_IN_AST.Diff a b ->
+            cpsOfExprs
+                [a, b]
+                (\[simpleA, simpleB] ->
+                    CPS_OUT_AST.Simple (CPS_OUT_AST.Diff simpleA simpleB)
+                )
+                counter0
+
+        CPS_IN_AST.If test consequence alternative ->
+            --
+            -- N.B. I didn't like how I had to compute the cpsOfExpr for
+            -- consequence and alternative before the test expression.
+            -- I wanted to do it within the callback but then the counters
+            -- wouldn't propagate correctly.
+            --
+            let
+                ( consequenceTf, counter1 ) = cpsOfExpr consequence k counter0
+                ( alternativeTf, counter2 ) = cpsOfExpr alternative k counter1
+            in
+            cpsOfExprs
+                [test]
+                (\[simpleTest] ->
+                    CPS_OUT_AST.If simpleTest consequenceTf alternativeTf
+                )
+                counter2
+
         _ ->
             error "To be implemented"
 
