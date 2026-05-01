@@ -8,6 +8,7 @@ library
   hs-source-dirs: src
 
   exposed-modules:
+    Examples
     Interpreter_IN
     Interpreter_OUT
     Transformer
